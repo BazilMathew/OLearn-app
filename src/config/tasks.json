@@ -1,0 +1,518 @@
+[
+  {
+    "task_id": "whatsapp_send_text",
+    "app": "whatsapp",
+    "title": {
+      "en": "Send a Text Message",
+      "hi": "टेक्स्ट मैसेज भेजें",
+      "ml": "ടെക്സ്റ്റ് സന്ദേശം അയക്കുക"
+    },
+    "description": {
+      "en": "Type and send a message to your son Ramesh",
+      "hi": "अपने बेटे रमेश को टाइप करके संदेश भेजें",
+      "ml": "മകൻ രമേഷിന് ഒരു ടെക്സ്റ്റ് സന്ദേശം അയക്കുക"
+    },
+    "steps": [
+      {
+        "screen": "whatsapp_chat_screen",
+        "highlight_element": "chat_input",
+        "audio_en": "assets/audio/en/wa_text_step1.mp3",
+        "audio_hi": "assets/audio/hi/wa_text_step1.mp3",
+        "audio_ml": "assets/audio/ml/wa_text_step1.mp3",
+        "hint_text": {
+          "en": "Tap the message box at the bottom to type your message.",
+          "hi": "संदेश लिखने के लिए नीचे दिए गए मैसेज बॉक्स पर टैप करें।",
+          "ml": "സന്ദേശം എഴുതാൻ താഴെയുള്ള മെസ്സേജ് ബോക്സിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_screen_typed",
+        "highlight_element": "send_button",
+        "audio_en": "assets/audio/en/wa_text_step2.mp3",
+        "audio_hi": "assets/audio/hi/wa_text_step2.mp3",
+        "audio_ml": "assets/audio/ml/wa_text_step2.mp3",
+        "hint_text": {
+          "en": "Now tap the green circle send button to send the message.",
+          "hi": "अब संदेश भेजने के लिए हरे गोल सेंड बटन को दबाएं।",
+          "ml": "സന്ദേശം അയക്കാൻ പച്ച വട്ടത്തിലുള്ള സെന്റ് ബട്ടണിൽ തൊടുക."
+        }
+      }
+    ]
+  },
+  {
+    "task_id": "whatsapp_send_photo",
+    "app": "whatsapp",
+    "title": {
+      "en": "Send a Photo",
+      "hi": "फोटो भेजें",
+      "ml": "ഫോട്ടോ അയക്കുക"
+    },
+    "description": {
+      "en": "Choose and send a photo from your gallery to Ramesh",
+      "hi": "अपनी गैलरी से रमेश को एक तस्वीर भेजें",
+      "ml": "ഗ്യാലറിയിൽ നിന്ന് രമേഷിന് ഒരു ഫോട്ടോ അയക്കുക"
+    },
+    "steps": [
+      {
+        "screen": "whatsapp_chat_screen",
+        "highlight_element": "attachment_icon",
+        "audio_en": "assets/audio/en/wa_photo_step1.mp3",
+        "audio_hi": "assets/audio/hi/wa_photo_step1.mp3",
+        "audio_ml": "assets/audio/ml/wa_photo_step1.mp3",
+        "hint_text": {
+          "en": "Tap the paperclip attachment icon at the bottom.",
+          "hi": "नीचे दिए गए पिन (अटैचमेंट) आइकॉन पर टैप करें।",
+          "ml": "താഴെയുള്ള പേപ്പർക്ലിപ്പ് (അറ്റാച്ച്മെന്റ്) ചിഹ്നത്തിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_attachment_sheet",
+        "highlight_element": "gallery_icon",
+        "audio_en": "assets/audio/en/wa_photo_step2.mp3",
+        "audio_hi": "assets/audio/hi/wa_photo_step2.mp3",
+        "audio_ml": "assets/audio/ml/wa_photo_step2.mp3",
+        "hint_text": {
+          "en": "Tap the purple Gallery icon to see your photos.",
+          "hi": "अपनी तस्वीरें देखने के लिए बैंगनी गैलरी आइकॉन पर टैप करें।",
+          "ml": "ഫോട്ടോകൾ കാണാൻ പർപ്പിൾ നിറത്തിലുള്ള ഗ്യാലറി ഐക്കൺ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_gallery_screen",
+        "highlight_element": "photo_thumbnail_1",
+        "audio_en": "assets/audio/en/wa_photo_step3.mp3",
+        "audio_hi": "assets/audio/hi/wa_photo_step3.mp3",
+        "audio_ml": "assets/audio/ml/wa_photo_step3.mp3",
+        "hint_text": {
+          "en": "Tap on the first photo to choose it.",
+          "hi": "तस्वीर चुनने के लिए पहली फोटो पर टैप करें।",
+          "ml": "ഫോട്ടോ തിരഞ്ഞെടുക്കാൻ ആദ്യത്തെ ഫോട്ടോയിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_photo_preview",
+        "highlight_element": "preview_send_button",
+        "audio_en": "assets/audio/en/wa_photo_step4.mp3",
+        "audio_hi": "assets/audio/hi/wa_photo_step4.mp3",
+        "audio_ml": "assets/audio/ml/wa_photo_step4.mp3",
+        "hint_text": {
+          "en": "Tap the green send button to send the photo.",
+          "hi": "फोटो भेजने के लिए हरे सेंड बटन को दबाएं।",
+          "ml": "ഫോട്ടോ അയക്കാൻ പച്ച സेंड് ബട്ടണിൽ തൊടുക."
+        }
+      }
+    ]
+  },
+  {
+    "task_id": "whatsapp_voice_call",
+    "app": "whatsapp",
+    "title": {
+      "en": "Make a Voice Call",
+      "hi": "वॉइस कॉल करें",
+      "ml": "വോയ്സ് കോൾ ചെയ്യുക"
+    },
+    "description": {
+      "en": "Call Ramesh over WhatsApp voice without paying phone balance",
+      "hi": "व्हाट्सएप पर रमेश को सीधे वॉइस कॉल करें",
+      "ml": "വാട്ട്സ്ആപ്പ് വഴി രമേഷിനെ സാധാരണ കോൾ ചെയ്യുക"
+    },
+    "steps": [
+      {
+        "screen": "whatsapp_chat_screen",
+        "highlight_element": "voice_call_icon",
+        "audio_en": "assets/audio/en/wa_voicecall_step1.mp3",
+        "audio_hi": "assets/audio/hi/wa_voicecall_step1.mp3",
+        "audio_ml": "assets/audio/ml/wa_voicecall_step1.mp3",
+        "hint_text": {
+          "en": "Tap the phone handset icon at the top right.",
+          "hi": "ऊपर दाईं ओर दिए गए फ़ोन रिसीवर आइकॉन पर टैप करें।",
+          "ml": "മുകളിൽ വലതുവശത്തുള്ള ഫോൺ ചിഹ്നത്തിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_call_confirm_dialog",
+        "highlight_element": "dialog_call_button",
+        "audio_en": "assets/audio/en/wa_voicecall_step2.mp3",
+        "audio_hi": "assets/audio/hi/wa_voicecall_step2.mp3",
+        "audio_ml": "assets/audio/ml/wa_voicecall_step2.mp3",
+        "hint_text": {
+          "en": "Tap the green Call button to start calling.",
+          "hi": "कॉल शुरू करने के लिए हरे रंग का कॉल बटन दबाएं।",
+          "ml": "കോൾ ആരംഭിക്കാൻ പച്ച കോൾ ബട്ടൺ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_active_voice_call",
+        "highlight_element": "end_call_button",
+        "audio_en": "assets/audio/en/wa_voicecall_step3.mp3",
+        "audio_hi": "assets/audio/hi/wa_voicecall_step3.mp3",
+        "audio_ml": "assets/audio/ml/wa_voicecall_step3.mp3",
+        "hint_text": {
+          "en": "When you finish talking, tap the red button to hang up.",
+          "hi": "बातचीत पूरी होने पर कॉल काटने के लिए लाल बटन दबाएं।",
+          "ml": "സംസാരം തീർന്നാൽ കോൾ അവസാനിപ്പിക്കാൻ ചുവപ്പ് ബട്ടണിൽ തൊടുക."
+        }
+      }
+    ]
+  },
+  {
+    "task_id": "whatsapp_video_call",
+    "app": "whatsapp",
+    "title": {
+      "en": "Make a Video Call",
+      "hi": "वीडियो कॉल करें",
+      "ml": "വീഡിയോ കോൾ ചെയ്യുക"
+    },
+    "description": {
+      "en": "See and speak with your family over face-to-face video",
+      "hi": "सामने देखकर बात करने के लिए वीडियो कॉल शुरू करें",
+      "ml": "കണ്ട് സംസാരിക്കാൻ വാട്ട്സ്ആപ്പ് വീഡിയോ കോൾ ചെയ്യുക"
+    },
+    "steps": [
+      {
+        "screen": "whatsapp_chat_screen",
+        "highlight_element": "video_call_icon",
+        "audio_en": "assets/audio/en/wa_videocall_step1.mp3",
+        "audio_hi": "assets/audio/hi/wa_videocall_step1.mp3",
+        "audio_ml": "assets/audio/ml/wa_videocall_step1.mp3",
+        "hint_text": {
+          "en": "Tap the video camera icon at the top bar.",
+          "hi": "ऊपर पट्टी पर वीडियो कैमरा आइकॉन पर टैप करें।",
+          "ml": "മുകളിലെ വീഡിയോ ക്യാമറ ഐക്കണിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_video_confirm_dialog",
+        "highlight_element": "dialog_video_button",
+        "audio_en": "assets/audio/en/wa_videocall_step2.mp3",
+        "audio_hi": "assets/audio/hi/wa_videocall_step2.mp3",
+        "audio_ml": "assets/audio/ml/wa_videocall_step2.mp3",
+        "hint_text": {
+          "en": "Tap the green Call button to connect your video call.",
+          "hi": "वीडियो कॉल शुरू करने के लिए हरा कॉल बटन दबाएं।",
+          "ml": "വീഡിയോ കോൾ തുടങ്ങാൻ പച്ച കോൾ ബട്ടൺ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_active_video_call",
+        "highlight_element": "end_call_button",
+        "audio_en": "assets/audio/en/wa_videocall_step3.mp3",
+        "audio_hi": "assets/audio/hi/wa_videocall_step3.mp3",
+        "audio_ml": "assets/audio/ml/wa_videocall_step3.mp3",
+        "hint_text": {
+          "en": "Tap the red button to safely end the video call.",
+          "hi": "वीडियो कॉल समाप्त करने के लिए लाल बटन दबाएं।",
+          "ml": "വീഡിയോ കോൾ പൂർത്തിയാക്കാൻ ചുവപ്പ് ബട്ടണിൽ തൊടുക."
+        }
+      }
+    ]
+  },
+  {
+    "task_id": "gpay_check_balance",
+    "app": "gpay",
+    "title": {
+      "en": "Check Account Balance",
+      "hi": "बैंक बैलेंस चेक करें",
+      "ml": "ബാങ്ക് ബാലൻസ് പരിശോധിക്കുക"
+    },
+    "description": {
+      "en": "Securely view your bank account balance in Google Pay",
+      "hi": "गूगल पे में अपना बैंक खाता बैलेंस सुरक्षित देखें",
+      "ml": "ഗൂഗിൾ പേയിൽ ബാങ്ക് ബാലൻസ് കാണാൻ പഠിക്കുക"
+    },
+    "steps": [
+      {
+        "screen": "gpay_home_screen",
+        "highlight_element": "check_balance_button",
+        "audio_en": "assets/audio/en/gpay_bal_step1.mp3",
+        "audio_hi": "assets/audio/hi/gpay_bal_step1.mp3",
+        "audio_ml": "assets/audio/ml/gpay_bal_step1.mp3",
+        "hint_text": {
+          "en": "Tap on Check bank balance at the bottom of the screen.",
+          "hi": "स्क्रीन के नीचे 'चेक बैंक बैलेंस' विकल्प पर टैप करें।",
+          "ml": "സ്ക്രീനിന്റെ താഴെയുള്ള ബാങ്ക് ബാലൻസ് പരിശോധിക്കുക തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_upi_pin_screen",
+        "highlight_element": "pin_keypad_submit",
+        "audio_en": "assets/audio/en/gpay_bal_step2.mp3",
+        "audio_hi": "assets/audio/hi/gpay_bal_step2.mp3",
+        "audio_ml": "assets/audio/ml/gpay_bal_step2.mp3",
+        "hint_text": {
+          "en": "Enter your 4-digit secret UPI PIN, then tap the blue checkmark button.",
+          "hi": "अपना 4 अंकों का गुप्त यूपीआई पिन डालें और नीले टिक मार्क बटन को दबाएं।",
+          "ml": "നിങ്ങളുടെ 4 അക്ക യുപിഐ പിൻ നൽകി നീല ശരി ചിഹ്നം തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_balance_display_screen",
+        "highlight_element": "balance_done_button",
+        "audio_en": "assets/audio/en/gpay_bal_step3.mp3",
+        "audio_hi": "assets/audio/hi/gpay_bal_step3.mp3",
+        "audio_ml": "assets/audio/ml/gpay_bal_step3.mp3",
+        "hint_text": {
+          "en": "Your balance of ₹14,250 is shown. Tap Done to return.",
+          "hi": "आपका ₹14,250 बैलेंस दिखाई दे रहा है। वापस लौटने के लिए 'डन' दबाएं।",
+          "ml": "നിങ്ങളുടെ ₹14,250 ബാലൻസ് കാണാം. മടങ്ങാൻ 'ഡൺ' തൊടുക."
+        }
+      }
+    ]
+  },
+  {
+    "task_id": "gpay_scan_qr",
+    "app": "gpay",
+    "title": {
+      "en": "Scan a QR Code and Pay",
+      "hi": "क्यूआर कोड स्कैन करके भुगतान करें",
+      "ml": "ക്യുആർ കോഡ് സ്കാൻ ചെയ്ത് പണം നൽകുക"
+    },
+    "description": {
+      "en": "Scan a shopkeeper's QR code and make a payment",
+      "hi": "दुकानदार के क्यूआर कोड को स्कैन करके पैसे दें",
+      "ml": "കടയിലെ ക്യുആർ കോഡ് സ്കാൻ ചെയ്ത് പണം നൽകുക"
+    },
+    "steps": [
+      {
+        "screen": "gpay_home_screen",
+        "highlight_element": "scan_qr_button",
+        "audio_en": "assets/audio/en/gpay_qr_step1.mp3",
+        "audio_hi": "assets/audio/hi/gpay_qr_step1.mp3",
+        "audio_ml": "assets/audio/ml/gpay_qr_step1.mp3",
+        "hint_text": {
+          "en": "Tap the large Scan any QR code button at the top.",
+          "hi": "ऊपर बड़े 'स्कैन एनी क्यूआर कोड' बटन पर टैप करें।",
+          "ml": "മുകളിലുള്ള 'ഏതെങ്കിലും ക്യുആർ സ്കാൻ ചെയ്യുക' വലിയ ബട്ടണിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_qr_scanner_viewfinder",
+        "highlight_element": "qr_target_box",
+        "audio_en": "assets/audio/en/gpay_qr_step2.mp3",
+        "audio_hi": "assets/audio/hi/gpay_qr_step2.mp3",
+        "audio_ml": "assets/audio/ml/gpay_qr_step2.mp3",
+        "hint_text": {
+          "en": "Point your phone camera inside the square frame at the shop QR code.",
+          "hi": "अपने फ़ोन कैमरे को चौकोर फ्रेम के अंदर दुकान के क्यूआर कोड पर रखें।",
+          "ml": "ഫോൺ ക്യാമറ ചതുര ഫ്രെയിമിനുള്ളിൽ കടയിലെ ക്യുആർ കോഡിലേക്ക് തിരിക്കുക."
+        }
+      },
+      {
+        "screen": "gpay_amount_entry_screen",
+        "highlight_element": "proceed_to_pay_button",
+        "audio_en": "assets/audio/en/gpay_qr_step3.mp3",
+        "audio_hi": "assets/audio/hi/gpay_qr_step3.mp3",
+        "audio_ml": "assets/audio/ml/gpay_qr_step3.mp3",
+        "hint_text": {
+          "en": "Enter the amount ₹200 and tap the blue Proceed to Pay button.",
+          "hi": "राशि ₹200 डालें और नीले 'प्रोसीड टू पे' बटन पर टैप करें।",
+          "ml": "തുക ₹200 നൽകി നീല 'പണം നൽകുക' ബട്ടൺ തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_upi_pin_screen",
+        "highlight_element": "pin_keypad_submit",
+        "audio_en": "assets/audio/en/gpay_qr_step4.mp3",
+        "audio_hi": "assets/audio/hi/gpay_qr_step4.mp3",
+        "audio_ml": "assets/audio/ml/gpay_qr_step4.mp3",
+        "hint_text": {
+          "en": "Enter your UPI PIN and tap the checkmark button.",
+          "hi": "अपना यूपीआई पिन डालें और टिक मार्क बटन पर टैप करें।",
+          "ml": "നിങ്ങളുടെ യുപിഐ പിൻ നൽകി ശരി ചിഹ്നം തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_payment_success_screen",
+        "highlight_element": "success_done_button",
+        "audio_en": "assets/audio/en/gpay_qr_step5.mp3",
+        "audio_hi": "assets/audio/hi/gpay_qr_step5.mp3",
+        "audio_ml": "assets/audio/ml/gpay_qr_step5.mp3",
+        "hint_text": {
+          "en": "Payment of ₹200 is successful! Tap Done to finish.",
+          "hi": "₹200 का भुगतान सफल हो गया! समाप्त करने के लिए 'डन' दबाएं।",
+          "ml": "₹200 വിജയകരമായി നൽകി! പൂർത്തിയാക്കാൻ 'ഡൺ' തൊടുക."
+        }
+      }
+    ]
+  },
+  {
+    "task_id": "gpay_send_contact",
+    "app": "gpay",
+    "title": {
+      "en": "Send Money to a Saved Contact",
+      "hi": "सेव किए गए संपर्क को पैसे भेजें",
+      "ml": "കോൺടാക്റ്റിലുള്ള ആൾക്ക് പണം അയക്കുക"
+    },
+    "description": {
+      "en": "Send money directly to family members in your contacts list",
+      "hi": "अपनी संपर्क सूची से परिवार के सदस्य को सीधे पैसे भेजें",
+      "ml": "ഫോണിലുള്ള കുടുംബാംഗത്തിന് പണം അയക്കുക"
+    },
+    "steps": [
+      {
+        "screen": "gpay_home_screen",
+        "highlight_element": "pay_contacts_button",
+        "audio_en": "assets/audio/en/gpay_contact_step1.mp3",
+        "audio_hi": "assets/audio/hi/gpay_contact_step1.mp3",
+        "audio_ml": "assets/audio/ml/gpay_contact_step1.mp3",
+        "hint_text": {
+          "en": "Tap Pay contacts on your home screen.",
+          "hi": "अपनी होम स्क्रीन पर 'पे कॉन्टैक्ट्स' पर टैप करें।",
+          "ml": "ഹോം സ്ക്രീനിലുള്ള 'കോൺടാക്റ്റുകൾക്ക് നൽകുക' തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_contact_list_screen",
+        "highlight_element": "contact_son_ramesh",
+        "audio_en": "assets/audio/en/gpay_contact_step2.mp3",
+        "audio_hi": "assets/audio/hi/gpay_contact_step2.mp3",
+        "audio_ml": "assets/audio/ml/gpay_contact_step2.mp3",
+        "hint_text": {
+          "en": "Tap on Ramesh (Son) to choose him from your contacts.",
+          "hi": "संपर्कों में से चुनने के लिए रमेश (बेटा) पर टैप करें।",
+          "ml": "കോൺടാക്റ്റുകളിൽ നിന്ന് രമേഷ് (മകൻ) എന്ന പേര് തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_contact_chat_screen",
+        "highlight_element": "contact_pay_button",
+        "audio_en": "assets/audio/en/gpay_contact_step3.mp3",
+        "audio_hi": "assets/audio/hi/gpay_contact_step3.mp3",
+        "audio_ml": "assets/audio/ml/gpay_contact_step3.mp3",
+        "hint_text": {
+          "en": "Tap the blue Pay button at the bottom.",
+          "hi": "नीचे दिए गए नीले रंग के 'पे' बटन पर टैप करें।",
+          "ml": "താഴെയുള്ള നീല 'പേ' ബട്ടണിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_amount_entry_screen",
+        "highlight_element": "proceed_to_pay_button",
+        "audio_en": "assets/audio/en/gpay_contact_step4.mp3",
+        "audio_hi": "assets/audio/hi/gpay_contact_step4.mp3",
+        "audio_ml": "assets/audio/ml/gpay_contact_step4.mp3",
+        "hint_text": {
+          "en": "Enter ₹1,000 and tap Proceed to Pay.",
+          "hi": "₹1,000 डालें और 'प्रोसीड टू पे' पर टैप करें।",
+          "ml": "₹1,000 നൽകി 'പണം നൽകുക' തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_upi_pin_screen",
+        "highlight_element": "pin_keypad_submit",
+        "audio_en": "assets/audio/en/gpay_contact_step5.mp3",
+        "audio_hi": "assets/audio/hi/gpay_contact_step5.mp3",
+        "audio_ml": "assets/audio/ml/gpay_contact_step5.mp3",
+        "hint_text": {
+          "en": "Enter your UPI PIN and tap the checkmark button.",
+          "hi": "अपना यूपीआई पिन डालें और टिक मार्क बटन पर टैप करें।",
+          "ml": "നിങ്ങളുടെ യുപിഐ പിൻ നൽകി ശരി ചിഹ്നം തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_payment_success_screen",
+        "highlight_element": "success_done_button",
+        "audio_en": "assets/audio/en/gpay_contact_step6.mp3",
+        "audio_hi": "assets/audio/hi/gpay_contact_step6.mp3",
+        "audio_ml": "assets/audio/ml/gpay_contact_step6.mp3",
+        "hint_text": {
+          "en": "₹1,000 was sent to Ramesh successfully! Tap Done to finish.",
+          "hi": "रमेश को ₹1,000 का भुगतान सफल रहा! समाप्त करने के लिए 'डन' दबाएं।",
+          "ml": "രമേഷിന് ₹1,000 വിജയകരമായി അയച്ചു! പൂർത്തിയാക്കാൻ 'ഡൺ' തൊടുക."
+        }
+      }
+    ]
+  },
+  {
+    "task_id": "gpay_transaction_history",
+    "app": "gpay",
+    "title": {
+      "en": "View Transaction History",
+      "hi": "लेन-देन का इतिहास देखें",
+      "ml": "ഇടപാട് ചരിത്രം കാണുക"
+    },
+    "description": {
+      "en": "Check your recent payments, receipts, and UPI reference numbers",
+      "hi": "अपने हालिया भुगतान, रसीदें और संदर्भ नंबर जांचें",
+      "ml": "കഴിഞ്ഞ പേയ്‌മെന്റുകളും രസീതുകളും പരിശോധിക്കുക"
+    },
+    "steps": [
+      {
+        "screen": "gpay_home_screen",
+        "highlight_element": "transaction_history_button",
+        "audio_en": "assets/audio/en/gpay_hist_step1.mp3",
+        "audio_hi": "assets/audio/hi/gpay_hist_step1.mp3",
+        "audio_ml": "assets/audio/ml/gpay_hist_step1.mp3",
+        "hint_text": {
+          "en": "Scroll down and tap See transaction history.",
+          "hi": "नीचे स्क्रॉल करें और 'सी ट्रांज़ैक्शन हिस्ट्री' पर टैप करें।",
+          "ml": "താഴേക്ക് സ്ക്രോൾ ചെയ്ത് 'ഇടപാട് ചരിത്രം കാണുക' തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_history_list_screen",
+        "highlight_element": "history_item_1",
+        "audio_en": "assets/audio/en/gpay_hist_step2.mp3",
+        "audio_hi": "assets/audio/hi/gpay_hist_step2.mp3",
+        "audio_ml": "assets/audio/ml/gpay_hist_step2.mp3",
+        "hint_text": {
+          "en": "Tap on the first transaction to view its payment receipt.",
+          "hi": "रसीद देखने के लिए पहले लेन-देन पर टैप करें।",
+          "ml": "രസീത് കാണാൻ ആദ്യത്തെ ഇടപാടിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_receipt_detail_screen",
+        "highlight_element": "receipt_back_button",
+        "audio_en": "assets/audio/en/gpay_hist_step3.mp3",
+        "audio_hi": "assets/audio/hi/gpay_hist_step3.mp3",
+        "audio_ml": "assets/audio/ml/gpay_hist_step3.mp3",
+        "hint_text": {
+          "en": "Review the payment details, then tap the top Back arrow to return.",
+          "hi": "भुगतान विवरण देखें, फिर वापस जाने के लिए ऊपर बैक तीर पर टैप करें।",
+          "ml": "പേയ്മെന്റ് വിവരങ്ങൾ കണ്ട് മുകളിലുള്ള ബാക്ക് അമ്പടയാളത്തിൽ തൊടുക."
+        }
+      }
+    ]
+  },
+  {
+    "task_id": "whatsapp_voice_message",
+    "app": "whatsapp",
+    "title": {
+      "en": "Send a Voice Note",
+      "hi": "वॉइस नोट (बोलकर संदेश) भेजें",
+      "ml": "ശബ്ദ സന്ദേശം അയക്കുക"
+    },
+    "description": {
+      "en": "Record and send your voice instead of typing",
+      "hi": "टाइप करने के बजाय अपनी आवाज़ रिकॉर्ड करके भेजें",
+      "ml": "ടൈപ്പ് ചെയ്യാതെ സംസാരിച്ച് വോയ്സ് നോട്ട് അയക്കുക"
+    },
+    "steps": [
+      {
+        "screen": "whatsapp_chat_screen",
+        "highlight_element": "mic_record_button",
+        "audio_en": "assets/audio/en/wa_voicenote_step1.mp3",
+        "audio_hi": "assets/audio/hi/wa_voicenote_step1.mp3",
+        "audio_ml": "assets/audio/ml/wa_voicenote_step1.mp3",
+        "hint_text": {
+          "en": "Tap the green microphone button at the bottom right to record.",
+          "hi": "रिकॉर्ड करने के लिए नीचे दाईं ओर हरे माइक बटन पर टैप करें।",
+          "ml": "റെക്കോർഡ് ചെയ്യാൻ താഴെ വലതുവശത്തുള്ള പച്ച മൈക്ക് ബട്ടണിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_voice_recording_screen",
+        "highlight_element": "send_voice_note_button",
+        "audio_en": "assets/audio/en/wa_voicenote_step2.mp3",
+        "audio_hi": "assets/audio/hi/wa_voicenote_step2.mp3",
+        "audio_ml": "assets/audio/ml/wa_voicenote_step2.mp3",
+        "hint_text": {
+          "en": "Tap the green Send button to send your voice note to Ramesh.",
+          "hi": "रमेश को अपना वॉइस नोट भेजने के लिए हरे सेंड बटन को दबाएं।",
+          "ml": "രമേഷിന് ശബ്ദ സന്ദേശം അയക്കാൻ പച്ച സेंड് ബട്ടൺ തൊടുക."
+        }
+      }
+    ]
+  }
+]
