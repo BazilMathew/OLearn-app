@@ -23,6 +23,7 @@ export interface TranslationDictionary {
   send: string;
   cancel: string;
   clarifyTitle: string;
+  didNotUnderstand: string;
   practiceAgain: string;
   backToMenu: string;
   taskCompleted: string;
@@ -77,6 +78,7 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     send: 'Ask',
     cancel: 'Cancel',
     clarifyTitle: 'Which of these would you like to do?',
+    didNotUnderstand: "I didn't understand, please try again or choose a task",
     practiceAgain: 'Practice Again',
     backToMenu: 'Back to Menu',
     taskCompleted: 'Well Done! Task Completed!',
@@ -129,6 +131,7 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     send: 'पूछें',
     cancel: 'रद्द करें',
     clarifyTitle: 'आप इनमें से क्या करना चाहते हैं?',
+    didNotUnderstand: 'मैं समझ नहीं पाया, कृपया फिर से कोशिश करें या कोई काम चुनें',
     practiceAgain: 'फिर से अभ्यास करें',
     backToMenu: 'मेनू पर वापस जाएं',
     taskCompleted: 'बहुत बढ़िया! अभ्यास पूरा हुआ!',
@@ -181,6 +184,7 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     send: 'ചോദിക്കുക',
     cancel: 'റദ്ദാക്കുക',
     clarifyTitle: 'ഇതിൽ ഏതാണ് താങ്കൾ ചെയ്യാൻ ആഗ്രഹിക്കുന്നത്?',
+    didNotUnderstand: 'എനിക്ക് മനസ്സിലായില്ല, ദയവായി വീണ്ടും ശ്രമിക്കുക അല്ലെങ്കിൽ ഒരു പാഠം തിരഞ്ഞെടുക്കുക',
     practiceAgain: 'വീണ്ടും പരിശീലിക്കുക',
     backToMenu: 'മെനുവിലേക്ക് മടങ്ങുക',
     taskCompleted: 'വളരെ നന്ന്! പാഠം പൂർത്തിയായി!',

@@ -1,4 +1,5 @@
 import tasksData from '../config/tasks.json';
+import { I18N } from '../config/i18n';
 import { SupportedLanguage, TaskConfig } from '../types/task';
 import { apiPost } from './apiClient';
 
@@ -9,16 +10,208 @@ export interface RouteResult {
     text: string;
     options: Array<{ taskId: string; label: string }>;
   };
+  // Nothing scored high enough: show "I didn't understand" and the task list.
+  notUnderstood?: boolean;
 }
 
 const TASKS = tasksData as TaskConfig[];
 
+// Weights: 3-5 = names this task clearly, 2 = intent shared by a few tasks,
+// 1 = generic word (app names, send, check, code) that can never decide alone.
+// Keywords of all three languages are used together, since speech is often code-mixed.
+// "word*" matches any word starting with "word". Malayalam words ending in ്, ം or a chillu
+// also match their inflected forms (കോഡ് → കോഡിൽ, ബാലൻസ് → ബാലൻസിൽ, കോൾ → കോളിൽ).
+const WHATSAPP_APP = ['whatsapp', 'whats app', 'watsapp', 'व्हाट्सएप', 'व्हाट्सऐप', 'वॉट्सऐप', 'वाट्सएप', 'വാട്സ്ആപ്പ്', 'വാട്ട്സ്ആപ്പ്', 'വാട്സാപ്പ്', 'വാട്സ് ആപ്പ്'];
+const GPAY_APP = ['gpay', 'g pay', 'google pay', 'googlepay', 'phonepe', 'paytm', 'upi', 'गूगल पे', 'जीपे', 'जी पे', 'यूपीआई', 'ജിപേ', 'ജി പേ', 'ഗൂഗിൾ പേ', 'ഗൂഗിൾപേ', 'യുപിഐ'];
+const SEND = ['send*', 'भेज*', 'അയക്ക*', 'അയച്ച*'];
+const PAY = ['pay', 'paying', 'payment*', 'money', 'पैसे', 'पैसा', 'रुपये', 'रुपए', 'भुगतान', 'पेमेंट', 'പണം', 'പൈസ', 'രൂപ', 'പേ', 'പേയ്മെന്റ്', 'പെയ്മെന്റ്', 'അടയ്ക്ക*', 'കൊടുക്ക*', 'നൽക*'];
+const CALL = ['call*', 'कॉल', 'काल', 'कॉलिंग', 'കോൾ', 'കാൾ', 'വിളി*'];
+const VOICE = ['voice', 'वॉइस', 'वॉयस', 'वाइस', 'വോയ്സ്', 'വോയിസ്'];
+
+const w = (weight: number, words: string[]): Array<[string, number]> => words.map(word => [word, weight]);
+
+const KEYWORDS: Record<string, Array<[string, number]>> = {
+  whatsapp_send_text: [
+    ...w(3, ['text*', 'message*', 'msg', 'sms', 'मैसेज', 'मेसेज', 'मसेज', 'संदेश', 'सन्देश', 'टेक्स्ट', 'एसएमएस', 'സന്ദേശം', 'മെസ്സേജ്', 'മെസേജ്', 'ടെക്സ്റ്റ്']),
+    ...w(2, ['type*', 'typing', 'chat*', 'write', 'लिख*', 'टाइप', 'चैट', 'എഴുത*', 'ടൈപ്പ്', 'ചാറ്റ്']),
+    ...w(1, [...SEND, ...WHATSAPP_APP])
+  ],
+  whatsapp_send_photo: [
+    ...w(3, ['photo*', 'pic', 'pics', 'picture*', 'image*', 'gallery', 'selfie', 'फोटो', 'तस्वीर*', 'चित्र', 'इमेज', 'गैलरी', 'पिक्चर', 'ഫോട്ടോ*', 'ചിത്രം', 'പടം', 'പടങ്ങൾ', 'ഗാലറി', 'ഗ്യാലറി', 'ഇമേജ്', 'സെൽഫി']),
+    ...w(1, [...SEND, ...WHATSAPP_APP])
+  ],
+  whatsapp_voice_call: [
+    ...w(5, ['voice call*', 'audio call*', 'phone call*', 'वॉइस कॉल', 'वॉयस कॉल', 'वाइस कॉल', 'ऑडियो कॉल', 'फोन कॉल', 'വോയ്സ് കോൾ', 'വോയിസ് കോൾ', 'ഓഡിയോ കോൾ', 'ഫോൺ കോൾ', 'ഫോൺ വിളി*']),
+    ...w(2, [...CALL, ...VOICE, 'ring', 'talk*', 'फोन', 'बात', 'സംസാരി*']),
+    ...w(1, ['phone', 'ഫോൺ', ...WHATSAPP_APP])
+  ],
+  whatsapp_video_call: [
+    ...w(5, ['video call*', 'वीडियो कॉल', 'विडियो कॉल', 'വീഡിയോ കോൾ', 'വിഡിയോ കോൾ']),
+    ...w(3, ['video*', 'वीडियो', 'विडियो', 'വീഡിയോ', 'വിഡിയോ']),
+    ...w(2, [...CALL, 'talk*', 'बात', 'സംസാരി*', 'face', 'चेहरा', 'चेहरे', 'देखकर', 'മുഖം']),
+    ...w(1, WHATSAPP_APP)
+  ],
+  whatsapp_voice_message: [
+    ...w(5, ['voice message*', 'voice note*', 'voice msg', 'audio message*', 'वॉइस मैसेज', 'वॉयस मैसेज', 'वाइस मैसेज', 'ऑडियो मैसेज', 'वॉइस नोट', 'आवाज संदेश', 'बोलकर संदेश', 'बोलकर मैसेज', 'വോയ്സ് മെസ്സേജ്', 'വോയ്സ് മെസേജ്', 'വോയിസ് മെസ്സേജ്', 'വോയ്സ് നോട്ട്', 'ഓഡിയോ മെസ്സേജ്', 'ശബ്ദ സന്ദേശം', 'ശബ്ദസന്ദേശം']),
+    ...w(4, ['आवाज में']),
+    ...w(3, ['record*', 'बोलकर', 'बोल कर', 'रिकॉर्ड*', 'रिकार्ड*', 'റെക്കോർഡ്', 'റെക്കോഡ്']),
+    ...w(2, [...VOICE, 'audio', 'speaking', 'आवाज', 'ऑडियो', 'ശബ്ദം', 'ഓഡിയോ', 'പറഞ്ഞ്']),
+    ...w(1, [...SEND, ...WHATSAPP_APP])
+  ],
+  gpay_check_balance: [
+    ...w(4, ['bank balance', 'account balance', 'how much money', 'कितने पैसे', 'कितना पैसा', 'कितने रुपये', 'कितने रुपए', 'पैसे कितने', 'रुपये कितने', 'रुपए कितने', 'എത്ര രൂപ', 'രൂപ എത്ര', 'എത്ര പണം', 'പണം എത്ര', 'എത്ര പൈസ', 'പൈസ എത്ര']),
+    ...w(3, ['balance*', 'बैलेंस', 'बैलेन्स', 'बैलन्स', 'बेलेंस', 'शेष', 'बकाया', 'ബാലൻസ്', 'ബാലെൻസ്', 'ബാക്കി']),
+    ...w(2, ['account*', 'how much', 'remaining', 'खाता', 'खाते', 'अकाउंट', 'അക്കൗണ്ട്', 'അക്കൌണ്ട്', 'എത്ര']),
+    ...w(1, ['check*', 'चेक', 'जांच*', 'देख*', 'ചെക്ക്', 'നോക്ക*', ...GPAY_APP])
+  ],
+  gpay_scan_qr: [
+    ...w(4, ['qr code', 'qrcode', 'क्यूआर कोड', 'ക്യൂആർ കോഡ്', 'ക്യുആർ കോഡ്']),
+    ...w(3, ['qr', 'q r', 'scan*', 'barcode', 'क्यूआर', 'क्युआर', 'क्यू आर', 'स्कैन*', 'स्केन*', 'ക്യൂആർ', 'ക്യുആർ', 'ക്യൂ ആർ', 'ക്യു ആർ', 'സ്കാൻ', 'സ്ക്കാൻ']),
+    ...w(2, [...PAY, 'shop*', 'store', 'दुकान*', 'കട', 'കടയിൽ', 'കടക്കാര*', 'ഷോപ്പ്']),
+    ...w(1, ['code', 'कोड', 'കോഡ്', ...GPAY_APP])
+  ],
+  gpay_send_contact: [
+    ...w(4, ['send money', 'पैसे भेज*', 'पैसा भेज*', 'रुपये भेज*', 'रुपए भेज*', 'പണം അയക്ക*', 'പൈസ അയക്ക*', 'രൂപ അയക്ക*', 'പണമയക്ക*']),
+    ...w(3, ['transfer*', 'contact*', 'ट्रांसफर', 'संपर्क', 'कॉन्टैक्ट', 'ട്രാൻസ്ഫർ', 'കോൺടാക്റ്റ്', 'കോണ്ടാക്ട്']),
+    ...w(2, PAY),
+    ...w(1, ['son', 'daughter', 'ramesh', 'family', 'बेटा', 'बेटे', 'बेटी', 'रमेश', 'മകൻ', 'മകൾ', 'രമേഷ്', ...SEND, ...GPAY_APP])
+  ],
+  gpay_transaction_history: [
+    ...w(4, ['past payment*', 'old payment*', 'previous payment*', 'payment record*', 'पुराने भुगतान', 'पुराने पेमेंट', 'പഴയ പേയ്മെന്റ്']),
+    ...w(4, ['history', 'transaction*', 'statement*', 'receipt*', 'passbook', 'इतिहास', 'हिस्ट्री', 'लेनदेन', 'लेन देन', 'ट्रांजैक्शन', 'ट्रांजेक्शन', 'स्टेटमेंट', 'पासबुक', 'हिसाब', 'रसीद', 'ചരിത്രം', 'ഹിസ്റ്ററി', 'ഇടപാട്', 'ട്രാൻസാക്ഷൻ', 'സ്റ്റേറ്റ്മെന്റ്', 'രസീത്', 'പാസ്ബുക്ക്', 'കണക്ക്']),
+    ...w(2, ['previous', 'past', 'spent', 'पुराने', 'पिछले', 'खर्च*', 'പഴയ', 'മുമ്പ*', 'മുൻപ്', 'ചെലവ*']),
+    ...w(1, GPAY_APP)
+  ]
+};
+
+// Route only when the best task scores at least MIN_SCORE and leads the runner-up by MARGIN.
+const MIN_SCORE = 2;
+const MARGIN = 2;
+
+const CHILLU: Record<string, string> = { 'ണ': 'ൺ', 'ന': 'ൻ', 'ര': 'ർ', 'ല': 'ൽ', 'ള': 'ൾ', 'ക': 'ൿ' };
+const CHILLU_BASE: Record<string, string> = { 'ൺ': 'ണ', 'ൻ': 'ന', 'ർ': 'ര', 'ൽ': 'ല', 'ൾ': 'ള', 'ൿ': 'ക' };
+
+/** Lowercase, unify Unicode spellings, drop punctuation and Latin accents, collapse spaces. */
+export function normalizeText(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/([A-Za-z])[̀-ͯ]+/g, '$1') // Latin accents only; Indic vowel signs stay
+    .normalize('NFC')
+    .toLowerCase()
+    .replace(/([ണനരലളക])്‍/g, (_, c: string) => CHILLU[c]) // old-style chillu → atomic
+    .replace(/[​-‍﻿]/g, '') // zero-width joiners
+    .replace(/़/g, '') // Hindi nukta: फ़ → फ
+    .replace(/ँ/g, 'ं') // chandrabindu → anusvara
+    .replace(/[\p{P}\p{S}]+/gu, ' ')
+    .replace(/([a-z0-9])(?=[^\sa-z0-9])/g, '$1 ') // split "QRകോഡ്" → "qr കോഡ്"
+    .replace(/([^\sa-z0-9])(?=[a-z0-9])/g, '$1 ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+interface TokenMatcher { exact: string; prefix?: string }
+interface CompiledKeyword { tokens: TokenMatcher[]; weight: number }
+
+function compileToken(token: string): TokenMatcher {
+  if (token.endsWith('*')) return { exact: token.slice(0, -1), prefix: token.slice(0, -1) };
+  const last = token.slice(-1);
+  let stem: string | undefined;
+  if (last === '്' || last === 'ം') stem = token.slice(0, -1);
+  else if (CHILLU_BASE[last]) stem = token.slice(0, -1) + CHILLU_BASE[last];
+  return { exact: token, prefix: stem && [...stem].length >= 3 ? stem : undefined };
+}
+
+const COMPILED: Record<string, CompiledKeyword[]> = Object.fromEntries(
+  Object.entries(KEYWORDS).map(([taskId, list]) => [
+    taskId,
+    list.map(([phrase, weight]) => ({
+      weight,
+      tokens: phrase.split(' ').flatMap(word => {
+        const parts = normalizeText(word).split(' ');
+        if (word.endsWith('*')) parts[parts.length - 1] += '*';
+        return parts;
+      }).map(compileToken)
+    }))
+  ])
+);
+
+const tokenMatches = (word: string, m: TokenMatcher) =>
+  word === m.exact || (m.prefix !== undefined && word.startsWith(m.prefix));
+
+/** Scores every task. A word inside a longer matched phrase only counts for that phrase. */
+export function scoreTasks(normalized: string): Record<string, number> {
+  const words = normalized ? normalized.split(' ') : [];
+  const hits: Array<{ taskId: string; key: number; start: number; len: number; weight: number }> = [];
+  for (const [taskId, keywords] of Object.entries(COMPILED)) {
+    keywords.forEach((kw, key) => {
+      for (let start = 0; start + kw.tokens.length <= words.length; start++) {
+        if (kw.tokens.every((m, i) => tokenMatches(words[start + i], m))) {
+          hits.push({ taskId, key, start, len: kw.tokens.length, weight: kw.weight });
+        }
+      }
+    });
+  }
+
+  hits.sort((a, b) => b.len - a.len);
+  const accepted: typeof hits = [];
+  for (const hit of hits) {
+    const covered = accepted.some(a => a.len > hit.len && hit.start < a.start + a.len && a.start < hit.start + hit.len);
+    if (!covered) accepted.push(hit);
+  }
+
+  const scores: Record<string, number> = Object.fromEntries(Object.keys(COMPILED).map(id => [id, 0]));
+  const counted = new Set<string>();
+  for (const hit of accepted) {
+    const id = `${hit.taskId}:${hit.key}`;
+    if (counted.has(id)) continue;
+    counted.add(id);
+    scores[hit.taskId] += hit.weight;
+  }
+  return scores;
+}
+
+const pick = (language: SupportedLanguage, en: string, hi: string, ml: string) =>
+  language === 'hi' ? hi : language === 'ml' ? ml : en;
+
+function clarifyBetween(a: string, b: string, language: SupportedLanguage): RouteResult['clarifyQuestion'] {
+  const pair = [a, b].sort().join('|');
+  if (pair === 'whatsapp_video_call|whatsapp_voice_call') {
+    return {
+      text: pick(language,
+        'Would you like to make a regular Voice Call or a Video Call?',
+        'क्या आप सामान्य वॉइस कॉल करना चाहते हैं या वीडियो कॉल?',
+        'നിങ്ങൾക്ക് സാധാരണ വോയ്സ് കോളാണോ അതോ വീഡിയോ കോളാണോ ചെയ്യേണ്ടത്?'),
+      options: [
+        { taskId: 'whatsapp_voice_call', label: pick(language, 'Voice Call', 'फ़ोन / वॉइस कॉल', 'വോയ്സ് കോൾ') },
+        { taskId: 'whatsapp_video_call', label: pick(language, 'Video Call', 'वीडियो कॉल', 'വീഡിയോ കോൾ') }
+      ]
+    };
+  }
+  if (pair === 'gpay_scan_qr|gpay_send_contact') {
+    return {
+      text: pick(language,
+        'Do you want to scan a shop QR code, or send money to a saved contact?',
+        'आप दुकान पर क्यूआर कोड से भुगतान करना चाहते हैं या किसी संपर्क को पैसे भेजना चाहते हैं?',
+        'കടയിൽ ക്യുആർ കോഡ് സ്കാൻ ചെയ്തോ അതോ കോൺടാക്റ്റിലുള്ള ആൾക്കോ പണം നൽകേണ്ടത്?'),
+      options: [
+        { taskId: 'gpay_scan_qr', label: pick(language, 'Scan QR Code', 'दुकान पर क्यूआर कोड स्कैन', 'ക്യുആർ സ്കാൻ ചെയ്ത് നൽകുക') },
+        { taskId: 'gpay_send_contact', label: pick(language, 'Send to Contact', 'संपर्क (बेटे) को पैसे भेजें', 'കുടുംബാംഗത്തിന് പണം അയക്കുക') }
+      ]
+    };
+  }
+  const title = (id: string) => TASKS.find(t => t.task_id === id)?.title[language] ?? id;
+  return {
+    text: (I18N[language] || I18N.en).clarifyTitle,
+    options: [a, b].map(taskId => ({ taskId, label: title(taskId) }))
+  };
+}
+
 export const TaskRouterService = {
   /**
-   * Routes user input (spoken or typed) to one of the 8 fixed tasks.
+   * Routes user input (spoken or typed) to one of the fixed tasks.
    * First asks the OLearn server, which classifies with an LLM.
-   * When offline or the server is unavailable, uses a comprehensive multilingual
-   * semantic classifier matching English, Hindi, and Malayalam natural language intents.
+   * When offline or the server is unavailable, scores the text against
+   * English, Hindi and Malayalam keywords on the device.
    */
   async routeQuery(query: string, language: SupportedLanguage): Promise<RouteResult> {
     const trimmed = query.trim().toLowerCase();
@@ -39,126 +232,18 @@ export const TaskRouterService = {
   },
 
   localSemanticMatch(query: string, language: SupportedLanguage): RouteResult {
-    const q = query.toLowerCase();
+    const normalized = normalizeText(query);
+    const scores = scoreTasks(normalized);
 
-    // Check for ambiguity first:
-    // 1. Calling ambiguity (Voice vs Video Call)
-    const callKeywords = ['call', 'कॉल', 'बात करनी', 'വിളിക്കുക', 'കോൾ'];
-    const isCall = callKeywords.some(w => q.includes(w));
-    const isVideoExplicit = ['video', 'वीडियो', 'വീഡിയോ', 'चेहरा', 'face'].some(w => q.includes(w));
-    const isVoiceExplicit = ['voice', 'वॉइस', 'audio', 'ഓഡിയോ', 'സംസാരിക്കാൻ', 'फोन'].some(w => q.includes(w));
+    const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+    const [[topId, top], [secondId, second]] = ranked;
 
-    if (isCall && !isVideoExplicit && !isVoiceExplicit) {
-      // Ambiguous between Voice Call and Video Call
-      return {
-        matched: false,
-        clarifyQuestion: {
-          text: language === 'hi'
-            ? 'क्या आप सामान्य वॉइस कॉल करना चाहते हैं या वीडियो कॉल?'
-            : language === 'ml'
-            ? 'നിങ്ങൾക്ക് സാധാരണ വോയ്സ് കോളാണോ അതോ വീഡിയോ കോളാണോ ചെയ്യേണ്ടത്?'
-            : 'Would you like to make a regular Voice Call or a Video Call?',
-          options: [
-            {
-              taskId: 'whatsapp_voice_call',
-              label: language === 'hi' ? 'फ़ोन / वॉइस कॉल' : language === 'ml' ? 'വോയ്സ് കോൾ' : 'Voice Call'
-            },
-            {
-              taskId: 'whatsapp_video_call',
-              label: language === 'hi' ? 'वीडियो कॉल' : language === 'ml' ? 'വീഡിയോ കോൾ' : 'Video Call'
-            }
-          ]
-        }
-      };
+    if (top < MIN_SCORE) {
+      return { matched: false, notUnderstood: true };
     }
-
-    if (isVideoExplicit || (isCall && q.includes('video'))) {
-      return { matched: true, taskId: 'whatsapp_video_call' };
+    if (top - second < MARGIN) {
+      return { matched: false, clarifyQuestion: clarifyBetween(topId, secondId, language) };
     }
-    if (isVoiceExplicit || (isCall && !isVideoExplicit)) {
-      return { matched: true, taskId: 'whatsapp_voice_call' };
-    }
-
-    // 2. Paying ambiguity: QR code vs Saved contact vs Check balance
-    const payKeywords = ['pay', 'money', 'पैसे', 'रुपये', 'भेजने', 'പണം', 'രൂപ', 'അയക്കുക', 'നൽകുക'];
-    const isPay = payKeywords.some(w => q.includes(w));
-    const isQRExplicit = ['qr', 'scan', 'क्यूआर', 'स्कैन', 'दुकान', 'ബോർഡ്', 'ക്യുആർ', 'കോഡ്', 'സ്കാൻ'].some(w => q.includes(w));
-    const isContactExplicit = ['son', 'contact', 'ramesh', 'बेटा', 'रमेश', 'संपर्क', 'മകൻ', 'രമേഷ്', 'കോൺടാക്റ്റ്'].some(w => q.includes(w));
-    const isBalanceExplicit = ['balance', 'बैलेंस', 'खाता', 'रुपए कितने', 'രൂപ എത്ര', 'ബാലൻസ്', 'അക്കൗണ്ട്'].some(w => q.includes(w));
-    const isHistoryExplicit = ['history', 'statement', 'receipt', 'इतिहास', 'पासबुक', 'രസീത്', 'ചരിത്രം', 'പഴയ'].some(w => q.includes(w));
-
-    if (isBalanceExplicit) {
-      return { matched: true, taskId: 'gpay_check_balance' };
-    }
-    if (isHistoryExplicit) {
-      return { matched: true, taskId: 'gpay_transaction_history' };
-    }
-    if (isQRExplicit) {
-      return { matched: true, taskId: 'gpay_scan_qr' };
-    }
-    if (isContactExplicit) {
-      return { matched: true, taskId: 'gpay_send_contact' };
-    }
-
-    if (isPay) {
-      // Ambiguous pay intent: Ask QR or Contact
-      return {
-        matched: false,
-        clarifyQuestion: {
-          text: language === 'hi'
-            ? 'आप दुकान पर क्यूआर कोड से भुगतान करना चाहते हैं या किसी संपर्क को पैसे भेजना चाहते हैं?'
-            : language === 'ml'
-            ? 'കടയിൽ ക്യുആർ കോഡ് സ്കാൻ ചെയ്തോ അതോ കോൺടാക്റ്റിലുള്ള ആൾക്കോ പണം നൽകേണ്ടത്?'
-            : 'Do you want to scan a shop QR code, or send money to a saved contact?',
-          options: [
-            {
-              taskId: 'gpay_scan_qr',
-              label: language === 'hi' ? 'दुकान पर क्यूआर कोड स्कैन' : language === 'ml' ? 'ക്യുആർ സ്കാൻ ചെയ്ത് നൽകുക' : 'Scan QR Code'
-            },
-            {
-              taskId: 'gpay_send_contact',
-              label: language === 'hi' ? 'संपर्क (बेटे) को पैसे भेजें' : language === 'ml' ? 'കുടുംബാംഗത്തിന് പണം അയക്കുക' : 'Send to Contact'
-            }
-          ]
-        }
-      };
-    }
-
-    // 3. Photo intent
-    if (['photo', 'picture', 'image', 'फोटो', 'तस्वीर', 'ചിത്രം', 'ഫോട്ടോ'].some(w => q.includes(w))) {
-      return { matched: true, taskId: 'whatsapp_send_photo' };
-    }
-
-    // 4. Voice note intent
-    if (['voice note', 'बोलकर', 'audio message', 'വോയ്സ് നോട്ട്', 'ശബ്ദ സന്ദേശം'].some(w => q.includes(w))) {
-      return { matched: true, taskId: 'whatsapp_voice_message' };
-    }
-
-    // 5. Text message intent
-    if (['text', 'message', 'msg', 'मैसेज', 'संदेश', 'സന്ദേശം', 'മെസ്സേജ്'].some(w => q.includes(w))) {
-      return { matched: true, taskId: 'whatsapp_send_text' };
-    }
-
-    // Default fallback: No clear match
-    return {
-      matched: false,
-      clarifyQuestion: {
-        text: language === 'hi'
-          ? 'क्या आप व्हाट्सएप पर संदेश/कॉल सीखना चाहते हैं, या गूगल पे पर पैसे भेजना?'
-          : language === 'ml'
-          ? 'വാട്ട്‌സ്ആപ്പിൽ മെസ്സേജ് അയക്കാനാണോ, ഗൂഗിൾ പേയിൽ പണം അയക്കാനാണോ പഠിക്കേണ്ടത്?'
-          : 'Would you like to learn WhatsApp messaging/calling, or Google Pay payments?',
-        options: [
-          {
-            taskId: 'whatsapp_send_text',
-            label: language === 'hi' ? 'व्हाट्सएप मैसेज भेजें' : language === 'ml' ? 'വാട്ട്സ്ആപ്പ് മെസ്സേജ്' : 'WhatsApp Message'
-          },
-          {
-            taskId: 'gpay_scan_qr',
-            label: language === 'hi' ? 'गूगल पे क्यूआर कोड स्कैन' : language === 'ml' ? 'ഗൂഗിൾ പേ ക്യുആർ' : 'Google Pay QR Scan'
-          }
-        ]
-      }
-    };
+    return { matched: true, taskId: topId };
   }
 };

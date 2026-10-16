@@ -48,6 +48,7 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
   const [typedInput, setTypedInput] = useState<string>('');
   const [isRouting, setIsRouting] = useState<boolean>(false);
   const [clarifyData, setClarifyData] = useState<RouteResult['clarifyQuestion'] | null>(null);
+  const [notUnderstood, setNotUnderstood] = useState<boolean>(false);
 
   const t = I18N[language] || I18N.en;
   const sttRef = useRef<STTService | null>(null);
@@ -97,6 +98,7 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
     }
 
     setClarifyData(null);
+    setNotUnderstood(false);
     setTranscript('');
     setNotice(null);
 
@@ -131,6 +133,7 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
     if (!queryText.trim()) return;
     setIsRouting(true);
     setClarifyData(null);
+    setNotUnderstood(false);
 
     const result = await TaskRouterService.routeQuery(queryText, language);
     setIsRouting(false);
@@ -145,6 +148,9 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
 
     if (result.clarifyQuestion) {
       setClarifyData(result.clarifyQuestion);
+    } else if (result.notUnderstood) {
+      // Shown as text only: no clip exists for this message.
+      setNotUnderstood(true);
     }
   };
 
@@ -246,6 +252,31 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
                   className="w-full min-h-[58px] bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xl rounded-2xl px-4 py-2 text-left flex items-center justify-between shadow-md"
                 >
                   <span>{opt.label}</span>
+                  <span>→</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Nothing matched: say so and let the user pick a task */}
+        {notUnderstood && (
+          <div className="w-full bg-slate-800 border-2 border-amber-400 rounded-3xl p-5 text-left space-y-4 shadow-2xl animate-fade-in">
+            <div className="flex items-start space-x-3" role="alert">
+              <HelpCircle className="w-7 h-7 text-amber-400 flex-shrink-0 mt-1" />
+              <div className="text-xl font-bold text-white">
+                {t.didNotUnderstand}
+              </div>
+            </div>
+
+            <div className="space-y-3 pt-2 max-h-[40vh] overflow-y-auto">
+              {tasks.map((task) => (
+                <button
+                  key={task.task_id}
+                  onClick={() => onSelectTask(task)}
+                  className="w-full min-h-[64px] bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xl rounded-2xl px-4 py-2 text-left flex items-center justify-between shadow-md"
+                >
+                  <span>{task.title[language]}</span>
                   <span>→</span>
                 </button>
               ))}
