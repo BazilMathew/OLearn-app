@@ -42,6 +42,27 @@ export const HighlightTarget: React.FC<HighlightTargetProps> = ({
   const isHighlighted = elementId === activeHighlightId;
   const ref = useRef<HTMLDivElement>(null);
 
+  // When this becomes the step's target (or its screen appears), bring it fully into view if it is not.
+  // Waits for the 250ms screen-enter slide so the measurement is final.
+  useEffect(() => {
+    if (!isHighlighted) return;
+    const timer = setTimeout(() => {
+      const el = ref.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const margin = 16; // room for the soft ring
+      for (let p = el.parentElement; p; p = p.parentElement) {
+        if (!/auto|scroll/.test(getComputedStyle(p).overflowY)) continue;
+        const pr = p.getBoundingClientRect();
+        if (r.top - margin < pr.top || r.bottom + margin > pr.bottom) {
+          el.scrollIntoView({ block: 'center', behavior: motionReduced() ? 'auto' : 'smooth' });
+          return;
+        }
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [isHighlighted]);
+
   useEffect(() => {
     if (!isHighlighted || nudgeKey === 0 || motionReduced()) return;
     ref.current?.animate?.(WOBBLE, { duration: 300, easing: 'ease-in-out' });

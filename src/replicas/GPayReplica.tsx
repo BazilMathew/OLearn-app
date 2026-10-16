@@ -166,7 +166,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
         </div>
 
         {/* Numpad Simulator with Blue Checkmark */}
-        <div className="bg-[#F1F3F4] px-sm py-xs border-t border-[#DADCE0]">
+        <div className="bg-[#F1F3F4] px-sm pt-xs pb-lg border-t border-[#DADCE0]">
           <div className="grid grid-cols-3 gap-1 text-center text-title">
             {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(num => (
               <div
@@ -199,7 +199,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
   // 4. PAYMENT SUCCESS SCREEN
   if (screen === 'gpay_payment_success_screen') {
     return (
-      <div className="h-full w-full bg-gpay-blue text-white flex flex-col justify-between items-center p-lg text-center">
+      <div className="min-h-full shrink-0 w-full bg-gpay-blue text-white flex flex-col justify-between items-center p-lg text-center">
         <div className="flex-1 flex flex-col items-center justify-center gap-md">
           <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
             <Check className="w-10 h-10 text-gpay-blue stroke-[3]" />
