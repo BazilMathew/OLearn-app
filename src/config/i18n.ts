@@ -13,6 +13,12 @@ export interface TranslationDictionary {
   askMeSubtitle: string;
   listening: string;
   tapAndSpeak: string;
+  voiceNoSpeech: string;
+  voiceMicDenied: string;
+  voiceInsecure: string;
+  voiceOffline: string;
+  voiceUnavailable: string;
+  voiceWorking: string;
   typePlaceholder: string;
   send: string;
   cancel: string;
@@ -61,6 +67,12 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     askMeSubtitle: 'Tell me what you want to learn in WhatsApp or Google Pay',
     listening: 'Listening...',
     tapAndSpeak: 'Tap and speak',
+    voiceNoSpeech: 'Didn’t catch that, tap and try again',
+    voiceMicDenied: 'Please allow the microphone',
+    voiceInsecure: 'Voice needs a secure connection, please type instead',
+    voiceOffline: 'No internet, please type',
+    voiceUnavailable: 'Voice isn’t available here, please type your question',
+    voiceWorking: 'One moment...',
     typePlaceholder: 'Or type what you want to learn...',
     send: 'Ask',
     cancel: 'Cancel',
@@ -107,6 +119,12 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     askMeSubtitle: 'व्हाट्सएप या गूगल पे पर आप क्या सीखना चाहते हैं, बोलकर बताएं',
     listening: 'सुन रहा हूँ...',
     tapAndSpeak: 'बोलने के लिए दबाएं',
+    voiceNoSpeech: 'समझ नहीं आया, फिर से दबाकर बोलें',
+    voiceMicDenied: 'कृपया माइक्रोफ़ोन की अनुमति दें',
+    voiceInsecure: 'आवाज़ के लिए सुरक्षित कनेक्शन चाहिए, कृपया टाइप करें',
+    voiceOffline: 'इंटरनेट नहीं है, कृपया टाइप करें',
+    voiceUnavailable: 'यहाँ आवाज़ उपलब्ध नहीं है, कृपया अपना सवाल टाइप करें',
+    voiceWorking: 'एक पल रुकिए...',
     typePlaceholder: 'या यहाँ टाइप करके पूछें...',
     send: 'पूछें',
     cancel: 'रद्द करें',
@@ -153,6 +171,12 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     askMeSubtitle: 'വാട്ട്‌സ്ആപ്പിലോ ഗൂഗിൾ പേയിലോ എന്ത് ചെയ്യാനാണ് പഠിക്കേണ്ടത് എന്ന് പറയൂ',
     listening: 'കേൾക്കുന്നു...',
     tapAndSpeak: 'സംസാരിക്കാൻ തൊടുക',
+    voiceNoSpeech: 'മനസ്സിലായില്ല, വീണ്ടും തൊട്ട് സംസാരിക്കുക',
+    voiceMicDenied: 'ദയവായി മൈക്രോഫോൺ അനുവദിക്കുക',
+    voiceInsecure: 'ശബ്ദത്തിന് സുരക്ഷിത കണക്ഷൻ വേണം, ദയവായി ടൈപ്പ് ചെയ്യുക',
+    voiceOffline: 'ഇന്റർനെറ്റ് ഇല്ല, ദയവായി ടൈപ്പ് ചെയ്യുക',
+    voiceUnavailable: 'ഇവിടെ ശബ്ദം ലഭ്യമല്ല, ദയവായി നിങ്ങളുടെ ചോദ്യം ടൈപ്പ് ചെയ്യുക',
+    voiceWorking: 'ഒരു നിമിഷം...',
     typePlaceholder: 'അല്ലെങ്കിൽ ഇവിടെ ടൈപ്പ് ചെയ്യുക...',
     send: 'ചോദിക്കുക',
     cancel: 'റദ്ദാക്കുക',

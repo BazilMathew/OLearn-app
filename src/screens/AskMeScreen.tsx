@@ -1,9 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { SupportedLanguage, TaskConfig } from '../types/task';
-import { I18N } from '../config/i18n';
-import { STTService } from '../services/STTService';
+import { I18N, TranslationDictionary } from '../config/i18n';
+import { STTService, STTError, STTState } from '../services/STTService';
 import { TaskRouterService, RouteResult } from '../services/TaskRouterService';
+import { AudioService } from '../services/AudioService';
 import { Mic, X, Send, HelpCircle, Loader2 } from 'lucide-react';
+
+const ERROR_TEXT: Record<STTError, keyof TranslationDictionary> = {
+  'no-speech': 'voiceNoSpeech',
+  'not-allowed': 'voiceMicDenied',
+  insecure: 'voiceInsecure',
+  offline: 'voiceOffline',
+  unavailable: 'voiceUnavailable'
+};
+
+// Longest we wait for the spoken "Listening" to finish before opening the mic anyway.
+const MAX_PROMPT_MS = 4000;
 
 interface AskMeScreenProps {
   language: SupportedLanguage;
@@ -18,41 +30,87 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
   onSelectTask,
   onClose
 }) => {
-  const [isListening, setIsListening] = useState<boolean>(false);
+  // 'starting' = saying "Listening" aloud before the mic opens, so it is not transcribed.
+  const [voiceState, setVoiceState] = useState<STTState | 'starting'>('idle');
+  const [notice, setNotice] = useState<string | null>(null);
   const [transcript, setTranscript] = useState<string>('');
   const [typedInput, setTypedInput] = useState<string>('');
   const [isRouting, setIsRouting] = useState<boolean>(false);
   const [clarifyData, setClarifyData] = useState<RouteResult['clarifyQuestion'] | null>(null);
 
   const t = I18N[language] || I18N.en;
-  const stt = new STTService();
+  const sttRef = useRef<STTService | null>(null);
+  if (!sttRef.current) sttRef.current = new STTService();
+  const stt = sttRef.current;
+
+  const startTokenRef = useRef(0);
+  const startTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isListening = voiceState === 'starting' || voiceState === 'listening';
+
+  const cancelPendingStart = () => {
+    startTokenRef.current++;
+    if (startTimerRef.current) clearTimeout(startTimerRef.current);
+    startTimerRef.current = null;
+  };
+
+  const stopVoice = () => {
+    cancelPendingStart();
+    stt.cancel();
+    setVoiceState('idle');
+  };
+
+  useEffect(() => () => {
+    cancelPendingStart();
+    stt.cancel();
+  }, [stt]);
+
+  const showNotice = (text: string) => {
+    setNotice(text);
+    AudioService.playDynamicTTS(text, language);
+  };
 
   const handleToggleMic = () => {
-    if (isListening) {
-      stt.stopListening();
-      setIsListening(false);
-      if (transcript.trim()) {
-        processQuery(transcript);
-      }
-    } else {
-      setClarifyData(null);
-      setTranscript('');
-      stt.startListening(
-        language,
-        {
-          onTranscript: (text) => {
-            setTranscript(text);
-          },
-          onError: (err) => {
-            console.warn('STT Error:', err);
-            setIsListening(false);
-          },
-          onListeningChange: (state) => {
-            setIsListening(state);
-          }
-        }
-      );
+    if (voiceState === 'transcribing') return;
+    if (voiceState === 'starting') {
+      cancelPendingStart();
+      AudioService.stopAudio();
+      setVoiceState('idle');
+      return;
     }
+    if (voiceState === 'listening') {
+      // Whatever was heard arrives through onFinal and is routed there.
+      stt.stopListening();
+      return;
+    }
+
+    setClarifyData(null);
+    setTranscript('');
+    setNotice(null);
+
+    const blocker = stt.getBlocker();
+    if (blocker) {
+      showNotice(t[ERROR_TEXT[blocker]] as string);
+      return;
+    }
+
+    setVoiceState('starting');
+    const token = ++startTokenRef.current;
+    const openMic = () => {
+      if (startTokenRef.current !== token) return;
+      cancelPendingStart();
+      AudioService.stopAudio();
+      stt.startListening(language, {
+        onInterim: (text) => setTranscript(text),
+        onFinal: (text) => {
+          setTranscript(text);
+          processQuery(text);
+        },
+        onError: (err) => showNotice(t[ERROR_TEXT[err]] as string),
+        onStateChange: (state) => setVoiceState(state)
+      });
+    };
+    startTimerRef.current = setTimeout(openMic, MAX_PROMPT_MS);
+    AudioService.playDynamicTTS(t.listening, language, openMic);
   };
 
   const processQuery = async (queryText: string) => {
@@ -79,6 +137,8 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
   const handleTypedSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (typedInput.trim()) {
+      stopVoice();
+      setNotice(null);
       processQuery(typedInput);
       setTypedInput('');
     }
@@ -91,7 +151,7 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
         <div className="text-2xl font-black text-amber-400">{t.askMe}</div>
         <button
           onClick={() => {
-            stt.stopListening();
+            stopVoice();
             onClose();
           }}
           className="w-14 h-14 bg-slate-800 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white border-2 border-slate-600 active:bg-slate-600"
@@ -126,9 +186,17 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
 
         {/* Persistent Large Text Label Beneath Mic Button AT ALL TIMES */}
         <div className="space-y-2">
-          <div className="text-2xl font-extrabold text-amber-300">
-            {isListening ? t.listening : t.tapAndSpeak}
+          <div className="text-2xl font-extrabold text-amber-300 flex items-center justify-center space-x-2" role="status" aria-live="polite">
+            {voiceState === 'transcribing' && <Loader2 className="w-6 h-6 animate-spin" />}
+            <span>
+              {voiceState === 'transcribing' ? t.voiceWorking : isListening ? t.listening : t.tapAndSpeak}
+            </span>
           </div>
+          {notice && !isListening && voiceState !== 'transcribing' && (
+            <div className="bg-slate-800 border-2 border-amber-400 p-4 rounded-2xl text-2xl text-white font-bold max-w-sm mx-auto" role="alert">
+              {notice}
+            </div>
+          )}
           {transcript && (
             <div className="bg-slate-800 border border-slate-700 p-3.5 rounded-2xl text-xl text-emerald-300 font-semibold max-w-xs mx-auto">
               "{transcript}"
