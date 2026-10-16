@@ -165,7 +165,7 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     }
   },
   ml: {
-    appName: 'ഓ-ലേഷൻ',
+    appName: 'ഓലേൺ',
     tagline: 'മുതിർന്നവർക്കായി സ്മാർട്ട്ഫോൺ പരിശീലനം',
     chooseLanguage: 'ഭാഷ തിരഞ്ഞെടുക്കുക',
     selectLanguageTitle: 'നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കൂ',
