@@ -57,8 +57,9 @@ class AudioServiceClass {
 
     // 1. Try playing pre-recorded audio from public path
     const resolvedPath = audioPath.startsWith('/') ? audioPath : '/' + audioPath;
+    let audio: HTMLAudioElement | null = null;
     try {
-      const audio = new Audio(resolvedPath);
+      audio = new Audio(resolvedPath);
       audio.playbackRate = this.speechRate;
       this.currentAudio = audio;
 
@@ -68,6 +69,7 @@ class AudioServiceClass {
       };
 
       audio.onerror = (e) => {
+        if (this.currentAudio !== audio) return;
         console.warn(`Local audio failed for ${resolvedPath}, falling back to dynamic TTS:`, e);
         this.currentAudio = null;
         if (fallbackText) {
@@ -78,6 +80,7 @@ class AudioServiceClass {
       await audio.play();
       return;
     } catch (err) {
+      if (this.currentAudio !== audio) return;
       console.warn('Audio play threw error, using TTS fallback:', err);
       if (fallbackText) {
         this.playDynamicTTS(fallbackText, language, onEnded);
