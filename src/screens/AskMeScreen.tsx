@@ -14,7 +14,18 @@ const ERROR_TEXT: Record<STTError, keyof TranslationDictionary> = {
   unavailable: 'voiceUnavailable'
 };
 
-// Longest we wait for the spoken "Listening" to finish before opening the mic anyway.
+// Status messages play only bundled clips from public/assets/audio/{lang}/, never TTS,
+// so they use the same voice as the tutorials. A missing clip means the message is shown, not spoken.
+const LISTENING_CLIP = 'askme_listening';
+const ERROR_CLIP: Record<STTError, string> = {
+  'no-speech': 'askme_no_speech',
+  'not-allowed': 'askme_mic_denied',
+  insecure: 'askme_insecure',
+  offline: 'askme_offline',
+  unavailable: 'askme_unavailable'
+};
+
+// Longest we wait for the "Listening" clip to finish before opening the mic anyway.
 const MAX_PROMPT_MS = 4000;
 
 interface AskMeScreenProps {
@@ -30,7 +41,7 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
   onSelectTask,
   onClose
 }) => {
-  // 'starting' = saying "Listening" aloud before the mic opens, so it is not transcribed.
+  // 'starting' = playing the "Listening" clip before the mic opens, so it is not transcribed.
   const [voiceState, setVoiceState] = useState<STTState | 'starting'>('idle');
   const [notice, setNotice] = useState<string | null>(null);
   const [transcript, setTranscript] = useState<string>('');
@@ -64,9 +75,11 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
     stt.cancel();
   }, [stt]);
 
-  const showNotice = (text: string) => {
-    setNotice(text);
-    AudioService.playDynamicTTS(text, language);
+  const clipPath = (clip: string) => `assets/audio/${language}/${clip}.mp3`;
+
+  const showNotice = (err: STTError) => {
+    setNotice(t[ERROR_TEXT[err]] as string);
+    AudioService.playClip(clipPath(ERROR_CLIP[err]));
   };
 
   const handleToggleMic = () => {
@@ -89,7 +102,7 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
 
     const blocker = stt.getBlocker();
     if (blocker) {
-      showNotice(t[ERROR_TEXT[blocker]] as string);
+      showNotice(blocker);
       return;
     }
 
@@ -105,12 +118,13 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
           setTranscript(text);
           processQuery(text);
         },
-        onError: (err) => showNotice(t[ERROR_TEXT[err]] as string),
+        onError: (err) => showNotice(err),
         onStateChange: (state) => setVoiceState(state)
       });
     };
+    // Wait for the clip (at most MAX_PROMPT_MS); if there is no clip, openMic runs right away.
     startTimerRef.current = setTimeout(openMic, MAX_PROMPT_MS);
-    AudioService.playDynamicTTS(t.listening, language, openMic);
+    AudioService.playClip(clipPath(LISTENING_CLIP), openMic, openMic);
   };
 
   const processQuery = async (queryText: string) => {

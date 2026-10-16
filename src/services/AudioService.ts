@@ -86,6 +86,29 @@ class AudioServiceClass {
   }
 
   /**
+   * Plays a bundled clip only, never TTS, so the voice always matches the narration clips.
+   * onEnded runs when the clip finishes; onMissing runs instead if it cannot play.
+   * Neither runs if the clip is stopped or replaced first.
+   */
+  public playClip(audioPath: string, onEnded?: () => void, onMissing?: () => void): void {
+    this.stopAudio();
+
+    const resolvedPath = audioPath.startsWith('/') ? audioPath : '/' + audioPath;
+    const audio = new Audio(resolvedPath);
+    audio.playbackRate = this.speechRate;
+    this.currentAudio = audio;
+
+    const settle = (callback?: () => void) => {
+      if (this.currentAudio !== audio) return;
+      this.currentAudio = null;
+      if (callback) callback();
+    };
+    audio.onended = () => settle(onEnded);
+    audio.onerror = () => settle(onMissing);
+    audio.play().catch(() => settle(onMissing));
+  }
+
+  /**
    * Plays dynamic or fallback text.
    * For Malayalam: Uses Google Translate's public TTS endpoint directly.
    * For English & Hindi: Uses device speech synthesis.
