@@ -14,3 +14,7 @@ dist-ssr
 *.log
 prd_extracted.txt
 visual_extracted.txt
+
+.env
+.env.*
+!.env.example
