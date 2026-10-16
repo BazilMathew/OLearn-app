@@ -35,6 +35,8 @@ export interface TranslationDictionary {
   completedBadge: string;
   startPractice: string;
   stepOf: string;
+  stepXofY: string;
+  practiceMode: string;
   back: string;
   exitTutorial: string;
   replayAudio: string;
@@ -91,6 +93,8 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     completedBadge: 'Completed',
     startPractice: 'Start Tutorial',
     stepOf: 'Step',
+    stepXofY: 'Step {n} of {total}',
+    practiceMode: 'Practice mode',
     back: 'Back',
     exitTutorial: 'Exit',
     replayAudio: 'Repeat Voice',
@@ -145,6 +149,8 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     completedBadge: 'सफलतापूर्वक सीखा',
     startPractice: 'अभ्यास शुरू करें',
     stepOf: 'कदम',
+    stepXofY: 'कदम {n} (कुल {total} में से)',
+    practiceMode: 'अभ्यास मोड',
     back: 'पीछे',
     exitTutorial: 'बाहर जाएं',
     replayAudio: 'आवाज़ दोबारा सुनें',
@@ -199,6 +205,8 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     completedBadge: 'പഠിച്ചു കഴിഞ്ഞു',
     startPractice: 'പരിശീലനം തുടങ്ങുക',
     stepOf: 'ഘട്ടം',
+    stepXofY: 'ഘട്ടം {n} ({total}-ൽ)',
+    practiceMode: 'പരിശീലന മോഡ്',
     back: 'മടങ്ങുക',
     exitTutorial: 'പുറത്ത് കടക്കുക',
     replayAudio: 'ശബ്ദം വീണ്ടും കേൾക്കുക',

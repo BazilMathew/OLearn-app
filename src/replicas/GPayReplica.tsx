@@ -13,7 +13,10 @@ import {
   ShieldCheck,
   ArrowUpRight,
   ArrowDownLeft,
-  Lock
+  Lock,
+  ChevronRight,
+  Delete,
+  BadgeCheck
 } from 'lucide-react';
 
 interface GPayReplicaProps {
@@ -22,22 +25,34 @@ interface GPayReplicaProps {
   language: SupportedLanguage;
   onCorrectTap: () => void;
   onWrongTap: () => void;
+  nudgeKey?: number;
 }
+
+// Simple light app bar used by most Google Pay screens
+const AppBar: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="bg-white flex items-center gap-md px-lg py-md border-b border-[#DADCE0]">
+    <ArrowLeft className="w-7 h-7 text-ink flex-shrink-0" aria-hidden="true" />
+    {children}
+  </div>
+);
 
 export const GPayReplica: React.FC<GPayReplicaProps> = ({
   screen,
   highlightElement,
   language,
   onCorrectTap,
-  onWrongTap
+  onWrongTap,
+  nudgeKey
 }) => {
+  const tp = { activeHighlightId: highlightElement, onCorrectTap, onWrongTap, nudgeKey };
+
   // 1. QR SCANNER VIEWFINDER SCREEN
   if (screen === 'gpay_qr_scanner_viewfinder') {
     return (
-      <div className="h-full w-full bg-black text-white flex flex-col justify-between items-center p-6">
-        <div className="w-full flex items-center justify-between pt-2">
-          <ArrowLeft className="w-7 h-7 text-white" />
-          <span className="text-xl font-bold">
+      <div className="h-full w-full bg-[#202124] text-white flex flex-col justify-between items-center p-xl">
+        <div className="w-full flex items-center justify-between">
+          <ArrowLeft className="w-7 h-7 text-white" aria-hidden="true" />
+          <span className="text-body font-bold">
             {language === 'hi' ? 'दुकान का क्यूआर स्कैन करें' : language === 'ml' ? 'ക്യുആർ സ്കാൻ ചെയ്യുക' : 'Scan Shop QR'}
           </span>
           <div className="w-7" />
@@ -45,27 +60,28 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
 
         {/* Viewfinder Frame with Shop QR Code */}
         <div className="flex flex-col items-center">
-          <HighlightTarget
-            elementId="qr_target_box"
-            activeHighlightId={highlightElement}
-            onCorrectTap={onCorrectTap}
-            onWrongTap={onWrongTap}
-            className="p-3"
-          >
-            <div className="w-64 h-64 border-4 border-dashed border-amber-400 rounded-3xl bg-slate-900 flex flex-col items-center justify-center p-4 relative shadow-2xl">
-              <QrCode className="w-40 h-40 text-white" />
-              <div className="bg-blue-600 text-white text-base font-bold px-3 py-1 rounded-full mt-2">
+          <HighlightTarget elementId="qr_target_box" {...tp} className="rounded-[28px]">
+            <div className="w-64 h-64 rounded-[28px] bg-[#303134] flex flex-col items-center justify-center p-lg relative">
+              {/* Viewfinder corners */}
+              <span className="absolute top-3 left-3 w-10 h-10 border-t-4 border-l-4 border-white rounded-tl-xl" aria-hidden="true" />
+              <span className="absolute top-3 right-3 w-10 h-10 border-t-4 border-r-4 border-white rounded-tr-xl" aria-hidden="true" />
+              <span className="absolute bottom-3 left-3 w-10 h-10 border-b-4 border-l-4 border-white rounded-bl-xl" aria-hidden="true" />
+              <span className="absolute bottom-3 right-3 w-10 h-10 border-b-4 border-r-4 border-white rounded-br-xl" aria-hidden="true" />
+              <div className="bg-white rounded-xl p-sm">
+                <QrCode className="w-32 h-32 text-ink" />
+              </div>
+              <div className="bg-gpay-blue text-white text-label px-md py-xs rounded-full mt-md">
                 Sharma Kirana Store
               </div>
             </div>
           </HighlightTarget>
 
-          <p className="text-xl text-amber-300 font-bold mt-4 text-center">
+          <p className="text-body text-white font-bold mt-xl text-center">
             {language === 'hi' ? 'कैमरा क्यूआर कोड के सामने रखें' : language === 'ml' ? 'ക്യാമറ ക്യുആർ കോഡിന് നേരെ പിടിക്കുക' : 'Point camera at shop QR code'}
           </p>
         </div>
 
-        <div className="text-center text-slate-400 text-lg mb-4">
+        <div className="text-center text-white/70 text-label font-normal">
           Google Pay UPI Sandbox
         </div>
       </div>
@@ -75,43 +91,45 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
   // 2. AMOUNT ENTRY SCREEN
   if (screen === 'gpay_amount_entry_screen') {
     return (
-      <div className="h-full w-full bg-white text-gray-900 flex flex-col justify-between p-6">
-        <div className="flex items-center space-x-3 pt-2">
-          <ArrowLeft className="w-7 h-7 text-gray-800" />
-          <div>
-            <div className="text-2xl font-bold">
+      <div className="h-full w-full bg-white text-ink flex flex-col justify-between">
+        <AppBar>
+          <div className="w-12 h-12 bg-[#E37400] rounded-full flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
+            S
+          </div>
+          <div className="min-w-0">
+            <div className="text-body font-bold leading-tight">
               {highlightElement === 'proceed_to_pay_button' && screen.includes('contact')
                 ? (language === 'hi' ? 'रमेश (बेटा)' : language === 'ml' ? 'രമേഷ് (മകൻ)' : 'Ramesh (Son)')
                 : 'Sharma Groceries'}
             </div>
-            <div className="text-base text-gray-500 font-semibold">Banking Name Verified</div>
+            <div className="text-label font-normal text-ink-muted flex items-center gap-xs">
+              <BadgeCheck className="w-5 h-5 text-gpay-blue flex-shrink-0" aria-hidden="true" />
+              <span>Banking Name Verified</span>
+            </div>
           </div>
-        </div>
+        </AppBar>
 
-        <div className="flex flex-col items-center my-auto space-y-4">
-          <span className="text-xl text-gray-600 font-semibold">
+        <div className="flex flex-col items-center my-auto gap-md px-xl">
+          <span className="text-body text-ink-muted">
             {language === 'hi' ? 'भुगतान राशि' : language === 'ml' ? 'നൽകേണ്ട തുക' : 'Paying Amount'}
           </span>
-          <div className="text-6xl font-extrabold text-[#1A73E8] tracking-tight">
+          <div className="text-6xl font-bold text-ink tracking-tight">
             ₹200
           </div>
-          <div className="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-lg font-medium">
-            State Bank of India •••• 4829
+          <div className="bg-gpay-light-blue text-ink px-lg py-sm rounded-full text-label flex items-center gap-sm">
+            <Building2 className="w-5 h-5 text-gpay-blue flex-shrink-0" aria-hidden="true" />
+            <span>State Bank of India •••• 4829</span>
           </div>
         </div>
 
         {/* Proceed to Pay Button (Min 64dp height) */}
-        <HighlightTarget
-          elementId="proceed_to_pay_button"
-          activeHighlightId={highlightElement}
-          onCorrectTap={onCorrectTap}
-          onWrongTap={onWrongTap}
-          className="w-full mb-2"
-        >
-          <div className="w-full min-h-[64px] bg-[#1A73E8] hover:bg-[#1557b0] text-white text-2xl font-bold rounded-2xl flex items-center justify-center shadow-lg">
-            {language === 'hi' ? 'भुगतान करें (₹200)' : language === 'ml' ? 'പണം നൽകുക (₹200)' : 'Proceed to Pay (₹200)'}
-          </div>
-        </HighlightTarget>
+        <div className="p-lg">
+          <HighlightTarget elementId="proceed_to_pay_button" {...tp} className="w-full rounded-full">
+            <div className="w-full min-h-[64px] bg-gpay-blue text-white text-body font-bold rounded-full flex items-center justify-center px-lg">
+              {language === 'hi' ? 'भुगतान करें (₹200)' : language === 'ml' ? 'പണം നൽകുക (₹200)' : 'Proceed to Pay (₹200)'}
+            </div>
+          </HighlightTarget>
+        </div>
       </div>
     );
   }
@@ -119,65 +137,57 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
   // 3. SECURE UPI PIN ENTRY SCREEN
   if (screen === 'gpay_upi_pin_screen') {
     return (
-      <div className="h-full w-full bg-slate-900 text-white flex flex-col justify-between p-6">
-        <div className="flex items-center justify-between border-b border-slate-700 pb-3">
-          <div className="flex items-center space-x-2">
-            <Lock className="w-6 h-6 text-amber-400" />
-            <span className="text-xl font-bold tracking-wider">UPI PIN</span>
+      <div className="h-full w-full bg-white text-ink flex flex-col justify-between">
+        <div className="flex items-center justify-between px-lg py-xs border-b border-[#DADCE0]">
+          <div className="flex items-center gap-sm">
+            <Lock className="w-6 h-6 text-gpay-blue" aria-hidden="true" />
+            <span className="text-body font-bold tracking-wide">UPI PIN</span>
           </div>
-          <span className="text-sm bg-slate-800 text-slate-300 px-3 py-1 rounded-lg">
+          <span className="text-label bg-gpay-light-blue text-gpay-dark-blue px-md py-xs rounded-full">
             SBI Bank
           </span>
         </div>
 
-        <div className="flex flex-col items-center my-6 space-y-4 text-center">
-          <div className="text-2xl font-bold text-slate-100">
+        <div className="flex flex-col items-center gap-xs text-center px-lg py-sm">
+          <div className="text-body font-bold text-ink">
             {language === 'hi' ? 'अपना 4-अंकों का गुप्त यूपीआई पिन डालें' : language === 'ml' ? 'നിങ്ങളുടെ 4 അക്ക യുപിഐ പിൻ നൽകുക' : 'Enter 4-Digit Secret UPI PIN'}
           </div>
 
-          {/* 4 Masked PIN Dots */}
-          <div className="flex space-x-6 py-4">
+          {/* 4 Masked PIN Dots (dummy, nothing is typed) */}
+          <div className="flex gap-xl" aria-hidden="true">
             {[1, 2, 3, 4].map((dot) => (
-              <div
-                key={dot}
-                className="w-7 h-7 rounded-full bg-amber-400 border-2 border-white shadow-lg animate-pulse"
-              />
+              <div key={dot} className="w-5 h-5 rounded-full bg-ink" />
             ))}
           </div>
 
-          <p className="text-base text-slate-400 font-semibold">
+          <p className="text-label font-normal text-ink-muted">
             {language === 'hi' ? 'यूपीआई पिन कभी किसी को न बताएं' : language === 'ml' ? 'യുപിഐ പിൻ ആരുമായും പങ്കിടരുത്' : 'Never share your UPI PIN with anyone'}
           </p>
         </div>
 
         {/* Numpad Simulator with Blue Checkmark */}
-        <div className="bg-slate-800 rounded-3xl p-4 shadow-xl border border-slate-700">
-          <div className="grid grid-cols-3 gap-3 text-center text-2xl font-bold">
+        <div className="bg-[#F1F3F4] px-sm py-xs border-t border-[#DADCE0]">
+          <div className="grid grid-cols-3 gap-1 text-center text-title">
             {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(num => (
               <div
                 key={num}
                 onClick={onWrongTap}
-                className="py-3 bg-slate-700/60 rounded-xl hover:bg-slate-700 cursor-pointer text-slate-200"
+                className="min-h-[64px] flex items-center justify-center bg-white rounded-xl cursor-pointer text-ink"
               >
                 {num}
               </div>
             ))}
-            <div onClick={onWrongTap} className="py-3 text-rose-400 text-xl font-bold cursor-pointer">
-              ✕
+            <div onClick={onWrongTap} className="min-h-[64px] flex items-center justify-center cursor-pointer text-ink">
+              <Delete className="w-8 h-8" aria-hidden="true" />
             </div>
-            <div onClick={onWrongTap} className="py-3 bg-slate-700/60 rounded-xl text-slate-200">
+            <div onClick={onWrongTap} className="min-h-[64px] flex items-center justify-center bg-white rounded-xl text-ink">
               0
             </div>
 
             {/* Checkmark Button */}
-            <HighlightTarget
-              elementId="pin_keypad_submit"
-              activeHighlightId={highlightElement}
-              onCorrectTap={onCorrectTap}
-              onWrongTap={onWrongTap}
-            >
-              <div className="py-3 bg-[#1A73E8] hover:bg-blue-600 rounded-xl flex items-center justify-center shadow-lg border-2 border-white">
-                <Check className="w-8 h-8 text-white stroke-[3]" />
+            <HighlightTarget elementId="pin_keypad_submit" {...tp} className="rounded-xl">
+              <div className="min-h-[64px] bg-gpay-blue rounded-xl flex items-center justify-center">
+                <Check className="w-9 h-9 text-white stroke-[3]" />
               </div>
             </HighlightTarget>
           </div>
@@ -189,36 +199,30 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
   // 4. PAYMENT SUCCESS SCREEN
   if (screen === 'gpay_payment_success_screen') {
     return (
-      <div className="h-full w-full bg-[#1A73E8] text-white flex flex-col justify-between items-center p-6 text-center">
-        <div className="flex-1 flex flex-col items-center justify-center space-y-6">
-          <div className="w-28 h-28 bg-white rounded-full flex items-center justify-center shadow-2xl animate-bounce">
-            <Check className="w-16 h-16 text-[#1A73E8] stroke-[3]" />
+      <div className="h-full w-full bg-gpay-blue text-white flex flex-col justify-between items-center p-lg text-center">
+        <div className="flex-1 flex flex-col items-center justify-center gap-md">
+          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
+            <Check className="w-10 h-10 text-gpay-blue stroke-[3]" />
           </div>
 
-          <div className="space-y-2">
-            <div className="text-4xl font-extrabold tracking-tight">₹200.00</div>
-            <div className="text-2xl font-bold">
+          <div className="space-y-sm">
+            <div className="text-4xl font-bold tracking-tight">₹200.00</div>
+            <div className="text-title">
               {language === 'hi' ? 'भुगतान सफल रहा!' : language === 'ml' ? 'പേയ്മെന്റ് വിജയകരം!' : 'Paid Successfully!'}
             </div>
-            <div className="text-lg text-blue-100 font-semibold">
+            <div className="text-label font-normal text-white/90">
               Sharma Groceries • UPI Ref 428901847192
             </div>
           </div>
 
-          <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 border border-white/30 text-left w-full max-w-xs space-y-1">
-            <div className="text-sm text-blue-200 font-bold">DEBITED FROM</div>
-            <div className="text-lg font-bold">State Bank of India •••• 4829</div>
+          <div className="bg-white/15 rounded-card px-lg py-md border-2 border-white/30 text-left w-full max-w-xs space-y-xs">
+            <div className="text-label text-white/85 tracking-wide">DEBITED FROM</div>
+            <div className="text-body font-bold">State Bank of India •••• 4829</div>
           </div>
         </div>
 
-        <HighlightTarget
-          elementId="success_done_button"
-          activeHighlightId={highlightElement}
-          onCorrectTap={onCorrectTap}
-          onWrongTap={onWrongTap}
-          className="w-full mb-4"
-        >
-          <div className="w-full min-h-[64px] bg-white text-[#1A73E8] text-2xl font-black rounded-2xl flex items-center justify-center shadow-xl border-2 border-white">
+        <HighlightTarget elementId="success_done_button" {...tp} className="w-full rounded-full mt-md">
+          <div className="w-full min-h-[64px] bg-white text-gpay-blue text-body font-bold rounded-full flex items-center justify-center">
             {language === 'hi' ? 'समाप्त (डन)' : language === 'ml' ? 'പൂർത്തിയായി (ഡൺ)' : 'Done'}
           </div>
         </HighlightTarget>
@@ -229,30 +233,24 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
   // 5. CONTACT LIST SCREEN
   if (screen === 'gpay_contact_list_screen') {
     return (
-      <div className="h-full w-full bg-[#F8F9FA] text-gray-900 flex flex-col p-4">
-        <div className="flex items-center space-x-3 pb-4 border-b border-gray-200">
-          <ArrowLeft className="w-7 h-7 text-gray-800" />
-          <div className="text-2xl font-bold">
+      <div className="h-full w-full bg-white text-ink flex flex-col">
+        <AppBar>
+          <div className="text-title">
             {language === 'hi' ? 'संपर्क चुनें' : language === 'ml' ? 'കോൺടാക്റ്റ് തിരഞ്ഞെടുക്കുക' : 'Select Contact'}
           </div>
-        </div>
+        </AppBar>
 
-        <div className="space-y-4 pt-4">
-          <HighlightTarget
-            elementId="contact_son_ramesh"
-            activeHighlightId={highlightElement}
-            onCorrectTap={onCorrectTap}
-            onWrongTap={onWrongTap}
-          >
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center space-x-4">
-              <div className="w-14 h-14 bg-emerald-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+        <div className="p-lg space-y-sm">
+          <HighlightTarget elementId="contact_son_ramesh" {...tp}>
+            <div className="min-h-[80px] bg-white px-md py-md rounded-2xl flex items-center gap-lg">
+              <div className="w-14 h-14 bg-[#1E8E3E] rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
                 R
               </div>
-              <div className="flex-1">
-                <div className="text-2xl font-bold text-gray-900">
+              <div className="flex-1 min-w-0">
+                <div className="text-body font-bold text-ink">
                   {language === 'hi' ? 'रमेश' : language === 'ml' ? 'രമേഷ്' : 'Ramesh'}
                 </div>
-                <div className="text-lg text-emerald-700 font-semibold">
+                <div className="text-label font-normal text-ink-muted">
                   {language === 'hi' ? 'बेटा • +91 98765 43210' : language === 'ml' ? 'മകൻ • +91 98765 43210' : 'Son • +91 98765 43210'}
                 </div>
               </div>
@@ -261,16 +259,16 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
 
           <div
             onClick={onWrongTap}
-            className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center space-x-4 opacity-75"
+            className="min-h-[80px] bg-white px-md py-md rounded-2xl flex items-center gap-lg"
           >
-            <div className="w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+            <div className="w-14 h-14 bg-[#8430CE] rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
               P
             </div>
-            <div className="flex-1">
-              <div className="text-2xl font-bold text-gray-900">
+            <div className="flex-1 min-w-0">
+              <div className="text-body font-bold text-ink">
                 {language === 'hi' ? 'प्रिया' : language === 'ml' ? 'പ്രിയ' : 'Priya'}
               </div>
-              <div className="text-lg text-indigo-700 font-semibold">
+              <div className="text-label font-normal text-ink-muted">
                 {language === 'hi' ? 'बेटी' : language === 'ml' ? 'മകൾ' : 'Daughter'}
               </div>
             </div>
@@ -283,45 +281,38 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
   // 6. CONTACT CHAT SCREEN
   if (screen === 'gpay_contact_chat_screen') {
     return (
-      <div className="h-full w-full bg-[#F8F9FA] text-gray-900 flex flex-col justify-between p-4">
-        <div className="flex items-center space-x-3 pb-3 border-b border-gray-200">
-          <ArrowLeft className="w-7 h-7 text-gray-800" />
-          <div className="w-12 h-12 bg-emerald-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
+      <div className="h-full w-full bg-gpay-bg text-ink flex flex-col justify-between">
+        <AppBar>
+          <div className="w-12 h-12 bg-[#1E8E3E] rounded-full flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
             R
           </div>
-          <div>
-            <div className="text-2xl font-bold">
+          <div className="min-w-0">
+            <div className="text-body font-bold leading-tight">
               {language === 'hi' ? 'रमेश (बेटा)' : language === 'ml' ? 'രമേഷ് (മകൻ)' : 'Ramesh (Son)'}
             </div>
-            <div className="text-sm text-gray-500 font-semibold">+91 98765 43210</div>
+            <div className="text-label font-normal text-ink-muted">+91 98765 43210</div>
           </div>
-        </div>
+        </AppBar>
 
-        <div className="flex-1 flex flex-col justify-center items-center p-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-center max-w-xs shadow-sm">
-            <ShieldCheck className="w-8 h-8 text-[#1A73E8] mx-auto mb-2" />
-            <div className="text-lg font-bold text-gray-800">
+        <div className="flex-1 flex flex-col justify-center items-center p-xl">
+          <div className="bg-white border border-[#DADCE0] rounded-card p-lg text-center max-w-xs">
+            <ShieldCheck className="w-9 h-9 text-gpay-blue mx-auto mb-sm" aria-hidden="true" />
+            <div className="text-body font-bold text-ink">
               {language === 'hi' ? 'सुरक्षित यूपीआई भुगतान' : language === 'ml' ? 'സുരക്ഷിത യുപിഐ പേയ്മെന്റ്' : 'Secure UPI Direct Transfer'}
             </div>
           </div>
         </div>
 
-        <div className="flex space-x-4 pt-4">
-          <HighlightTarget
-            elementId="contact_pay_button"
-            activeHighlightId={highlightElement}
-            onCorrectTap={onCorrectTap}
-            onWrongTap={onWrongTap}
-            className="flex-1"
-          >
-            <div className="w-full min-h-[64px] bg-[#1A73E8] hover:bg-[#1557b0] text-white text-2xl font-bold rounded-2xl flex items-center justify-center shadow-lg">
+        <div className="flex gap-md p-lg bg-white border-t border-[#DADCE0]">
+          <HighlightTarget elementId="contact_pay_button" {...tp} className="flex-1 rounded-full">
+            <div className="w-full min-h-[64px] bg-gpay-blue text-white text-body font-bold rounded-full flex items-center justify-center px-md">
               {language === 'hi' ? 'पैसे भेजें (पे)' : language === 'ml' ? 'പണം അയക്കുക (പേ)' : 'Pay Money'}
             </div>
           </HighlightTarget>
 
           <div
             onClick={onWrongTap}
-            className="flex-1 min-h-[64px] bg-gray-200 text-gray-700 text-xl font-bold rounded-2xl flex items-center justify-center opacity-60"
+            className="flex-1 min-h-[64px] bg-white text-gpay-blue border-2 border-[#DADCE0] text-body font-bold rounded-full flex items-center justify-center"
           >
             Request
           </div>
@@ -333,48 +324,45 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
   // 7. BANK BALANCE DISPLAY SCREEN
   if (screen === 'gpay_balance_display_screen') {
     return (
-      <div className="h-full w-full bg-[#F8F9FA] text-gray-900 flex flex-col justify-between p-6">
-        <div className="flex items-center space-x-3 pt-2">
-          <ArrowLeft className="w-7 h-7 text-gray-800" />
-          <div className="text-2xl font-bold">
+      <div className="h-full w-full bg-gpay-bg text-ink flex flex-col justify-between">
+        <AppBar>
+          <div className="text-title">
             {language === 'hi' ? 'बैंक बैलेंस' : language === 'ml' ? 'ബാങ്ക് ബാലൻസ്' : 'Account Balance'}
           </div>
-        </div>
+        </AppBar>
 
-        <div className="bg-white rounded-3xl p-6 shadow-md border border-gray-200 space-y-4 my-auto">
-          <div className="flex items-center space-x-3">
-            <Building2 className="w-10 h-10 text-[#1A73E8]" />
-            <div>
-              <div className="text-2xl font-bold text-gray-900">
+        <div className="bg-white rounded-card p-xl border border-[#DADCE0] space-y-lg mx-lg my-auto">
+          <div className="flex items-center gap-md">
+            <div className="w-14 h-14 bg-gpay-light-blue rounded-full flex items-center justify-center flex-shrink-0">
+              <Building2 className="w-8 h-8 text-gpay-blue" aria-hidden="true" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-body font-bold text-ink">
                 {MOCK_BANK_BALANCE.bankName}
               </div>
-              <div className="text-lg text-gray-600 font-semibold">
+              <div className="text-label font-normal text-ink-muted">
                 {MOCK_BANK_BALANCE.accountNumberMasked}
               </div>
             </div>
           </div>
 
-          <div className="border-t border-gray-200 pt-4">
-            <div className="text-lg text-gray-600 font-semibold">
+          <div className="border-t border-[#DADCE0] pt-lg">
+            <div className="text-label font-normal text-ink-muted">
               {language === 'hi' ? 'उपलब्ध शेष राशि' : language === 'ml' ? 'ലഭ്യമായ ബാലൻസ്' : 'Available Balance'}
             </div>
-            <div className="text-5xl font-black text-emerald-600 mt-1">
+            <div className="text-5xl font-bold text-[#137333] mt-xs">
               {MOCK_BANK_BALANCE.balanceAmount}
             </div>
           </div>
         </div>
 
-        <HighlightTarget
-          elementId="balance_done_button"
-          activeHighlightId={highlightElement}
-          onCorrectTap={onCorrectTap}
-          onWrongTap={onWrongTap}
-          className="w-full mb-4"
-        >
-          <div className="w-full min-h-[64px] bg-[#1A73E8] hover:bg-[#1557b0] text-white text-2xl font-bold rounded-2xl flex items-center justify-center shadow-lg">
-            {language === 'hi' ? 'पूर्ण (डन)' : language === 'ml' ? 'മടങ്ങുക (ഡൺ)' : 'Done'}
-          </div>
-        </HighlightTarget>
+        <div className="p-lg">
+          <HighlightTarget elementId="balance_done_button" {...tp} className="w-full rounded-full">
+            <div className="w-full min-h-[64px] bg-gpay-blue text-white text-body font-bold rounded-full flex items-center justify-center">
+              {language === 'hi' ? 'पूर्ण (डन)' : language === 'ml' ? 'മടങ്ങുക (ഡൺ)' : 'Done'}
+            </div>
+          </HighlightTarget>
+        </div>
       </div>
     );
   }
@@ -382,59 +370,55 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
   // 8. TRANSACTION HISTORY LIST SCREEN
   if (screen === 'gpay_history_list_screen') {
     return (
-      <div className="h-full w-full bg-[#F8F9FA] text-gray-900 flex flex-col p-4">
-        <div className="flex items-center space-x-3 pb-4 border-b border-gray-200">
-          <ArrowLeft className="w-7 h-7 text-gray-800" />
-          <div className="text-2xl font-bold">
+      <div className="h-full w-full bg-white text-ink flex flex-col">
+        <AppBar>
+          <div className="text-title">
             {language === 'hi' ? 'लेन-देन इतिहास' : language === 'ml' ? 'ഇടപാട് ചരിത്രം' : 'Transaction History'}
           </div>
-        </div>
+        </AppBar>
 
-        <div className="space-y-4 pt-4">
-          <HighlightTarget
-            elementId="history_item_1"
-            activeHighlightId={highlightElement}
-            onCorrectTap={onCorrectTap}
-            onWrongTap={onWrongTap}
-          >
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-[#1A73E8]">
+        <div className="p-lg space-y-sm">
+          <HighlightTarget elementId="history_item_1" {...tp}>
+            <div className="min-h-[80px] bg-white px-md py-md rounded-2xl flex items-center justify-between gap-md">
+              <div className="flex items-center gap-md min-w-0">
+                <div className="w-12 h-12 bg-gpay-light-blue rounded-full flex items-center justify-center text-gpay-blue flex-shrink-0">
                   <ArrowUpRight className="w-7 h-7 stroke-[2.5]" />
                 </div>
-                <div>
-                  <div className="text-xl font-bold text-gray-900">
+                <div className="min-w-0">
+                  <div className="text-body font-bold text-ink">
                     {MOCK_TRANSACTIONS[0].merchant[language] || MOCK_TRANSACTIONS[0].merchant.en}
                   </div>
-                  <div className="text-base text-gray-500 font-semibold">
+                  <div className="text-label font-normal text-ink-muted">
                     {MOCK_TRANSACTIONS[0].date[language] || MOCK_TRANSACTIONS[0].date.en}
                   </div>
                 </div>
               </div>
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-body font-bold text-ink flex-shrink-0">
                 {MOCK_TRANSACTIONS[0].amount}
               </div>
             </div>
           </HighlightTarget>
 
+          <div className="border-t border-[#DADCE0] mx-md" aria-hidden="true" />
+
           <div
             onClick={onWrongTap}
-            className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center justify-between opacity-70"
+            className="min-h-[80px] bg-white px-md py-md rounded-2xl flex items-center justify-between gap-md"
           >
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
+            <div className="flex items-center gap-md min-w-0">
+              <div className="w-12 h-12 bg-[#E6F4EA] rounded-full flex items-center justify-center text-[#137333] flex-shrink-0">
                 <ArrowDownLeft className="w-7 h-7 stroke-[2.5]" />
               </div>
-              <div>
-                <div className="text-xl font-bold text-gray-900">
+              <div className="min-w-0">
+                <div className="text-body font-bold text-ink">
                   {MOCK_TRANSACTIONS[1].merchant[language] || MOCK_TRANSACTIONS[1].merchant.en}
                 </div>
-                <div className="text-base text-gray-500 font-semibold">
+                <div className="text-label font-normal text-ink-muted">
                   {MOCK_TRANSACTIONS[1].date[language] || MOCK_TRANSACTIONS[1].date.en}
                 </div>
               </div>
             </div>
-            <div className="text-2xl font-bold text-emerald-600">
+            <div className="text-body font-bold text-[#137333] flex-shrink-0">
               +{MOCK_TRANSACTIONS[1].amount}
             </div>
           </div>
@@ -446,52 +430,46 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
   // 9. RECEIPT DETAIL SCREEN
   if (screen === 'gpay_receipt_detail_screen') {
     return (
-      <div className="h-full w-full bg-[#F8F9FA] text-gray-900 flex flex-col justify-between p-6">
-        <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-          <HighlightTarget
-            elementId="receipt_back_button"
-            activeHighlightId={highlightElement}
-            onCorrectTap={onCorrectTap}
-            onWrongTap={onWrongTap}
-            className="p-2"
-          >
-            <div className="p-2 bg-gray-200 rounded-full hover:bg-gray-300">
-              <ArrowLeft className="w-7 h-7 text-gray-800" />
+      <div className="h-full w-full bg-gpay-bg text-ink flex flex-col justify-between">
+        <div className="bg-white flex items-center justify-between gap-md px-md py-md border-b border-[#DADCE0]">
+          <HighlightTarget elementId="receipt_back_button" {...tp} className="rounded-full">
+            <div className="w-16 h-16 bg-gpay-light-blue rounded-full flex items-center justify-center">
+              <ArrowLeft className="w-8 h-8 text-ink" />
             </div>
           </HighlightTarget>
-          <span className="text-xl font-bold">
+          <span className="text-body font-bold">
             {language === 'hi' ? 'भुगतान रसीद' : language === 'ml' ? 'പേയ്മെന്റ് രസീത്' : 'Payment Receipt'}
           </span>
-          <div className="w-10" />
+          <div className="w-16" />
         </div>
 
-        <div className="bg-white rounded-3xl p-6 shadow-md border border-gray-200 space-y-6 my-auto">
-          <div className="text-center space-y-2">
-            <CheckCircle2 className="w-16 h-16 text-emerald-600 mx-auto" />
-            <div className="text-2xl font-bold text-gray-900">
+        <div className="bg-white rounded-card p-xl border border-[#DADCE0] space-y-xl mx-lg my-auto">
+          <div className="text-center space-y-sm">
+            <CheckCircle2 className="w-16 h-16 text-[#137333] mx-auto" aria-hidden="true" />
+            <div className="text-body font-bold text-ink">
               {MOCK_TRANSACTIONS[0].merchant[language] || MOCK_TRANSACTIONS[0].merchant.en}
             </div>
-            <div className="text-4xl font-extrabold text-gray-900">
+            <div className="text-5xl font-bold text-ink">
               {MOCK_TRANSACTIONS[0].amount}
             </div>
-            <div className="text-base text-emerald-700 font-bold bg-emerald-50 py-1 px-3 rounded-full inline-block">
+            <div className="text-label text-[#137333] bg-[#E6F4EA] py-xs px-md rounded-full inline-block">
               {language === 'hi' ? 'सफल भुगतान' : language === 'ml' ? 'വിജയകരം' : 'Completed'}
             </div>
           </div>
 
-          <div className="border-t border-gray-200 pt-4 space-y-3 text-lg font-medium text-gray-700">
-            <div className="flex justify-between">
+          <div className="border-t border-[#DADCE0] pt-lg space-y-md text-label font-normal text-ink-muted">
+            <div className="flex justify-between gap-md">
               <span>UPI Ref No</span>
-              <span className="font-bold text-gray-900">428901847192</span>
+              <span className="font-bold text-ink">428901847192</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between gap-md">
               <span>Payment Mode</span>
-              <span className="font-bold text-gray-900">SBI Bank •••• 4829</span>
+              <span className="font-bold text-ink text-right">SBI Bank •••• 4829</span>
             </div>
           </div>
         </div>
 
-        <div className="text-center text-gray-500 text-lg mb-2">
+        <div className="text-center text-ink-muted text-label font-normal pb-lg">
           OLearn Sandboxed Mock Data
         </div>
       </div>
@@ -500,46 +478,40 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
 
   // 10. GPAY HOME SCREEN (Default)
   return (
-    <div className="h-full w-full bg-[#F8F9FA] text-gray-900 flex flex-col justify-between p-4 overflow-y-auto">
+    <div className="h-full w-full bg-gpay-bg text-ink flex flex-col justify-between overflow-y-auto">
       {/* Top Header */}
-      <div className="flex items-center justify-between pb-4 pt-1 border-b border-gray-200">
-        <div className="flex items-center space-x-2">
-          <div className="w-10 h-10 bg-[#1A73E8] rounded-xl flex items-center justify-center font-black text-white text-xl">
+      <div className="bg-white flex items-center justify-between px-lg py-md border-b border-[#DADCE0]">
+        <div className="flex items-center gap-sm">
+          <div className="w-10 h-10 bg-gpay-blue rounded-xl flex items-center justify-center font-bold text-white text-xl">
             G
           </div>
-          <span className="text-2xl font-black text-gray-800 tracking-tight">Google Pay</span>
+          <span className="text-title text-ink">Google Pay</span>
         </div>
-        <div className="w-11 h-11 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
+        <div className="w-12 h-12 bg-gpay-light-blue rounded-full flex items-center justify-center text-2xl">
           👵
         </div>
       </div>
 
-      <div className="space-y-6 my-4">
+      <div className="space-y-lg p-lg my-auto">
         {/* Large Action Tiles: Minimum 64dp high */}
-        <div className="space-y-4">
-          <HighlightTarget
-            elementId="scan_qr_button"
-            activeHighlightId={highlightElement}
-            onCorrectTap={onCorrectTap}
-            onWrongTap={onWrongTap}
-          >
-            <div className="min-h-[72px] bg-[#1A73E8] text-white p-4 rounded-2xl shadow-md flex items-center space-x-4 border-2 border-blue-600">
-              <QrCode className="w-10 h-10 flex-shrink-0" />
-              <div className="text-2xl font-bold leading-tight">
+        <div className="space-y-md">
+          <HighlightTarget elementId="scan_qr_button" {...tp}>
+            <div className="min-h-[80px] bg-gpay-blue text-white px-lg py-md rounded-2xl flex items-center gap-lg">
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <QrCode className="w-7 h-7" />
+              </div>
+              <div className="text-body font-bold leading-tight">
                 {language === 'hi' ? 'कोई भी क्यूआर स्कैन करें' : language === 'ml' ? 'ഏതെങ്കിലും ക്യുആർ സ്കാൻ ചെയ്യുക' : 'Scan any QR code'}
               </div>
             </div>
           </HighlightTarget>
 
-          <HighlightTarget
-            elementId="pay_contacts_button"
-            activeHighlightId={highlightElement}
-            onCorrectTap={onCorrectTap}
-            onWrongTap={onWrongTap}
-          >
-            <div className="min-h-[72px] bg-white text-gray-900 p-4 rounded-2xl shadow-sm flex items-center space-x-4 border-2 border-gray-200 hover:border-blue-400">
-              <Users className="w-10 h-10 text-[#1A73E8] flex-shrink-0" />
-              <div className="text-2xl font-bold leading-tight">
+          <HighlightTarget elementId="pay_contacts_button" {...tp}>
+            <div className="min-h-[80px] bg-white text-ink px-lg py-md rounded-2xl flex items-center gap-lg border border-[#DADCE0]">
+              <div className="w-12 h-12 bg-gpay-light-blue rounded-full flex items-center justify-center flex-shrink-0">
+                <Users className="w-7 h-7 text-gpay-blue" />
+              </div>
+              <div className="text-body font-bold leading-tight">
                 {language === 'hi' ? 'संपर्कों को पैसे भेजें' : language === 'ml' ? 'കോൺടാക്റ്റുകൾക്ക് പണം നൽകുക' : 'Pay contacts'}
               </div>
             </div>
@@ -547,40 +519,32 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
         </div>
 
         {/* Banking and History Links */}
-        <div className="bg-white rounded-3xl p-4 shadow-sm border border-gray-200 space-y-4">
-          <HighlightTarget
-            elementId="check_balance_button"
-            activeHighlightId={highlightElement}
-            onCorrectTap={onCorrectTap}
-            onWrongTap={onWrongTap}
-          >
-            <div className="min-h-[64px] p-3 rounded-xl flex items-center space-x-3 hover:bg-gray-50 border border-gray-100">
-              <Building2 className="w-8 h-8 text-[#1A73E8] flex-shrink-0" />
-              <span className="text-xl font-bold text-gray-900">
+        <div className="bg-white rounded-card p-sm border border-[#DADCE0] space-y-xs">
+          <HighlightTarget elementId="check_balance_button" {...tp}>
+            <div className="min-h-[64px] px-md py-sm rounded-xl flex items-center gap-md">
+              <Building2 className="w-7 h-7 text-gpay-blue flex-shrink-0" />
+              <span className="text-body font-bold text-ink flex-1">
                 {language === 'hi' ? 'बैंक बैलेंस चेक करें' : language === 'ml' ? 'ബാങ്ക് ബാലൻസ് പരിശോധിക്കുക' : 'Check bank balance'}
               </span>
+              <ChevronRight className="w-6 h-6 text-ink-muted flex-shrink-0" aria-hidden="true" />
             </div>
           </HighlightTarget>
 
-          <div className="border-t border-gray-200" />
+          <div className="border-t border-[#DADCE0] mx-md" />
 
-          <HighlightTarget
-            elementId="transaction_history_button"
-            activeHighlightId={highlightElement}
-            onCorrectTap={onCorrectTap}
-            onWrongTap={onWrongTap}
-          >
-            <div className="min-h-[64px] p-3 rounded-xl flex items-center space-x-3 hover:bg-gray-50 border border-gray-100">
-              <Receipt className="w-8 h-8 text-[#1A73E8] flex-shrink-0" />
-              <span className="text-xl font-bold text-gray-900">
+          <HighlightTarget elementId="transaction_history_button" {...tp}>
+            <div className="min-h-[64px] px-md py-sm rounded-xl flex items-center gap-md">
+              <Receipt className="w-7 h-7 text-gpay-blue flex-shrink-0" />
+              <span className="text-body font-bold text-ink flex-1">
                 {language === 'hi' ? 'लेन-देन का इतिहास देखें' : language === 'ml' ? 'ഇടപാട് ചരിത്രം കാണുക' : 'See transaction history'}
               </span>
+              <ChevronRight className="w-6 h-6 text-ink-muted flex-shrink-0" aria-hidden="true" />
             </div>
           </HighlightTarget>
         </div>
       </div>
 
-      <div className="text-center text-gray-500 text-sm font-semibold pb-2">
+      <div className="text-center text-ink-muted text-label font-normal px-lg pb-lg">
         Mock Google Pay Replica • No real money is used
       </div>
     </div>
