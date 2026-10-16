@@ -35,7 +35,6 @@ export interface TranslationDictionary {
   deviceFrame: string;
   fullscreen: string;
   offlineNotice: string;
-  apiKeyLabel: string;
   save: string;
   resetProgress: string;
   soundSpeed: string;
@@ -84,7 +83,6 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     deviceFrame: 'Mobile View',
     fullscreen: 'Fullscreen',
     offlineNotice: 'Offline Mode: Voice narration & mock apps work without internet',
-    apiKeyLabel: 'OpenAI API Key (Optional for Whisper/LLM)',
     save: 'Save',
     resetProgress: 'Reset Progress',
     soundSpeed: 'Narration Speed',
@@ -131,7 +129,6 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     deviceFrame: 'फ़ोन व्यू',
     fullscreen: 'फुल स्क्रीन',
     offlineNotice: 'ऑफ़लाइन मोड: वॉइस और मॉक ऐप बिना इंटरनेट काम करते हैं',
-    apiKeyLabel: 'ओपनएआई एपीआई कुंजी (व्हिस्पर के लिए वैकल्पिक)',
     save: 'सहेजें',
     resetProgress: 'प्रगति रीसेट करें',
     soundSpeed: 'बोलने की गति',
@@ -178,7 +175,6 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     deviceFrame: 'ഫോൺ കാഴ്ച',
     fullscreen: 'പൂർണ്ണ സ്ക്രീൻ',
     offlineNotice: 'ഓഫ്‌ലൈൻ: ഇന്റർനെറ്റ് ഇല്ലാതെ പ്രവർത്തിക്കുന്നു',
-    apiKeyLabel: 'ഓപ്പൺഎഐ എപിഐ കീ (ഓപ്ഷണൽ)',
     save: 'സേവ് ചെയ്യുക',
     resetProgress: 'പുരോഗതി റീസെറ്റ് ചെയ്യുക',
     soundSpeed: 'ശബ്ദ വേഗത',

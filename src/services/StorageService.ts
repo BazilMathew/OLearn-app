@@ -14,7 +14,18 @@ export const StorageService = {
     try {
       const data = localStorage.getItem(STORAGE_KEY);
       if (data) {
-        return { ...DEFAULT_PROFILE, ...JSON.parse(data) };
+        const merged = { ...DEFAULT_PROFILE, ...JSON.parse(data) };
+        // Keep only known fields. This also deletes the OpenAI key older versions stored here.
+        const profile: AppProfile = {
+          name: merged.name,
+          language: merged.language,
+          completedTasks: merged.completedTasks,
+          firstLaunchCompleted: merged.firstLaunchCompleted
+        };
+        if (Object.keys(merged).length !== Object.keys(profile).length) {
+          this.saveProfile(profile);
+        }
+        return profile;
       }
     } catch (e) {
       console.warn('Failed to read profile from localStorage:', e);
@@ -48,12 +59,6 @@ export const StorageService = {
   resetProgress(): void {
     const profile = this.getProfile();
     profile.completedTasks = [];
-    this.saveProfile(profile);
-  },
-
-  setApiKey(key: string): void {
-    const profile = this.getProfile();
-    profile.apiKey = key.trim();
     this.saveProfile(profile);
   }
 };

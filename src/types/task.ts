@@ -29,6 +29,5 @@ export interface AppProfile {
   name: string;
   language: SupportedLanguage;
   completedTasks: string[];
-  apiKey?: string;
   firstLaunchCompleted: boolean;
 }

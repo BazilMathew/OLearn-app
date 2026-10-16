@@ -17,7 +17,7 @@ OLearn is an Android digital literacy training application designed specifically
   - Large centered microphone with persistent "Tap and speak" label.
   - Natural language intent routing in English, Hindi, and Malayalam.
   - Clarifying question dialog on ambiguous inputs (e.g. Voice Call vs Video Call).
-  - Web Speech API and Whisper-1 STT / GPT-4o-mini classification support.
+  - Web Speech API and Whisper-1 STT / GPT-4o-mini classification support (via the OLearn API server; the OpenAI key never reaches the browser).
 - **Senior Accessibility Standards**:
   - Typography: Minimum 20sp body text, 24–28sp bold headers, nothing below 18sp.
   - High-contrast solid backgrounds: Green accent for WhatsApp (`#075E54`), blue accent for Google Pay (`#1A73E8`).
@@ -30,11 +30,26 @@ OLearn is an Android digital literacy training application designed specifically
 # Install dependencies
 npm install
 
-# Start development server
-npm run dev
+# Optional: enable AI speech-to-text and routing
+cp .env.example .env   # then set OPENAI_API_KEY in .env
 
-# Production build
+# Start the web app (port 3000) and the API server (port 3001) together
+npm run dev:all
+
+# Or run them separately
+npm run dev          # web app only
+npm run dev:server   # API server only
+
+# Production build (typechecks client and server, then builds the client)
 npm run build
 ```
 
 Open [http://localhost:3000/](http://localhost:3000/) in your browser.
+
+The Vite dev server proxies `/api` to the API server at `http://localhost:3001`. The OpenAI key is read only by the server from `.env` and is never sent to the browser. Without a key, or with the server stopped or the device offline, Ask Me falls back to on-device keyword matching and the tutorials work as normal.
+
+| Variable | Used by | Default | Purpose |
+| --- | --- | --- | --- |
+| `OPENAI_API_KEY` | server | _(none)_ | Whisper-1 and GPT-4o-mini. If unset, `/api/stt` and `/api/route` return `503 {"error":"ai_unavailable"}`. |
+| `PORT` | server | `3001` | API server port. The Vite proxy expects 3001. |
+| `CLIENT_ORIGIN` | server | _(none)_ | Browser origin allowed by CORS. Not needed when using the Vite proxy. |

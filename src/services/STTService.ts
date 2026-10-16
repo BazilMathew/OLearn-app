@@ -1,4 +1,5 @@
 import { SupportedLanguage } from '../types/task';
+import { apiPost } from './apiClient';
 
 export interface STTListener {
   onTranscript: (text: string) => void;
@@ -25,7 +26,7 @@ export class STTService {
     return !!(this.recognition || (navigator.mediaDevices && window.MediaRecorder));
   }
 
-  public startListening(language: SupportedLanguage, listener: STTListener, apiKey?: string): void {
+  public startListening(language: SupportedLanguage, listener: STTListener): void {
     if (this.isListening) return;
 
     if (this.recognition) {
@@ -68,8 +69,8 @@ export class STTService {
       return;
     }
 
-    // Fallback: If Whisper API key is provided, record audio using MediaRecorder
-    if (navigator.mediaDevices && window.MediaRecorder && apiKey) {
+    // Fallback: record audio using MediaRecorder and transcribe it on the OLearn server (Whisper)
+    if (navigator.mediaDevices && window.MediaRecorder) {
       navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
         this.audioChunks = [];
         this.mediaRecorder = new MediaRecorder(stream);
@@ -78,11 +79,11 @@ export class STTService {
           this.isListening = false;
           listener.onListeningChange(false);
           const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
-          try {
-            const transcript = await this.sendToWhisper(audioBlob, language, apiKey);
+          const transcript = await this.sendToWhisper(audioBlob, language);
+          if (transcript !== null) {
             listener.onTranscript(transcript);
-          } catch (e: any) {
-            listener.onError(e.message || 'Whisper transcription failed');
+          } else {
+            listener.onError('Whisper transcription failed');
           }
         };
 
@@ -107,22 +108,13 @@ export class STTService {
     this.isListening = false;
   }
 
-  private async sendToWhisper(audioBlob: Blob, language: SupportedLanguage, apiKey: string): Promise<string> {
+  private async sendToWhisper(audioBlob: Blob, language: SupportedLanguage): Promise<string | null> {
     const formData = new FormData();
-    formData.append('file', audioBlob, 'audio.webm');
-    formData.append('model', 'whisper-1');
     formData.append('language', language);
+    formData.append('audio', audioBlob, 'audio.webm');
 
-    const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: formData
-    });
-
-    if (!res.ok) throw new Error('Whisper API transcription failed');
-    const data = await res.json();
-    return data.text || '';
+    const data = await apiPost<{ text?: unknown }>('/api/stt', formData);
+    if (!data || typeof data.text !== 'string') return null;
+    return data.text;
   }
 }

@@ -126,7 +126,6 @@ export const App: React.FC = () => {
           {screenState === 'ask_me' && (
             <AskMeScreen
               language={language}
-              apiKey={profile.apiKey}
               tasks={tasks}
               onSelectTask={handleSelectTask}
               onClose={() => setScreenState('home')}

@@ -7,7 +7,6 @@ import { Mic, X, Send, HelpCircle, Loader2 } from 'lucide-react';
 
 interface AskMeScreenProps {
   language: SupportedLanguage;
-  apiKey?: string;
   tasks: TaskConfig[];
   onSelectTask: (task: TaskConfig) => void;
   onClose: () => void;
@@ -15,7 +14,6 @@ interface AskMeScreenProps {
 
 export const AskMeScreen: React.FC<AskMeScreenProps> = ({
   language,
-  apiKey,
   tasks,
   onSelectTask,
   onClose
@@ -52,8 +50,7 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
           onListeningChange: (state) => {
             setIsListening(state);
           }
-        },
-        apiKey
+        }
       );
     }
   };
@@ -63,7 +60,7 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
     setIsRouting(true);
     setClarifyData(null);
 
-    const result = await TaskRouterService.routeQuery(queryText, language, apiKey);
+    const result = await TaskRouterService.routeQuery(queryText, language);
     setIsRouting(false);
 
     if (result.matched && result.taskId) {

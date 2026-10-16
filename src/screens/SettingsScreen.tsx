@@ -3,7 +3,7 @@ import { SupportedLanguage } from '../types/task';
 import { I18N } from '../config/i18n';
 import { StorageService } from '../services/StorageService';
 import { AudioService } from '../services/AudioService';
-import { ArrowLeft, Globe, Volume2, Key, RotateCcw, Check } from 'lucide-react';
+import { ArrowLeft, Globe, Volume2, RotateCcw } from 'lucide-react';
 
 interface SettingsScreenProps {
   language: SupportedLanguage;
@@ -16,10 +16,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onLanguageChange,
   onClose
 }) => {
-  const profile = StorageService.getProfile();
-  const [apiKeyInput, setApiKeyInput] = useState<string>(profile.apiKey || '');
   const [speed, setSpeed] = useState<number>(AudioService.getSpeechRate());
-  const [savedNotice, setSavedNotice] = useState<boolean>(false);
 
   const t = I18N[language] || I18N.en;
 
@@ -29,12 +26,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     { code: 'ml', label: 'മലയാളം' }
   ];
 
-  const handleSaveApiKey = () => {
-    StorageService.setApiKey(apiKeyInput);
-    setSavedNotice(true);
-    setTimeout(() => setSavedNotice(false), 2000);
-  };
-
   const handleSpeedChange = (newSpeed: number) => {
     setSpeed(newSpeed);
     AudioService.setSpeechRate(newSpeed);
@@ -43,8 +34,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const handleReset = () => {
     if (window.confirm('Reset all completed tutorial progress?')) {
       StorageService.resetProgress();
-      setSavedNotice(true);
-      setTimeout(() => setSavedNotice(false), 2000);
     }
   };
 
@@ -122,31 +111,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               {t.normalSpeed}
             </button>
           </div>
-        </div>
-
-        {/* Optional OpenAI API Key */}
-        <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-200 space-y-3">
-          <div className="flex items-center space-x-3 text-xl font-bold text-gray-900">
-            <Key className="w-7 h-7 text-purple-600" />
-            <span>OpenAI API Key</span>
-          </div>
-          <p className="text-base text-gray-600 font-semibold">
-            {t.apiKeyLabel}
-          </p>
-          <input
-            type="password"
-            value={apiKeyInput}
-            onChange={(e) => setApiKeyInput(e.target.value)}
-            placeholder="sk-..."
-            className="w-full p-3 text-lg border-2 border-gray-300 rounded-xl font-mono focus:border-amber-500 focus:outline-none"
-          />
-          <button
-            onClick={handleSaveApiKey}
-            className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-lg rounded-xl flex items-center justify-center space-x-2"
-          >
-            {savedNotice ? <Check className="w-5 h-5" /> : null}
-            <span>{savedNotice ? 'Saved!' : t.save}</span>
-          </button>
         </div>
 
         {/* Reset Progress */}

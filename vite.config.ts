@@ -5,6 +5,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
-    host: true
+    host: true,
+    proxy: {
+      '/api': 'http://localhost:3001'
+    }
   }
 });
