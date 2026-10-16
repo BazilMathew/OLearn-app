@@ -47,6 +47,7 @@ export interface TranslationDictionary {
   soundSpeed: string;
   normalSpeed: string;
   slowSpeed: string;
+  reduceMotion: string;
   languages: {
     en: string;
     hi: string;
@@ -102,6 +103,7 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     soundSpeed: 'Narration Speed',
     normalSpeed: 'Normal',
     slowSpeed: 'Slow & Clear',
+    reduceMotion: 'Reduce motion',
     languages: {
       en: 'English',
       hi: 'हिन्दी',
@@ -155,6 +157,7 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     soundSpeed: 'बोलने की गति',
     normalSpeed: 'सामान्य',
     slowSpeed: 'धीमी और स्पष्ट',
+    reduceMotion: 'हलचल कम करें',
     languages: {
       en: 'English',
       hi: 'हिन्दी',
@@ -208,6 +211,7 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     soundSpeed: 'ശബ്ദ വേഗത',
     normalSpeed: 'സാധാരണ',
     slowSpeed: 'പതുക്കെ & വ്യക്തമായി',
+    reduceMotion: 'ചലനം കുറയ്ക്കുക',
     languages: {
       en: 'English',
       hi: 'हिन्दी',

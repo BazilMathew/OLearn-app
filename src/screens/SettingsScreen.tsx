@@ -3,17 +3,24 @@ import { SupportedLanguage } from '../types/task';
 import { I18N } from '../config/i18n';
 import { StorageService } from '../services/StorageService';
 import { AudioService } from '../services/AudioService';
-import { ArrowLeft, Globe, Volume2, RotateCcw } from 'lucide-react';
+import { Globe, Volume2, RotateCcw, Check, Circle, Sparkles } from 'lucide-react';
+import { Button } from '../components/Button';
+import { Card } from '../components/Card';
+import { ScreenHeader } from '../components/ScreenHeader';
 
 interface SettingsScreenProps {
   language: SupportedLanguage;
   onLanguageChange: (lang: SupportedLanguage) => void;
+  reduceMotion: boolean;
+  onReduceMotionChange: (on: boolean) => void;
   onClose: () => void;
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   language,
   onLanguageChange,
+  reduceMotion,
+  onReduceMotionChange,
   onClose
 }) => {
   const [speed, setSpeed] = useState<number>(AudioService.getSpeechRate());
@@ -37,102 +44,101 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     }
   };
 
-  return (
-    <div className="h-full w-full bg-slate-50 flex flex-col justify-between p-5 select-none animate-fade-in overflow-y-auto">
-      {/* Header */}
-      <div className="pb-4 border-b-2 border-gray-200">
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={onClose}
-            className="p-2.5 bg-gray-200 hover:bg-gray-300 rounded-2xl text-gray-900"
-          >
-            <ArrowLeft className="w-8 h-8" />
-          </button>
-          <h1 className="text-3xl font-black text-gray-900">
-            {t.settings}
-          </h1>
-        </div>
-      </div>
+  const sectionTitle = 'flex items-center gap-md text-body font-bold text-ink';
 
-      <div className="space-y-6 my-4">
-        {/* Language Selection Tiles */}
-        <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-200 space-y-4">
-          <div className="flex items-center space-x-3 text-xl font-bold text-gray-900">
+  return (
+    <div className="h-full w-full bg-canvas flex flex-col p-lg select-none overflow-y-auto">
+      {/* Header */}
+      <ScreenHeader title={t.settings} onBack={onClose} backLabel={t.back} />
+
+      <div className="space-y-xl">
+        {/* Language Selection */}
+        <Card className="space-y-lg">
+          <div className={sectionTitle}>
             <Globe className="w-7 h-7 text-[#1A73E8]" />
             <span>{t.chooseLanguage}</span>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-md">
             {languages.map((lang) => {
               const isSelected = language === lang.code;
               return (
-                <button
+                <Button
                   key={lang.code}
+                  icon={isSelected ? Check : Circle}
+                  label={lang.label}
+                  selected={isSelected}
+                  fullWidth
+                  align="start"
                   onClick={() => onLanguageChange(lang.code)}
-                  className={`py-3 px-2 rounded-2xl font-bold text-xl border-2 transition-all ${
-                    isSelected
-                      ? 'bg-amber-400 border-amber-600 text-slate-950 ring-2 ring-amber-300'
-                      : 'bg-gray-50 border-gray-200 text-gray-800 hover:bg-gray-100'
-                  }`}
-                >
-                  {lang.label}
-                </button>
+                />
               );
             })}
           </div>
-        </div>
+        </Card>
 
         {/* Audio Narration Speed */}
-        <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-200 space-y-4">
-          <div className="flex items-center space-x-3 text-xl font-bold text-gray-900">
-            <Volume2 className="w-7 h-7 text-emerald-600" />
+        <Card className="space-y-lg">
+          <div className={sectionTitle}>
+            <Volume2 className="w-7 h-7 text-success" />
             <span>{t.soundSpeed}</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <button
+          <div className="space-y-md">
+            <Button
+              icon={speed < 0.95 ? Check : Circle}
+              label={t.slowSpeed}
+              selected={speed < 0.95}
+              fullWidth
+              align="start"
               onClick={() => handleSpeedChange(0.85)}
-              className={`py-3 px-4 rounded-2xl font-bold text-xl border-2 ${
-                speed < 0.95
-                  ? 'bg-emerald-500 text-white border-emerald-600'
-                  : 'bg-gray-50 text-gray-800 border-gray-200'
-              }`}
-            >
-              {t.slowSpeed}
-            </button>
-            <button
+            />
+            <Button
+              icon={speed >= 0.95 ? Check : Circle}
+              label={t.normalSpeed}
+              selected={speed >= 0.95}
+              fullWidth
+              align="start"
               onClick={() => handleSpeedChange(1.0)}
-              className={`py-3 px-4 rounded-2xl font-bold text-xl border-2 ${
-                speed >= 0.95
-                  ? 'bg-emerald-500 text-white border-emerald-600'
-                  : 'bg-gray-50 text-gray-800 border-gray-200'
-              }`}
-            >
-              {t.normalSpeed}
-            </button>
+            />
           </div>
+        </Card>
+
+        {/* Reduce motion */}
+        <div className="bg-surface rounded-card border-2 border-line shadow-card">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={reduceMotion}
+            onClick={() => onReduceMotionChange(!reduceMotion)}
+            className="w-full min-h-[72px] px-lg py-md flex items-center gap-md text-left rounded-card active:bg-canvas"
+          >
+            <Sparkles className="w-7 h-7 text-accent-deep flex-shrink-0" />
+            <span className="flex-1 text-body font-bold text-ink">{t.reduceMotion}</span>
+            <span
+              className={`relative w-[68px] h-10 rounded-full border-2 flex-shrink-0 transition-colors ${
+                reduceMotion ? 'bg-success border-success' : 'bg-line border-[#CDBFAE]'
+              }`}
+              aria-hidden="true"
+            >
+              <span
+                className={`absolute top-[2px] left-[2px] w-8 h-8 rounded-full bg-surface flex items-center justify-center transition-transform duration-200 ${
+                  reduceMotion ? 'translate-x-[28px]' : ''
+                }`}
+              >
+                {reduceMotion && <Check className="w-5 h-5 text-success" strokeWidth={3} />}
+              </span>
+            </span>
+          </button>
         </div>
 
         {/* Reset Progress */}
-        <div className="pt-2">
-          <button
-            onClick={handleReset}
-            className="w-full min-h-[58px] bg-rose-50 hover:bg-rose-100 text-rose-700 border-2 border-rose-300 font-bold text-xl rounded-2xl flex items-center justify-center space-x-2"
-          >
-            <RotateCcw className="w-6 h-6" />
-            <span>{t.resetProgress}</span>
-          </button>
-        </div>
+        <Button icon={RotateCcw} label={t.resetProgress} variant="danger" fullWidth onClick={handleReset} />
       </div>
 
       {/* Done Button */}
-      <div className="pt-4">
-        <button
-          onClick={onClose}
-          className="w-full min-h-[64px] bg-slate-900 hover:bg-slate-800 text-white text-2xl font-bold rounded-2xl shadow-xl flex items-center justify-center"
-        >
-          {t.continueBtn}
-        </button>
+      <div className="pt-xl mt-auto">
+        <Button icon={Check} label={t.continueBtn} variant="dark" fullWidth onClick={onClose} />
       </div>
     </div>
   );

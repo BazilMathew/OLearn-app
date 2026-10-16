@@ -6,7 +6,8 @@ const DEFAULT_PROFILE: AppProfile = {
   name: 'User',
   language: 'en',
   completedTasks: [],
-  firstLaunchCompleted: false
+  firstLaunchCompleted: false,
+  reduceMotion: false
 };
 
 export const StorageService = {
@@ -20,7 +21,8 @@ export const StorageService = {
           name: merged.name,
           language: merged.language,
           completedTasks: merged.completedTasks,
-          firstLaunchCompleted: merged.firstLaunchCompleted
+          firstLaunchCompleted: merged.firstLaunchCompleted,
+          reduceMotion: merged.reduceMotion === true
         };
         if (Object.keys(merged).length !== Object.keys(profile).length) {
           this.saveProfile(profile);
@@ -54,6 +56,12 @@ export const StorageService = {
       profile.completedTasks.push(taskId);
       this.saveProfile(profile);
     }
+  },
+
+  setReduceMotion(on: boolean): void {
+    const profile = this.getProfile();
+    profile.reduceMotion = on;
+    this.saveProfile(profile);
   },
 
   resetProgress(): void {

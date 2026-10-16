@@ -4,7 +4,12 @@ import { I18N, TranslationDictionary } from '../config/i18n';
 import { STTService, STTError, STTState } from '../services/STTService';
 import { TaskRouterService, RouteResult } from '../services/TaskRouterService';
 import { AudioService } from '../services/AudioService';
-import { Mic, X, Send, HelpCircle, Loader2 } from 'lucide-react';
+import { Mic, X, Send, HelpCircle, Loader2, ArrowRight, Keyboard } from 'lucide-react';
+import { Button } from '../components/Button';
+import { Card } from '../components/Card';
+import { ScreenHeader } from '../components/ScreenHeader';
+import { TextField } from '../components/TextField';
+import { Mascot } from '../components/Mascot';
 
 const ERROR_TEXT: Record<STTError, keyof TranslationDictionary> = {
   'no-speech': 'voiceNoSpeech',
@@ -164,144 +169,150 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
     }
   };
 
+  // Mitra appears only while nothing else is happening on screen.
+  const isIdle = voiceState === 'idle' && !isRouting && !clarifyData && !notUnderstood && !transcript && !notice;
+
   return (
-    <div className="h-full w-full bg-slate-900 text-white flex flex-col justify-between p-6 select-none animate-fade-in relative">
+    <div className="h-full w-full bg-canvas text-ink flex flex-col p-lg select-none relative">
       {/* Top Bar with Cancel / X */}
-      <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-        <div className="text-2xl font-black text-amber-400">{t.askMe}</div>
-        <button
-          onClick={() => {
-            stopVoice();
-            onClose();
-          }}
-          className="w-14 h-14 bg-slate-800 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white border-2 border-slate-600 active:bg-slate-600"
-          title={t.cancel}
-        >
-          <X className="w-8 h-8" />
-        </button>
-      </div>
+      <ScreenHeader
+        title={<span className="text-accent-deep">{t.askMe}</span>}
+        onBack={() => {
+          stopVoice();
+          onClose();
+        }}
+        backLabel={t.cancel}
+        backIcon={X}
+        aside={isIdle ? <Mascot size={72} /> : undefined}
+      />
 
       {/* Main Interaction Zone */}
-      <div className="flex-1 flex flex-col items-center justify-center my-auto space-y-6 text-center">
-        <p className="text-2xl font-bold text-slate-200 max-w-sm">
-          {t.askMeSubtitle}
-        </p>
+      <div className="flex-1 overflow-y-auto flex flex-col -mx-xs px-xs">
+        <div className="my-auto flex flex-col items-center space-y-xl text-center py-sm">
+          <p className="text-body font-bold text-ink max-w-sm">
+            {t.askMeSubtitle}
+          </p>
 
-        {/* Large Centered Mic Button with Simple Pulsing Circle (No confusing waveforms) */}
-        <div className="relative flex items-center justify-center py-4">
-          {isListening && (
-            <div className="absolute w-44 h-44 rounded-full bg-amber-400/30 animate-ping pointer-events-none" />
-          )}
-          <button
-            onClick={handleToggleMic}
-            className={`w-32 h-32 rounded-full flex items-center justify-center shadow-2xl border-4 transition-all duration-200 active:scale-95 ${
-              isListening
-                ? 'bg-rose-600 hover:bg-rose-700 border-white ring-8 ring-rose-500/40'
-                : 'bg-amber-500 hover:bg-amber-400 border-amber-300 ring-8 ring-amber-400/30'
-            }`}
-          >
-            <Mic className={`w-16 h-16 ${isListening ? 'text-white' : 'text-slate-950'}`} />
-          </button>
-        </div>
-
-        {/* Persistent Large Text Label Beneath Mic Button AT ALL TIMES */}
-        <div className="space-y-2">
-          <div className="text-2xl font-extrabold text-amber-300 flex items-center justify-center space-x-2" role="status" aria-live="polite">
-            {voiceState === 'transcribing' && <Loader2 className="w-6 h-6 animate-spin" />}
-            <span>
-              {voiceState === 'transcribing' ? t.voiceWorking : isListening ? t.listening : t.tapAndSpeak}
-            </span>
+          {/* Large Centered Mic Button: breathes when idle, calm rings while listening (No confusing waveforms) */}
+          <div className="relative flex items-center justify-center py-lg">
+            {isListening && (
+              <>
+                <div className="mic-ring absolute w-32 h-32 rounded-full border-4 border-danger opacity-40 pointer-events-none" />
+                <div className="mic-ring mic-ring-delay absolute w-32 h-32 rounded-full border-4 border-danger opacity-40 pointer-events-none" />
+              </>
+            )}
+            <div className={isListening ? undefined : 'mic-breathe'}>
+              <button
+                onClick={handleToggleMic}
+                aria-label={isListening ? t.listening : t.tapAndSpeak}
+                style={{ ['--shade' as string]: isListening ? '#7A151B' : '#8A5207' }}
+                className={`pressable w-32 h-32 rounded-full flex items-center justify-center border-4 ${
+                  isListening
+                    ? 'bg-danger border-[#7A151B] text-white active:bg-[#951D25]'
+                    : 'bg-accent border-accent-deep text-ink active:bg-[#E59A2A]'
+                }`}
+              >
+                <Mic className="w-16 h-16" strokeWidth={2.25} />
+              </button>
+            </div>
           </div>
-          {notice && !isListening && voiceState !== 'transcribing' && (
-            <div className="bg-slate-800 border-2 border-amber-400 p-4 rounded-2xl text-2xl text-white font-bold max-w-sm mx-auto" role="alert">
-              {notice}
+
+          {/* Persistent Large Text Label Beneath Mic Button AT ALL TIMES */}
+          <div className="space-y-md w-full">
+            <div className="text-title text-ink flex items-center justify-center gap-sm" role="status" aria-live="polite">
+              {voiceState === 'transcribing' && <Loader2 className="w-7 h-7 spin-slow" />}
+              <span>
+                {voiceState === 'transcribing' ? t.voiceWorking : isListening ? t.listening : t.tapAndSpeak}
+              </span>
+            </div>
+            {notice && !isListening && voiceState !== 'transcribing' && (
+              <Card className="border-accent-deep text-body font-bold text-ink max-w-sm mx-auto" shade="#8A5207">
+                <div role="alert">{notice}</div>
+              </Card>
+            )}
+            {transcript && (
+              <Card className="text-body font-semibold text-success max-w-xs mx-auto">
+                "{transcript}"
+              </Card>
+            )}
+          </div>
+
+          {isRouting && (
+            <div className="flex items-center gap-sm text-accent-deep text-body font-bold">
+              <Loader2 className="w-6 h-6 spin-slow" />
+              <span>Finding matching tutorial...</span>
             </div>
           )}
-          {transcript && (
-            <div className="bg-slate-800 border border-slate-700 p-3.5 rounded-2xl text-xl text-emerald-300 font-semibold max-w-xs mx-auto">
-              "{transcript}"
-            </div>
-          )}
-        </div>
 
-        {isRouting && (
-          <div className="flex items-center space-x-2 text-amber-400 text-xl font-bold">
-            <Loader2 className="w-6 h-6 animate-spin" />
-            <span>Finding matching tutorial...</span>
-          </div>
-        )}
-
-        {/* Clarifying Question Modal if ambiguous */}
-        {clarifyData && (
-          <div className="w-full bg-slate-800 border-2 border-amber-400 rounded-3xl p-5 text-left space-y-4 shadow-2xl animate-fade-in">
-            <div className="flex items-start space-x-3">
-              <HelpCircle className="w-7 h-7 text-amber-400 flex-shrink-0 mt-1" />
-              <div className="text-xl font-bold text-white">
-                {clarifyData.text}
+          {/* Clarifying Question Modal if ambiguous */}
+          {clarifyData && (
+            <Card className="w-full border-accent-deep text-left space-y-lg" shade="#8A5207">
+              <div className="flex items-start gap-md">
+                <HelpCircle className="w-7 h-7 text-accent-deep flex-shrink-0 mt-xs" />
+                <div className="text-body font-bold text-ink">
+                  {clarifyData.text}
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-3 pt-2">
-              {clarifyData.options.map((opt) => (
-                <button
-                  key={opt.taskId}
-                  onClick={() => {
-                    const found = tasks.find(t => t.task_id === opt.taskId);
-                    if (found) onSelectTask(found);
-                  }}
-                  className="w-full min-h-[58px] bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xl rounded-2xl px-4 py-2 text-left flex items-center justify-between shadow-md"
-                >
-                  <span>{opt.label}</span>
-                  <span>→</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Nothing matched: say so and let the user pick a task */}
-        {notUnderstood && (
-          <div className="w-full bg-slate-800 border-2 border-amber-400 rounded-3xl p-5 text-left space-y-4 shadow-2xl animate-fade-in">
-            <div className="flex items-start space-x-3" role="alert">
-              <HelpCircle className="w-7 h-7 text-amber-400 flex-shrink-0 mt-1" />
-              <div className="text-xl font-bold text-white">
-                {t.didNotUnderstand}
+              <div className="space-y-md">
+                {clarifyData.options.map((opt) => (
+                  <Button
+                    key={opt.taskId}
+                    icon={ArrowRight}
+                    iconEnd
+                    label={opt.label}
+                    variant="primary"
+                    fullWidth
+                    className="justify-between"
+                    onClick={() => {
+                      const found = tasks.find(t => t.task_id === opt.taskId);
+                      if (found) onSelectTask(found);
+                    }}
+                  />
+                ))}
               </div>
-            </div>
+            </Card>
+          )}
 
-            <div className="space-y-3 pt-2 max-h-[40vh] overflow-y-auto">
-              {tasks.map((task) => (
-                <button
-                  key={task.task_id}
-                  onClick={() => onSelectTask(task)}
-                  className="w-full min-h-[64px] bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xl rounded-2xl px-4 py-2 text-left flex items-center justify-between shadow-md"
-                >
-                  <span>{task.title[language]}</span>
-                  <span>→</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+          {/* Nothing matched: say so and let the user pick a task */}
+          {notUnderstood && (
+            <Card className="w-full border-accent-deep text-left space-y-lg" shade="#8A5207">
+              <div className="flex items-start gap-md" role="alert">
+                <HelpCircle className="w-7 h-7 text-accent-deep flex-shrink-0 mt-xs" />
+                <div className="text-body font-bold text-ink">
+                  {t.didNotUnderstand}
+                </div>
+              </div>
+
+              <div className="space-y-md max-h-[40vh] overflow-y-auto px-xs pb-xs">
+                {tasks.map((task) => (
+                  <Button
+                    key={task.task_id}
+                    icon={ArrowRight}
+                    iconEnd
+                    label={task.title[language]}
+                    variant="primary"
+                    fullWidth
+                    className="justify-between"
+                    onClick={() => onSelectTask(task)}
+                  />
+                ))}
+              </div>
+            </Card>
+          )}
+        </div>
       </div>
 
       {/* Typed Input Fallback */}
-      <form onSubmit={handleTypedSubmit} className="pt-2">
-        <div className="flex items-center space-x-2 bg-slate-800 p-2 rounded-2xl border-2 border-slate-700">
-          <input
-            type="text"
-            value={typedInput}
-            onChange={(e) => setTypedInput(e.target.value)}
-            placeholder={t.typePlaceholder}
-            className="flex-1 bg-transparent text-white px-3 py-2 text-xl font-medium focus:outline-none placeholder-slate-400"
-          />
-          <button
-            type="submit"
-            className="w-14 h-14 bg-amber-500 hover:bg-amber-600 rounded-xl flex items-center justify-center text-slate-950 flex-shrink-0 font-bold"
-          >
-            <Send className="w-7 h-7" />
-          </button>
-        </div>
+      <form onSubmit={handleTypedSubmit} className="pt-md space-y-md">
+        <TextField
+          icon={Keyboard}
+          type="text"
+          value={typedInput}
+          onChange={(e) => setTypedInput(e.target.value)}
+          label={t.typePlaceholder}
+        />
+        <Button type="submit" icon={Send} label={t.send} variant="primary" fullWidth />
       </form>
     </div>
   );

@@ -1,15 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import tasksData from './config/tasks.json';
 import { SupportedLanguage, TaskConfig } from './types/task';
 import { StorageService } from './services/StorageService';
 import { I18N } from './config/i18n';
-import { HomeScreen } from './screens/HomeScreen';
-import { TaskListScreen } from './screens/TaskListScreen';
-import { TaskEngine } from './engine/TaskEngine';
-import { AskMeScreen } from './screens/AskMeScreen';
-import { LanguageSelectScreen } from './screens/LanguageSelectScreen';
-import { SettingsScreen } from './screens/SettingsScreen';
 import { Home, Settings, Smartphone, Maximize2, Wifi, Battery, Signal } from 'lucide-react';
+
+// Screens load on demand so the first download stays small on low-end phones.
+const HomeScreen = lazy(() => import('./screens/HomeScreen').then((m) => ({ default: m.HomeScreen })));
+const TaskListScreen = lazy(() => import('./screens/TaskListScreen').then((m) => ({ default: m.TaskListScreen })));
+const TaskEngine = lazy(() => import('./engine/TaskEngine').then((m) => ({ default: m.TaskEngine })));
+const AskMeScreen = lazy(() => import('./screens/AskMeScreen').then((m) => ({ default: m.AskMeScreen })));
+const LanguageSelectScreen = lazy(() =>
+  import('./screens/LanguageSelectScreen').then((m) => ({ default: m.LanguageSelectScreen }))
+);
+const SettingsScreen = lazy(() => import('./screens/SettingsScreen').then((m) => ({ default: m.SettingsScreen })));
 
 type ScreenState = 'first_launch' | 'home' | 'task_list' | 'tutorial' | 'ask_me' | 'settings';
 
@@ -25,6 +29,11 @@ export const App: React.FC = () => {
   const tasks = tasksData as TaskConfig[];
   const language = profile.language;
   const t = I18N[language] || I18N.en;
+
+  // In-app Reduce motion: a class on <html> switches off every animation (see index.css)
+  useEffect(() => {
+    document.documentElement.classList.toggle('reduce-motion', profile.reduceMotion);
+  }, [profile.reduceMotion]);
 
   // Sync profile state when storage changes
   const reloadProfile = () => {
@@ -53,124 +62,130 @@ export const App: React.FC = () => {
     setScreenState('task_list');
   };
 
+  const navItemClass = (active: boolean) =>
+    `pressable flex-1 max-w-[180px] min-h-[64px] flex flex-col items-center justify-center gap-xs px-lg rounded-btn border-2 ${
+      active ? 'bg-accent-soft border-accent-deep text-ink' : 'bg-surface border-line text-ink-muted active:bg-canvas'
+    }`;
+
   return (
-    <div className="w-full min-h-screen flex flex-col items-center justify-center p-0 sm:p-4 bg-slate-950 text-slate-100 font-sans">
-      {/* Desktop Helper Bar: Switch between Android Frame & Fullscreen */}
-      <div className="w-full max-w-md hidden sm:flex items-center justify-between py-2 px-4 mb-2 text-sm text-slate-400">
+    <div className="w-full min-h-[100dvh] flex flex-col items-center justify-center sm:p-lg font-sans">
+      {/* Desktop Helper Bar: Switch between Android Frame & Fullscreen (640px and up only) */}
+      <div className="w-full max-w-md hidden sm:flex items-center justify-between py-sm px-lg mb-sm text-label text-slate-300">
         <span className="font-semibold tracking-wide">OLearn Senior Trainer</span>
         <button
           onClick={() => setUsePhoneFrame(!usePhoneFrame)}
-          className="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1 rounded-full text-xs font-bold border border-slate-700"
+          className="min-h-[64px] flex items-center gap-sm bg-slate-800 hover:bg-slate-700 text-slate-100 px-lg rounded-full text-label font-bold border border-slate-600"
         >
-          {usePhoneFrame ? <Maximize2 className="w-3.5 h-3.5" /> : <Smartphone className="w-3.5 h-3.5" />}
+          {usePhoneFrame ? <Maximize2 className="w-5 h-5" /> : <Smartphone className="w-5 h-5" />}
           <span>{usePhoneFrame ? t.fullscreen : t.deviceFrame}</span>
         </button>
       </div>
 
-      {/* Android Device Shell Container */}
+      {/* App shell: full-bleed on phones, device frame from 640px up */}
       <div
-        className={`w-full bg-black overflow-hidden relative flex flex-col justify-between transition-all duration-300 ${
+        className={`safe-area w-full h-[100dvh] bg-canvas overflow-hidden relative flex flex-col ${
           usePhoneFrame
-            ? 'max-w-[430px] h-[92vh] max-h-[890px] rounded-[48px] phone-shell border-[10px] border-slate-800'
-            : 'w-full h-screen rounded-none'
+            ? 'sm:max-w-[430px] sm:h-[calc(100dvh-120px)] sm:max-h-[890px] sm:rounded-[48px] phone-shell sm:border-[10px] sm:border-slate-800'
+            : 'sm:h-screen'
         }`}
       >
-        {/* Mock Android Status Bar */}
-        <div className="w-full bg-slate-900 text-white px-6 py-2 flex items-center justify-between text-xs font-bold z-40 select-none border-b border-slate-800/80">
+        {/* Mock Android Status Bar (desktop frame only; a real phone has its own) */}
+        <div className="w-full bg-slate-900 text-white px-xl py-sm hidden sm:flex items-center justify-between text-label font-bold z-40 select-none">
           <span>10:30</span>
           <div className="w-24 h-4 bg-black rounded-full mx-auto" /> {/* Camera Pill Notch */}
-          <div className="flex items-center space-x-2">
-            <Signal className="w-3.5 h-3.5" />
-            <Wifi className="w-3.5 h-3.5" />
-            <Battery className="w-4 h-4" />
+          <div className="flex items-center gap-sm">
+            <Signal className="w-4 h-4" />
+            <Wifi className="w-4 h-4" />
+            <Battery className="w-5 h-5" />
           </div>
         </div>
 
         {/* Dynamic App Content Screen */}
-        <div className="flex-1 overflow-hidden relative bg-white">
-          {screenState === 'first_launch' && (
-            <LanguageSelectScreen
-              currentLanguage={language}
-              onSelectLanguage={handleLanguageSelect}
-              isFirstLaunch={true}
-            />
-          )}
+        <div className="flex-1 overflow-hidden relative bg-canvas text-ink">
+          <Suspense fallback={<div className="h-full w-full bg-canvas" />}>
+            <div key={screenState} className="screen-enter h-full w-full">
+              {screenState === 'first_launch' && (
+                <LanguageSelectScreen
+                  currentLanguage={language}
+                  onSelectLanguage={handleLanguageSelect}
+                  isFirstLaunch={true}
+                />
+              )}
 
-          {screenState === 'home' && (
-            <HomeScreen
-              language={language}
-              onSelectApp={handleOpenAppTasks}
-              onOpenAskMe={() => setScreenState('ask_me')}
-            />
-          )}
+              {screenState === 'home' && (
+                <HomeScreen
+                  language={language}
+                  onSelectApp={handleOpenAppTasks}
+                  onOpenAskMe={() => setScreenState('ask_me')}
+                />
+              )}
 
-          {screenState === 'task_list' && (
-            <TaskListScreen
-              app={selectedApp}
-              tasks={tasks}
-              completedTaskIds={profile.completedTasks}
-              language={language}
-              onSelectTask={handleSelectTask}
-              onBack={() => setScreenState('home')}
-            />
-          )}
+              {screenState === 'task_list' && (
+                <TaskListScreen
+                  app={selectedApp}
+                  tasks={tasks}
+                  completedTaskIds={profile.completedTasks}
+                  language={language}
+                  onSelectTask={handleSelectTask}
+                  onBack={() => setScreenState('home')}
+                />
+              )}
 
-          {screenState === 'tutorial' && activeTask && (
-            <TaskEngine
-              task={activeTask}
-              language={language}
-              onExit={handleTutorialExit}
-            />
-          )}
+              {screenState === 'tutorial' && activeTask && (
+                <TaskEngine
+                  task={activeTask}
+                  language={language}
+                  onExit={handleTutorialExit}
+                />
+              )}
 
-          {screenState === 'ask_me' && (
-            <AskMeScreen
-              language={language}
-              tasks={tasks}
-              onSelectTask={handleSelectTask}
-              onClose={() => setScreenState('home')}
-            />
-          )}
+              {screenState === 'ask_me' && (
+                <AskMeScreen
+                  language={language}
+                  tasks={tasks}
+                  onSelectTask={handleSelectTask}
+                  onClose={() => setScreenState('home')}
+                />
+              )}
 
-          {screenState === 'settings' && (
-            <SettingsScreen
-              language={language}
-              onLanguageChange={(newLang) => {
-                StorageService.setLanguage(newLang);
-                reloadProfile();
-              }}
-              onClose={() => setScreenState('home')}
-            />
-          )}
+              {screenState === 'settings' && (
+                <SettingsScreen
+                  language={language}
+                  onLanguageChange={(newLang) => {
+                    StorageService.setLanguage(newLang);
+                    reloadProfile();
+                  }}
+                  reduceMotion={profile.reduceMotion}
+                  onReduceMotionChange={(on) => {
+                    StorageService.setReduceMotion(on);
+                    reloadProfile();
+                  }}
+                  onClose={() => setScreenState('home')}
+                />
+              )}
+            </div>
+          </Suspense>
         </div>
 
         {/* Bottom Navigation (Max 2 icons: Home and Settings with explicit text labels) */}
         {screenState !== 'tutorial' && screenState !== 'first_launch' && (
-          <div className="w-full bg-slate-900 border-t-2 border-slate-800 px-6 py-3 flex items-center justify-around z-30 select-none">
+          <nav className="w-full bg-surface border-t-2 border-line px-lg py-sm flex items-center justify-around gap-lg z-30 select-none">
             <button
               onClick={() => setScreenState('home')}
-              className={`flex flex-col items-center space-y-1 py-1 px-5 rounded-2xl transition-colors min-h-[56px] justify-center ${
-                screenState === 'home' || screenState === 'task_list'
-                  ? 'text-amber-400 bg-slate-800/80'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
+              className={navItemClass(screenState === 'home' || screenState === 'task_list')}
             >
-              <Home className="w-7 h-7" />
-              <span className="text-base font-bold">{t.home}</span>
+              <Home className="w-7 h-7" strokeWidth={2.5} />
+              <span className="text-label font-bold">{t.home}</span>
             </button>
 
             <button
               onClick={() => setScreenState('settings')}
-              className={`flex flex-col items-center space-y-1 py-1 px-5 rounded-2xl transition-colors min-h-[56px] justify-center ${
-                screenState === 'settings'
-                  ? 'text-amber-400 bg-slate-800/80'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
+              className={navItemClass(screenState === 'settings')}
             >
-              <Settings className="w-7 h-7" />
-              <span className="text-base font-bold">{t.settings}</span>
+              <Settings className="w-7 h-7" strokeWidth={2.5} />
+              <span className="text-label font-bold">{t.settings}</span>
             </button>
-          </div>
+          </nav>
         )}
       </div>
     </div>

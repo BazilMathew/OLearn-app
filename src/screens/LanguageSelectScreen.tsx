@@ -1,7 +1,9 @@
 import React from 'react';
 import { SupportedLanguage } from '../types/task';
 import { I18N } from '../config/i18n';
-import { Check } from 'lucide-react';
+import { Check, Circle, ArrowRight } from 'lucide-react';
+import { Button } from '../components/Button';
+import { Card } from '../components/Card';
 
 interface LanguageSelectScreenProps {
   currentLanguage: SupportedLanguage;
@@ -23,61 +25,60 @@ export const LanguageSelectScreen: React.FC<LanguageSelectScreenProps> = ({
   const t = I18N[currentLanguage] || I18N.en;
 
   return (
-    <div className="h-full w-full bg-slate-50 flex flex-col justify-between p-6 select-none animate-fade-in">
+    <div className="h-full w-full bg-canvas flex flex-col p-lg select-none overflow-y-auto">
       {/* Header */}
-      <div className="space-y-3 pt-6 text-center">
-        <div className="w-16 h-16 bg-amber-500 rounded-3xl mx-auto flex items-center justify-center font-black text-3xl text-slate-950 shadow-md">
+      <div className="space-y-md pt-xl text-center">
+        <div className="w-16 h-16 bg-accent text-ink rounded-btn mx-auto flex items-center justify-center font-black text-display border-2 border-accent-deep shadow-[0_4px_0_0_#8A5207]">
           OL
         </div>
-        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+        <h1 className="text-display text-ink">
           {t.selectLanguageTitle}
         </h1>
-        <p className="text-xl text-gray-700 font-medium max-w-xs mx-auto">
+        <p className="text-body text-ink-muted max-w-xs mx-auto">
           {t.selectLanguageSubtitle}
         </p>
       </div>
 
       {/* 3 Tiles Only: English / हिन्दी / മലയാളം */}
-      <div className="space-y-4 my-auto">
+      <div className="space-y-lg my-auto py-xl">
         {languages.map((lang) => {
           const isSelected = currentLanguage === lang.code;
           return (
-            <button
+            <Card
               key={lang.code}
               onClick={() => onSelectLanguage(lang.code)}
-              className={`w-full min-h-[76px] rounded-3xl p-5 flex items-center justify-between border-3 transition-all duration-200 shadow-md ${
-                isSelected
-                  ? 'bg-amber-400 border-amber-600 text-slate-950 ring-4 ring-amber-300/60'
-                  : 'bg-white hover:bg-gray-50 border-gray-300 text-gray-900 active:bg-gray-100'
+              ariaPressed={isSelected}
+              shade={isSelected ? '#8A5207' : undefined}
+              className={`min-h-[80px] flex items-center gap-lg ${
+                isSelected ? 'bg-accent-soft border-accent-deep active:bg-[#F8DDB0]' : 'border-line active:bg-canvas'
               }`}
             >
-              <div className="text-left">
-                <div className="text-3xl font-extrabold tracking-tight">
-                  {lang.nativeName}
-                </div>
-                <div className="text-lg font-semibold text-gray-700">
-                  {lang.englishName}
-                </div>
+              <div
+                className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 border-2 ${
+                  isSelected ? 'bg-ink border-ink text-surface' : 'bg-surface border-line text-ink-muted'
+                }`}
+              >
+                {isSelected ? <Check className="w-7 h-7" strokeWidth={3} /> : <Circle className="w-5 h-5" />}
               </div>
-
-              {isSelected && (
-                <div className="w-10 h-10 bg-slate-950 text-white rounded-full flex items-center justify-center shadow-md">
-                  <Check className="w-7 h-7 stroke-[3]" />
-                </div>
-              )}
-            </button>
+              <div>
+                <div className="text-title text-ink">{lang.nativeName}</div>
+                <div className="text-label text-ink-muted">{lang.englishName}</div>
+              </div>
+            </Card>
           );
         })}
       </div>
 
       {/* Continue CTA */}
-      <div className="pb-4">
-        <button
+      <div className="pb-sm">
+        <Button
+          icon={ArrowRight}
+          iconEnd
+          label={t.continueBtn}
+          variant="dark"
+          fullWidth
           onClick={() => onSelectLanguage(currentLanguage)}
-          className="w-full min-h-[64px] bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-2xl font-bold rounded-2xl shadow-xl flex items-center justify-center transition-colors"
-        >
-          {t.continueBtn}
-        </button>
+        />
       </div>
     </div>
   );

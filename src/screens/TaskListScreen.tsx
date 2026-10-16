@@ -2,6 +2,9 @@ import React from 'react';
 import { SupportedLanguage, TaskConfig } from '../types/task';
 import { I18N } from '../config/i18n';
 import { ArrowLeft, CheckCircle, Play } from 'lucide-react';
+import { Button } from '../components/Button';
+import { Card } from '../components/Card';
+import { ScreenHeader } from '../components/ScreenHeader';
 
 interface TaskListScreenProps {
   app: 'whatsapp' | 'gpay';
@@ -11,6 +14,10 @@ interface TaskListScreenProps {
   onSelectTask: (task: TaskConfig) => void;
   onBack: () => void;
 }
+
+// Only the first few cards animate in; the rest appear at once.
+const STAGGERED_CARDS = 6;
+const STAGGER_MS = 40;
 
 export const TaskListScreen: React.FC<TaskListScreenProps> = ({
   app,
@@ -25,85 +32,71 @@ export const TaskListScreen: React.FC<TaskListScreenProps> = ({
   const isWhatsApp = app === 'whatsapp';
 
   return (
-    <div className="h-full w-full bg-slate-50 flex flex-col justify-between p-4 select-none animate-fade-in">
+    <div className="h-full w-full bg-canvas flex flex-col p-lg select-none">
       {/* App Specific Header */}
-      <div className="pb-3 border-b-2 border-gray-200">
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={onBack}
-            className="p-2.5 bg-gray-200 hover:bg-gray-300 rounded-2xl text-gray-900 active:bg-gray-400"
-          >
-            <ArrowLeft className="w-8 h-8" />
-          </button>
-          <div>
-            <h1 className={`text-3xl font-black ${isWhatsApp ? 'text-[#075E54]' : 'text-[#1A73E8]'}`}>
-              {isWhatsApp ? t.whatsAppTitle : t.gpayTitle}
-            </h1>
-            <p className="text-lg font-bold text-gray-600">
-              {filteredTasks.length} {t.tasksAvailable}
-            </p>
-          </div>
-        </div>
-      </div>
+      <ScreenHeader
+        title={isWhatsApp ? t.whatsAppTitle : t.gpayTitle}
+        titleClassName={isWhatsApp ? 'text-[#075E54]' : 'text-gpay-dark-blue'}
+        subtitle={`${filteredTasks.length} ${t.tasksAvailable}`}
+        onBack={onBack}
+        backLabel={t.back}
+      />
 
       {/* Task List: Vertically stacked full-width buttons, minimum 64dp height */}
-      <div className="flex-1 overflow-y-auto space-y-4 py-4">
+      <div className="flex-1 overflow-y-auto space-y-lg pt-xs pb-lg -mx-xs px-xs">
         {filteredTasks.map((task, index) => {
           const isDone = completedTaskIds.includes(task.task_id);
+          const staggered = index < STAGGERED_CARDS;
           return (
-            <button
+            <div
               key={task.task_id}
-              onClick={() => onSelectTask(task)}
-              className={`w-full min-h-[84px] text-left p-4 rounded-3xl border-3 shadow-md flex items-center justify-between transition-all duration-150 active:scale-[0.98] ${
-                isDone
-                  ? 'bg-emerald-50 border-emerald-500 hover:bg-emerald-100'
-                  : 'bg-white border-gray-300 hover:border-amber-500 hover:bg-amber-50/50'
-              }`}
+              className={staggered ? 'fade-up' : undefined}
+              style={staggered ? { animationDelay: `${index * STAGGER_MS}ms` } : undefined}
             >
-              <div className="flex items-center space-x-4 flex-1 pr-2">
+              <Card
+                onClick={() => onSelectTask(task)}
+                shade={isDone ? '#276B43' : undefined}
+                className={`min-h-[88px] flex items-center gap-md ${
+                  isDone ? 'bg-success-soft border-success active:bg-[#D2EADB]' : 'border-line active:bg-canvas'
+                }`}
+              >
                 <div
-                  className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl font-black flex-shrink-0 shadow-sm ${
+                  className={`w-12 h-12 rounded-btn flex items-center justify-center text-title font-black flex-shrink-0 ${
                     isDone
-                      ? 'bg-emerald-600 text-white'
+                      ? 'bg-success text-white'
                       : isWhatsApp
                       ? 'bg-emerald-100 text-[#075E54]'
-                      : 'bg-blue-100 text-[#1A73E8]'
+                      : 'bg-blue-100 text-gpay-dark-blue'
                   }`}
                 >
-                  {isDone ? <CheckCircle className="w-7 h-7" /> : index + 1}
+                  {isDone ? <CheckCircle className="w-7 h-7" strokeWidth={2.5} /> : index + 1}
                 </div>
 
-                <div>
-                  <div className="text-2xl font-black text-gray-900 leading-tight">
+                <div className="flex-1 min-w-0">
+                  <div className="text-body font-extrabold text-ink">
                     {task.title[language] || task.title.en}
                   </div>
-                  <div className="text-lg text-gray-600 font-semibold mt-0.5 line-clamp-1">
+                  <div className="text-label font-medium text-ink-muted mt-xs line-clamp-1">
                     {task.description[language] || task.description.en}
                   </div>
                 </div>
-              </div>
 
-              <div
-                className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
-                  isDone ? 'bg-emerald-200 text-emerald-900' : 'bg-amber-400 text-slate-950'
-                }`}
-              >
-                <Play className="w-6 h-6 fill-current ml-0.5" />
-              </div>
-            </button>
+                <div
+                  className={`w-12 h-12 rounded-btn flex items-center justify-center flex-shrink-0 ${
+                    isDone ? 'bg-[#C6E3CF] text-success' : 'bg-accent text-ink'
+                  }`}
+                >
+                  <Play className="w-6 h-6 fill-current ml-0.5" />
+                </div>
+              </Card>
+            </div>
           );
         })}
       </div>
 
       {/* Back Button */}
-      <div className="pt-2">
-        <button
-          onClick={onBack}
-          className="w-full min-h-[64px] bg-slate-800 hover:bg-slate-900 text-white text-xl font-bold rounded-2xl shadow-md flex items-center justify-center space-x-2"
-        >
-          <ArrowLeft className="w-6 h-6" />
-          <span>{t.back}</span>
-        </button>
+      <div className="pt-sm">
+        <Button icon={ArrowLeft} label={t.back} variant="dark" fullWidth onClick={onBack} />
       </div>
     </div>
   );

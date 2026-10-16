@@ -30,4 +30,5 @@ export interface AppProfile {
   language: SupportedLanguage;
   completedTasks: string[];
   firstLaunchCompleted: boolean;
+  reduceMotion: boolean;
 }
