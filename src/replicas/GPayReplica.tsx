@@ -34,6 +34,28 @@ interface GPayReplicaProps {
 const PAYMENT_AMOUNTS: Record<string, number> = { gpay_send_contact: 1000 };
 const DEFAULT_PAYMENT_AMOUNT = 200;
 
+// Who the practice payment goes to, per task; other flows pay the shop.
+// The shop shows a "Banking Name Verified" line; a contact shows their phone number instead.
+interface Payee {
+  name: Record<SupportedLanguage, string>;
+  initial: string;
+  color: string;
+  phone?: string;
+}
+const SHOP_PAYEE: Payee = {
+  name: { en: 'Sharma Groceries', hi: 'Sharma Groceries', ml: 'Sharma Groceries' },
+  initial: 'S',
+  color: '#E37400'
+};
+const PAYEES: Record<string, Payee> = {
+  gpay_send_contact: {
+    name: { en: 'Ramesh (Son)', hi: 'रमेश (बेटा)', ml: 'രമേഷ് (മകൻ)' },
+    initial: 'R',
+    color: '#1E8E3E',
+    phone: '+91 98765 43210'
+  }
+};
+
 // Simple light app bar used by most Google Pay screens
 const AppBar: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="bg-white flex items-center gap-md px-lg py-md border-b border-[#DADCE0]">
@@ -56,6 +78,8 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
   const amountValue = (taskId && PAYMENT_AMOUNTS[taskId]) || DEFAULT_PAYMENT_AMOUNT;
   const amount = '₹' + amountValue.toLocaleString('en-IN');
   const amountExact = '₹' + amountValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const payee = (taskId && PAYEES[taskId]) || SHOP_PAYEE;
+  const payeeName = payee.name[language] || payee.name.en;
 
   // 1. QR SCANNER VIEWFINDER SCREEN
   if (screen === 'gpay_qr_scanner_viewfinder') {
@@ -104,19 +128,24 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
     return (
       <div className="h-full w-full bg-white text-ink flex flex-col justify-between">
         <AppBar>
-          <div className="w-12 h-12 bg-[#E37400] rounded-full flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
-            S
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center text-white text-xl font-bold flex-shrink-0"
+            style={{ background: payee.color }}
+          >
+            {payee.initial}
           </div>
           <div className="min-w-0">
             <div className="text-body font-bold leading-tight">
-              {highlightElement === 'proceed_to_pay_button' && screen.includes('contact')
-                ? (language === 'hi' ? 'रमेश (बेटा)' : language === 'ml' ? 'രമേഷ് (മകൻ)' : 'Ramesh (Son)')
-                : 'Sharma Groceries'}
+              {payeeName}
             </div>
-            <div className="text-label font-normal text-ink-muted flex items-center gap-xs">
-              <BadgeCheck className="w-5 h-5 text-gpay-blue flex-shrink-0" aria-hidden="true" />
-              <span>Banking Name Verified</span>
-            </div>
+            {payee.phone ? (
+              <div className="text-label font-normal text-ink-muted">{payee.phone}</div>
+            ) : (
+              <div className="text-label font-normal text-ink-muted flex items-center gap-xs">
+                <BadgeCheck className="w-5 h-5 text-gpay-blue flex-shrink-0" aria-hidden="true" />
+                <span>Banking Name Verified</span>
+              </div>
+            )}
           </div>
         </AppBar>
 
@@ -222,7 +251,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
               {language === 'hi' ? 'भुगतान सफल रहा!' : language === 'ml' ? 'പേയ്മെന്റ് വിജയകരം!' : 'Paid Successfully!'}
             </div>
             <div className="text-label font-normal text-white/90">
-              Sharma Groceries • UPI Ref 428901847192
+              {payeeName} • UPI Ref 428901847192
             </div>
           </div>
 
