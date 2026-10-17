@@ -240,10 +240,49 @@ const PAGE_HELPERS = `
         return c.includes('flex-1') && c.includes('overflow-y-auto') && c.includes('overflow-x-hidden') && c.includes('bg-canvas');
       }) || null;
     },
-    // Text that wraps in the middle of a word, anywhere on the practice screen: a new line must start
-    // right after a space, a hyphen, a bullet, an opening bracket or a slash
-    midWordBreaks() {
-      const el = this.replicaRoot();
+    // Home: every piece of text fully inside its own box and inside its tile (or the screen for the header)
+    homeClipped() {
+      const root = document.querySelector('.screen-enter');
+      const out = [];
+      if (!root) return ['Home screen not found'];
+      for (const el of root.querySelectorAll('*')) {
+        if (!vis(el) || el.children.length || !el.textContent.trim()) continue;
+        const what = '"' + el.textContent.trim().slice(0, 30) + '"';
+        if (el.scrollWidth > el.clientWidth + 1) out.push(what + ' wider than its box (' + el.scrollWidth + '>' + el.clientWidth + ')');
+        // Glyphs may draw a little past a visible box's line height (32px header: 40 > 38) without being cut;
+        // real clipping by the tile or screen is caught by the sticks-out check below
+        if (getComputedStyle(el).overflowY !== 'visible' && el.scrollHeight > el.clientHeight + 1) out.push(what + ' taller than its box (' + el.scrollHeight + '>' + el.clientHeight + ')');
+        const tile = el.closest('button') || root;
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const tr = range.getBoundingClientRect(), br = tile.getBoundingClientRect();
+        if (tr.left < br.left - 1 || tr.right > br.right + 1 || tr.top < br.top - 1 || tr.bottom > br.bottom + 1)
+          out.push(what + ' sticks out of its ' + (tile === root ? 'screen' : 'tile'));
+      }
+      return out;
+    },
+    // Home tiles: text column width and the widest single word in it (the column can never be narrower)
+    homeColumns() {
+      const root = document.querySelector('.screen-enter');
+      return [...root.querySelectorAll('button')].map((b) => {
+        const texts = [...b.querySelectorAll('*')].filter((e) => !e.children.length && e.textContent.trim());
+        const col = texts[0].parentElement;
+        let word = 0;
+        for (const e of texts) {
+          const s = document.createElement('span');
+          s.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font:' + getComputedStyle(e).font;
+          document.body.appendChild(s);
+          for (const w of e.textContent.trim().split(/\\s+/)) { s.textContent = w; word = Math.max(word, s.getBoundingClientRect().width); }
+          s.remove();
+        }
+        const ir = b.querySelector('svg')?.parentElement.getBoundingClientRect(), cr = col.getBoundingClientRect();
+        return { title: texts[0].textContent.trim(), col: Math.round(cr.width), word: Math.round(word), stacked: !!ir && cr.top >= ir.bottom - 1 };
+      });
+    },
+    // Text that wraps in the middle of a word, anywhere on the practice screen (or under root): a new
+    // line must start right after a space, a hyphen, a bullet, an opening bracket or a slash
+    midWordBreaks(root) {
+      const el = root || this.replicaRoot();
       const out = [];
       if (!el) return out;
       const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
@@ -424,6 +463,29 @@ const t0 = Date.now();
 await cdp.send('Emulation.setDeviceMetricsOverride', { width: 360, height: 690, deviceScaleFactor: 1, mobile: true });
 await openApp({ name: 'User', language: 'en', completedTasks: ['whatsapp_send_text'], firstLaunchCompleted: true });
 check(await A(`clickPointForText(${JSON.stringify(I18N.en.whatsAppTitle)})`), 'old saved profile: Home did not load');
+
+// ---------- Home: tile titles and subtitles fully visible, wrapped by word ----------
+for (const [w, h] of SIZES) {
+  for (const lang of LANGS) {
+    for (const reduce of MOTIONS) {
+      const tag = `${lang}_${w}x${h}_${reduce ? 'reduced' : 'motion'}`;
+      await cdp.send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: true });
+      await cdp.send('Emulation.setEmulatedMedia', {
+        features: [{ name: 'prefers-reduced-motion', value: reduce ? 'reduce' : 'no-preference' }]
+      });
+      await openApp({ name: 'User', language: lang, completedTasks: [], firstLaunchCompleted: true, reduceMotion: reduce, replicaLanguage: 'follow' });
+      await sleep(reduce ? 100 : 500); // screen slide-in
+      for (const s of await A('homeClipped()')) check(false, `${tag} Home: ${s}`);
+      for (const s of [...new Set(await A(`midWordBreaks(document.querySelector('.screen-enter'))`))]) check(false, `${tag} Home: ${s}`);
+      for (const s of await A('sideways()')) check(false, `${tag} Home: ${s}`);
+      if (w === 360 && !reduce) {
+        for (const c of await A('homeColumns()'))
+          notes.push(`${tag} Home tile "${c.title}": text column ${c.col}px, widest word ${c.word}px${c.stacked ? ' (below the icon)' : ''}`);
+      }
+      if (!reduce) await shot(`${tag}_home`);
+    }
+  }
+}
 
 let methodTurn = 0;
 for (const [w, h] of SIZES) {

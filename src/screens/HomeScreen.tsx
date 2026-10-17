@@ -33,18 +33,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </div>
       </div>
 
-      {/* Exactly 2 Large Square App Icons (>=120dp) with Name Printed Underneath */}
+      {/* Exactly 2 Large Square App Icons (>=120dp) with Name Printed Underneath.
+          The text column is never narrower than its longest word; when that does not fit beside the icon
+          (Malayalam WhatsApp at 360px), the text wraps below the icon, left-aligned, like the Ask card. */}
       <div className="space-y-lg my-auto py-xl">
         {/* WhatsApp Big Tile */}
         <Card
           onClick={() => onSelectApp('whatsapp')}
           shade="#075E54"
-          className="bg-white border-[#075E54] active:bg-emerald-50 flex items-center gap-lg"
+          className="bg-white border-[#075E54] active:bg-emerald-50 flex flex-wrap items-center gap-lg"
         >
           <div className="w-[120px] h-[120px] bg-[#25D366] text-white rounded-card flex items-center justify-center flex-shrink-0 border-2 border-[#128C7E]">
             <MessageCircle className="w-16 h-16" strokeWidth={2.25} />
           </div>
-          <div className="min-w-0 flex-1">
+          <div className="flex-1 min-w-[min(100%,min-content)]">
             <div className="text-title font-extrabold text-[#075E54]">
               {t.whatsAppTitle}
             </div>
@@ -58,12 +60,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         <Card
           onClick={() => onSelectApp('gpay')}
           shade="#1A73E8"
-          className="bg-white border-[#1A73E8] active:bg-blue-50 flex items-center gap-lg"
+          className="bg-white border-[#1A73E8] active:bg-blue-50 flex flex-wrap items-center gap-lg"
         >
           <div className="w-[120px] h-[120px] bg-[#1A73E8] text-white rounded-card flex items-center justify-center flex-shrink-0 border-2 border-blue-700">
             <CreditCard className="w-16 h-16" strokeWidth={2.25} />
           </div>
-          <div className="min-w-0 flex-1">
+          <div className="flex-1 min-w-[min(100%,min-content)]">
             <div className="text-title font-extrabold text-[#1A73E8]">
               {t.gpayTitle}
             </div>
