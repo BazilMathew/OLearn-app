@@ -123,6 +123,14 @@ export interface ReplicaStrings {
   tabMain: string;
   tabBank: string;
   tabProfile: string;
+  /** Google Pay home sections (inert) */
+  sendToBank: string;
+  sectionPeople: string;
+  sectionShops: string;
+  sectionBills: string;
+  billPhone: string;
+  billElectricity: string;
+  billWater: string;
 }
 
 export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
@@ -236,7 +244,14 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     mockFooter: 'Mock Google Pay Replica • No real money is used',
     tabMain: 'Main',
     tabBank: 'My bank',
-    tabProfile: 'Profile'
+    tabProfile: 'Profile',
+    sendToBank: 'Send to bank',
+    sectionPeople: 'People',
+    sectionShops: 'Shops',
+    sectionBills: 'Pay bills',
+    billPhone: 'Phone recharge',
+    billElectricity: 'Electricity',
+    billWater: 'Water'
   },
   hi: {
     rameshSon: 'रमेश (बेटा)',
@@ -348,7 +363,14 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     mockFooter: 'डेमो गूगल पे • असली पैसे का उपयोग नहीं होता',
     tabMain: 'मुख्य',
     tabBank: 'मेरा बैंक',
-    tabProfile: 'प्रोफ़ाइल'
+    tabProfile: 'प्रोफ़ाइल',
+    sendToBank: 'बैंक में भेजें',
+    sectionPeople: 'लोग',
+    sectionShops: 'दुकानें',
+    sectionBills: 'बिल भरें',
+    billPhone: 'फ़ोन रिचार्ज',
+    billElectricity: 'बिजली',
+    billWater: 'पानी'
   },
   ml: {
     rameshSon: 'രമേഷ് (മകൻ)',
@@ -460,6 +482,13 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     mockFooter: 'മാതൃക ഗൂഗിൾ പേ • യഥാർത്ഥ പണം ഉപയോഗിക്കുന്നില്ല',
     tabMain: 'പ്രധാനം',
     tabBank: 'എന്റെ ബാങ്ക്',
-    tabProfile: 'പ്രൊഫൈൽ'
+    tabProfile: 'പ്രൊഫൈൽ',
+    sendToBank: 'ബാങ്കിലേക്ക് അയയ്ക്കുക',
+    sectionPeople: 'ആളുകൾ',
+    sectionShops: 'കടകൾ',
+    sectionBills: 'ബില്ലുകൾ അടയ്ക്കുക',
+    billPhone: 'ഫോൺ റീചാർജ്',
+    billElectricity: 'കറന്റ് ബിൽ',
+    billWater: 'വെള്ളം'
   }
 };

@@ -26,7 +26,11 @@ import {
   X,
   Flashlight,
   MoreVertical,
-  Phone
+  Phone,
+  Smartphone,
+  Lightbulb,
+  Droplet,
+  Pill
 } from 'lucide-react';
 
 interface GPayReplicaProps {
@@ -58,13 +62,33 @@ const PAYEES: Record<string, Payee> = {
   gpay_send_contact: { nameKey: 'rameshSon', initialKey: 'rameshInitial', color: '#1E8E3E', phone: '+91 98765 43210' }
 };
 
-// Home shortcut: light-blue rounded square with a dark-blue icon and its name below
+// Home shortcut: light-blue rounded square with a dark-blue icon, its name beside it
 const Shortcut: React.FC<{ icon: React.ElementType; label: string }> = ({ icon: Icon, label }) => (
-  <div className="flex flex-col items-center gap-sm px-xs py-sm text-center">
-    <div className="w-16 h-16 rounded-2xl bg-[#D3E3FD] flex items-center justify-center">
+  <div className="min-h-[72px] flex items-center gap-md px-sm py-xs">
+    <div className="w-14 h-14 rounded-2xl bg-[#D3E3FD] flex items-center justify-center flex-shrink-0">
       <Icon className="w-8 h-8 text-[#0B57D0]" aria-hidden="true" />
     </div>
-    <span className="text-label font-semibold text-ink leading-tight">{label}</span>
+    <span className="text-label font-semibold text-ink leading-tight break-words min-w-0">{label}</span>
+  </div>
+);
+
+// Soft section heading on the Google Pay home
+const SectionTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="text-body font-semibold text-ink px-lg pt-lg pb-sm">{children}</div>
+);
+
+// Round 64px picture (initial or icon) with a name below; used for people, shops and bills on the home
+const RoundItem: React.FC<{ color: string; label: string; children: React.ReactNode; onClick?: () => void }> = ({
+  color,
+  label,
+  children,
+  onClick
+}) => (
+  <div onClick={onClick} className="min-w-0 flex flex-col items-center gap-xs py-xs text-center">
+    <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold flex-shrink-0" style={{ background: color }}>
+      {children}
+    </div>
+    <span className="text-label font-normal text-ink leading-tight break-words max-w-full">{label}</span>
   </div>
 );
 
@@ -569,19 +593,71 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
           </div>
         </div>
 
-        {/* Shortcuts at the top, two per row so 18px names fit in every language */}
-        <div className="grid grid-cols-2 gap-x-md px-lg py-md">
+        {/* The large Scan any QR code card at the top (the narration calls it large and at the top) */}
+        <div className="px-lg pt-sm">
           <HighlightTarget elementId="scan_qr_button" {...tp}>
-            <Shortcut icon={QrCode} label={r.scanAnyQr} />
-          </HighlightTarget>
-
-          <HighlightTarget elementId="pay_contacts_button" {...tp}>
-            <Shortcut icon={Users} label={r.payContacts} />
+            <div className="min-h-[96px] bg-gpay-blue text-white rounded-2xl px-lg py-md flex items-center gap-lg">
+              <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                <QrCode className="w-8 h-8 text-white" />
+              </div>
+              <span className="text-body font-bold leading-tight break-words min-w-0">{r.scanAnyQr}</span>
+            </div>
           </HighlightTarget>
         </div>
 
-        {/* Bank balance and history rows further down (the narration places them at the bottom) */}
-        <div className="px-lg pb-sm space-y-xs">
+        {/* Shortcuts as full-width rows, so long single words (e.g. Malayalam കോൺടാക്റ്റുകൾക്ക്) never break */}
+        <div className="px-lg pt-sm space-y-xs">
+          <HighlightTarget elementId="pay_contacts_button" {...tp}>
+            <Shortcut icon={Users} label={r.payContacts} />
+          </HighlightTarget>
+
+          <div onClick={onWrongTap} className="min-w-0">
+            <Shortcut icon={Landmark} label={r.sendToBank} />
+          </div>
+        </div>
+
+        {/* People (inert): Ramesh first. Columns are at least 88px so names wrap by word (3 per row at 360px,
+            4 at 412px); the grid wraps, it never scrolls sideways */}
+        <SectionTitle>{r.sectionPeople}</SectionTitle>
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(88px,1fr))] gap-x-xs gap-y-sm px-lg text-white">
+          <RoundItem color="#1E8E3E" label={r.rameshSon} onClick={onWrongTap}>{r.rameshInitial}</RoundItem>
+          <RoundItem color="#8430CE" label={r.priya} onClick={onWrongTap}>{r.priyaInitial}</RoundItem>
+          <RoundItem color="#3B5BA9" label={r.chatListDoctor} onClick={onWrongTap}>{r.chatListDoctor.charAt(0)}</RoundItem>
+          <RoundItem color="#54656F" label={r.chatListFamily} onClick={onWrongTap}>
+            <Users className="w-8 h-8" aria-hidden="true" />
+          </RoundItem>
+        </div>
+
+        {/* Shops (inert): bordered cards */}
+        <SectionTitle>{r.sectionShops}</SectionTitle>
+        <div className="grid grid-cols-2 gap-md px-lg text-white">
+          <div onClick={onWrongTap} className="min-w-0 rounded-2xl border border-[#DADCE0] px-sm py-sm">
+            <RoundItem color="#E37400" label={r.shopName}>{r.shopInitial}</RoundItem>
+          </div>
+          <div onClick={onWrongTap} className="min-w-0 rounded-2xl border border-[#DADCE0] px-sm py-sm">
+            <RoundItem color="#00796B" label={r.chatListPharmacy}>
+              <Pill className="w-8 h-8" aria-hidden="true" />
+            </RoundItem>
+          </div>
+        </div>
+
+        {/* Pay bills (inert): round light-blue icons */}
+        <SectionTitle>{r.sectionBills}</SectionTitle>
+        <div className="grid grid-cols-3 gap-x-xs px-lg text-[#0B57D0]">
+          <RoundItem color="#D3E3FD" label={r.billPhone} onClick={onWrongTap}>
+            <Smartphone className="w-8 h-8" aria-hidden="true" />
+          </RoundItem>
+          <RoundItem color="#D3E3FD" label={r.billElectricity} onClick={onWrongTap}>
+            <Lightbulb className="w-8 h-8" aria-hidden="true" />
+          </RoundItem>
+          <RoundItem color="#D3E3FD" label={r.billWater} onClick={onWrongTap}>
+            <Droplet className="w-8 h-8" aria-hidden="true" />
+          </RoundItem>
+        </div>
+
+        {/* Bank balance and history rows near the bottom, below the sections
+            (the narration places them at the bottom and scrolls down to the history) */}
+        <div className="mx-lg mt-lg mb-sm rounded-2xl border border-[#DADCE0] p-xs space-y-xs">
           <HighlightTarget elementId="check_balance_button" {...tp}>
             <div className="min-h-[64px] px-sm py-sm flex items-center gap-md">
               <div className="w-12 h-12 rounded-full bg-[#D3E3FD] flex items-center justify-center flex-shrink-0">
@@ -603,7 +679,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
           </HighlightTarget>
         </div>
 
-        <div className="mt-auto text-center text-ink-muted text-label font-normal px-lg pb-md">
+        <div className="mt-auto text-center text-ink-muted text-label font-normal px-lg pt-sm pb-md">
           {r.mockFooter}
         </div>
       </div>
