@@ -282,35 +282,36 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
 
       {/* Attachment Tray Popup */}
       {screen === 'whatsapp_attachment_sheet' && (
-        <div className="bg-white rounded-t-[28px] px-lg pt-lg pb-xl border-t-2 border-line z-30 screen-enter">
+        <div className="bg-white rounded-t-[28px] px-lg pt-md pb-lg border-t-2 border-line z-30 screen-enter">
           <div className="w-12 h-1.5 bg-line rounded-full mx-auto mb-lg" aria-hidden="true" />
-          <div className="text-body font-bold text-ink mb-lg text-center">
+          <div className="text-body font-bold text-ink mb-md text-center">
             {r.shareContent}
           </div>
-          <div className="grid grid-cols-3 gap-sm">
+          {/* One option per row so long labels (e.g. Malayalam ഡോക്യുമെന്റ്) never break mid-word */}
+          <div className="space-y-sm">
             <HighlightTarget elementId="gallery_icon" {...tp}>
-              <div className="flex flex-col items-center py-xs">
-                <div className="w-16 h-16 bg-[#BF59CF] rounded-full flex items-center justify-center">
-                  <Image className="w-8 h-8 text-white" />
+              <div className="min-h-[72px] flex items-center gap-lg px-md py-sm">
+                <div className="w-14 h-14 bg-[#BF59CF] rounded-full flex items-center justify-center flex-shrink-0">
+                  <Image className="w-7 h-7 text-white" />
                 </div>
-                <span className="text-label text-ink mt-sm text-center leading-tight [overflow-wrap:anywhere]">
+                <span className="text-body font-bold text-ink">
                   {r.gallery}
                 </span>
               </div>
             </HighlightTarget>
 
-            <div onClick={onWrongTap} className="flex flex-col items-center py-xs">
-              <div className="w-16 h-16 bg-[#FF2E74] rounded-full flex items-center justify-center">
-                <Camera className="w-8 h-8 text-white" />
+            <div onClick={onWrongTap} className="min-h-[72px] flex items-center gap-lg px-md py-sm">
+              <div className="w-14 h-14 bg-[#FF2E74] rounded-full flex items-center justify-center flex-shrink-0">
+                <Camera className="w-7 h-7 text-white" />
               </div>
-              <span className="text-label text-ink mt-sm text-center leading-tight [overflow-wrap:anywhere]">{r.camera}</span>
+              <span className="text-body font-bold text-ink">{r.camera}</span>
             </div>
 
-            <div onClick={onWrongTap} className="flex flex-col items-center py-xs">
-              <div className="w-16 h-16 bg-[#7F66FF] rounded-full flex items-center justify-center">
-                <FileText className="w-8 h-8 text-white" />
+            <div onClick={onWrongTap} className="min-h-[72px] flex items-center gap-lg px-md py-sm">
+              <div className="w-14 h-14 bg-[#7F66FF] rounded-full flex items-center justify-center flex-shrink-0">
+                <FileText className="w-7 h-7 text-white" />
               </div>
-              <span className="text-label text-ink mt-sm text-center leading-tight [overflow-wrap:anywhere]">{r.document}</span>
+              <span className="text-body font-bold text-ink">{r.document}</span>
             </div>
           </div>
         </div>
