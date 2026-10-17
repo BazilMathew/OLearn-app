@@ -135,6 +135,7 @@ export const App: React.FC = () => {
                 <TaskEngine
                   task={activeTask}
                   language={language}
+                  replicaLanguage={profile.replicaLanguage}
                   onExit={handleTutorialExit}
                 />
               )}
@@ -158,6 +159,11 @@ export const App: React.FC = () => {
                   reduceMotion={profile.reduceMotion}
                   onReduceMotionChange={(on) => {
                     StorageService.setReduceMotion(on);
+                    reloadProfile();
+                  }}
+                  replicaLanguage={profile.replicaLanguage}
+                  onReplicaLanguageChange={(mode) => {
+                    StorageService.setReplicaLanguage(mode);
                     reloadProfile();
                   }}
                   onClose={() => setScreenState('home')}

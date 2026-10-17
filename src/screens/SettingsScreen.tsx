@@ -3,7 +3,7 @@ import { SupportedLanguage } from '../types/task';
 import { I18N } from '../config/i18n';
 import { StorageService } from '../services/StorageService';
 import { AudioService } from '../services/AudioService';
-import { Globe, Volume2, RotateCcw, Check, Circle, Sparkles } from 'lucide-react';
+import { Globe, Volume2, RotateCcw, Check, Circle, Sparkles, Languages } from 'lucide-react';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -13,6 +13,8 @@ interface SettingsScreenProps {
   onLanguageChange: (lang: SupportedLanguage) => void;
   reduceMotion: boolean;
   onReduceMotionChange: (on: boolean) => void;
+  replicaLanguage: 'en' | 'follow';
+  onReplicaLanguageChange: (mode: 'en' | 'follow') => void;
   onClose: () => void;
 }
 
@@ -21,6 +23,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onLanguageChange,
   reduceMotion,
   onReduceMotionChange,
+  replicaLanguage,
+  onReplicaLanguageChange,
   onClose
 }) => {
   const [speed, setSpeed] = useState<number>(AudioService.getSpeechRate());
@@ -127,6 +131,39 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 }`}
               >
                 {reduceMotion && <Check className="w-5 h-5 text-success" strokeWidth={3} />}
+              </span>
+            </span>
+          </button>
+        </div>
+
+        {/* Practice screens language: mock WhatsApp / Google Pay in English or in my language */}
+        <div className="bg-surface rounded-card border-2 border-line shadow-card">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={replicaLanguage === 'follow'}
+            onClick={() => onReplicaLanguageChange(replicaLanguage === 'follow' ? 'en' : 'follow')}
+            className="w-full min-h-[72px] px-lg py-md flex items-center gap-md text-left rounded-card active:bg-canvas"
+          >
+            <Languages className="w-7 h-7 text-[#1A73E8] flex-shrink-0" />
+            <span className="flex-1 min-w-0">
+              <span className="block text-body font-bold text-ink">{t.practiceScreens}</span>
+              <span className="block text-label text-ink-muted">
+                {replicaLanguage === 'follow' ? t.practiceScreensMine : t.practiceScreensEnglish}
+              </span>
+            </span>
+            <span
+              className={`relative w-[68px] h-10 rounded-full border-2 flex-shrink-0 transition-colors ${
+                replicaLanguage === 'follow' ? 'bg-success border-success' : 'bg-line border-[#CDBFAE]'
+              }`}
+              aria-hidden="true"
+            >
+              <span
+                className={`absolute top-[2px] left-[2px] w-8 h-8 rounded-full bg-surface flex items-center justify-center transition-transform duration-200 ${
+                  replicaLanguage === 'follow' ? 'translate-x-[28px]' : ''
+                }`}
+              >
+                {replicaLanguage === 'follow' && <Check className="w-5 h-5 text-success" strokeWidth={3} />}
               </span>
             </span>
           </button>

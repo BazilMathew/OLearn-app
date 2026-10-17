@@ -31,4 +31,6 @@ export interface AppProfile {
   completedTasks: string[];
   firstLaunchCompleted: boolean;
   reduceMotion: boolean;
+  /** Language of the mock WhatsApp / Google Pay screens: English, or follow the learner's language. */
+  replicaLanguage: 'en' | 'follow';
 }

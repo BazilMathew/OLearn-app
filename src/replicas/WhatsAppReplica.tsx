@@ -1,6 +1,7 @@
 import React from 'react';
 import { SupportedLanguage } from '../types/task';
 import { HighlightTarget } from '../engine/HighlightTarget';
+import { REPLICA_STRINGS } from './replicaStrings';
 import {
   Phone,
   Video,
@@ -46,7 +47,8 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
   onWrongTap,
   nudgeKey
 }) => {
-  const contactName = language === 'hi' ? 'रमेश (बेटा)' : language === 'ml' ? 'രമേഷ് (മകൻ)' : 'Ramesh (Son)';
+  const r = REPLICA_STRINGS[language] || REPLICA_STRINGS.en;
+  const contactName = r.rameshSon;
   const tp = { activeHighlightId: highlightElement, onCorrectTap, onWrongTap, nudgeKey };
 
   // 1. ACTIVE VOICE CALL SCREEN
@@ -59,14 +61,14 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
             <span>WhatsApp</span>
           </div>
           <div className="w-28 h-28 bg-wa-green rounded-full flex items-center justify-center text-5xl font-bold border-4 border-white/30 mt-md">
-            R
+            {r.rameshInitial}
           </div>
           <div className="text-title text-white">{contactName}</div>
           <div className="text-body text-[#D9FDD3] font-semibold tracking-wider">
             00:14
           </div>
           <div className="text-label text-white/85 font-normal">
-            {language === 'hi' ? 'व्हाट्सएप वॉइस कॉल जारी है' : language === 'ml' ? 'വോയ്സ് കോൾ നടക്കുന്നു' : 'WhatsApp Voice Call in progress'}
+            {r.voiceCallInProgress}
           </div>
         </div>
 
@@ -100,7 +102,7 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
         {/* Self View Floating Window */}
         <div className="absolute top-lg right-lg w-28 h-36 bg-[#3B4A54] border-2 border-white rounded-card flex flex-col items-center justify-center overflow-hidden z-20">
           <span className="text-4xl">👵</span>
-          <span className="text-label text-white mt-xs">You</span>
+          <span className="text-label text-white mt-xs">{r.you}</span>
         </div>
 
         {/* Bottom Call Controls */}
@@ -129,7 +131,7 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
           <div className="flex-1 min-w-0">
             <div className="text-body font-bold leading-tight">{contactName}</div>
             <div className="text-label text-[#D9FDD3] font-normal">
-              {language === 'hi' ? 'फोटो पूर्वावलोकन' : language === 'ml' ? 'ഫോട്ടോ കാഴ്ച്ച' : 'Photo Preview'}
+              {r.photoPreview}
             </div>
           </div>
         </div>
@@ -139,10 +141,10 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
           <div className="w-full max-w-[300px] h-full max-h-[380px] min-h-[200px] bg-gradient-to-br from-amber-300 to-orange-500 rounded-card flex flex-col items-center justify-center text-center p-xl">
             <span className="text-7xl mb-md">🌸</span>
             <div className="text-title text-ink">
-              {language === 'hi' ? 'सुंदर फूल' : language === 'ml' ? 'സുന്ദരമായ പൂവ്' : 'Beautiful Flower'}
+              {r.beautifulFlower}
             </div>
             <div className="text-label text-ink mt-xs">
-              Family Photo 1
+              {r.familyPhoto}
             </div>
           </div>
         </div>
@@ -150,7 +152,7 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
         {/* Bottom Preview Controls */}
         <div className="flex items-center gap-md pt-sm">
           <div className="bg-[#1F2C34] text-white/80 px-lg min-h-[64px] flex items-center rounded-full text-body flex-1 min-w-0">
-            {language === 'hi' ? 'कैप्शन जोड़ें...' : language === 'ml' ? 'വിവരണം നൽകുക...' : 'Add a caption...'}
+            {r.addCaption}
           </div>
 
           <HighlightTarget elementId="preview_send_button" {...tp} className="rounded-full flex-shrink-0">
@@ -170,7 +172,7 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
         <div className="bg-[#1F2C34] flex items-center gap-md px-lg py-md">
           <ArrowLeft className="w-7 h-7 text-white flex-shrink-0" aria-hidden="true" />
           <div className="text-title text-white">
-            {language === 'hi' ? 'सभी तस्वीरें (गैलरी)' : language === 'ml' ? 'എല്ലാ ഫോട്ടോകളും' : 'All Photos (Gallery)'}
+            {r.allPhotos}
           </div>
         </div>
 
@@ -178,7 +180,7 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
           <HighlightTarget elementId="photo_thumbnail_1" {...tp}>
             <div className="h-40 bg-gradient-to-br from-amber-300 to-orange-500 rounded-2xl p-md flex flex-col items-center justify-center text-center">
               <span className="text-5xl mb-sm">🌸</span>
-              <span className="text-body font-bold text-ink">Flower</span>
+              <span className="text-body font-bold text-ink">{r.flower}</span>
             </div>
           </HighlightTarget>
 
@@ -187,7 +189,7 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
             className="h-40 bg-gradient-to-br from-sky-400 to-indigo-700 rounded-2xl p-md flex flex-col items-center justify-center text-center"
           >
             <span className="text-5xl mb-sm">🛕</span>
-            <span className="text-body font-bold text-white">Temple</span>
+            <span className="text-body font-bold text-white">{r.temple}</span>
           </div>
 
           <div
@@ -195,7 +197,7 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
             className="h-40 bg-gradient-to-br from-emerald-400 to-teal-700 rounded-2xl p-md flex flex-col items-center justify-center text-center"
           >
             <span className="text-5xl mb-sm">👶</span>
-            <span className="text-body font-bold text-white">Grandchild</span>
+            <span className="text-body font-bold text-white">{r.grandchild}</span>
           </div>
 
           <div
@@ -203,7 +205,7 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
             className="h-40 bg-gradient-to-br from-rose-400 to-pink-700 rounded-2xl p-md flex flex-col items-center justify-center text-center"
           >
             <span className="text-5xl mb-sm">🎂</span>
-            <span className="text-body font-bold text-white">Birthday</span>
+            <span className="text-body font-bold text-white">{r.birthday}</span>
           </div>
         </div>
       </div>
@@ -218,11 +220,11 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
         <div className="flex items-center gap-sm min-w-0">
           <ArrowLeft className="w-7 h-7 text-white flex-shrink-0" aria-hidden="true" />
           <div className="w-11 h-11 bg-wa-green rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0">
-            R
+            {r.rameshInitial}
           </div>
           <div className="min-w-0">
             <div className="text-body font-bold leading-tight">{contactName}</div>
-            <div className="text-label text-white/85 font-normal">online</div>
+            <div className="text-label text-white/85 font-normal">{r.online}</div>
           </div>
         </div>
 
@@ -246,7 +248,7 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
       <div className="flex-1 px-lg py-lg space-y-md overflow-y-auto">
         <div className="flex justify-center">
           <span className="bg-[#FFF5C4] text-ink text-label px-lg py-xs rounded-xl border border-[#E9DA9A]">
-            {language === 'hi' ? 'आज' : language === 'ml' ? 'ഇന്ന്' : 'Today'}
+            {r.today}
           </span>
         </div>
 
@@ -255,11 +257,7 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
           <div className="relative bg-white text-ink rounded-2xl rounded-tl-none px-md pt-sm pb-xs max-w-[85%] shadow-[0_1px_0_0_rgba(11,20,26,0.13)]">
             <span className="absolute -left-2 top-0 w-0 h-0 border-t-[12px] border-t-white border-l-[10px] border-l-transparent" aria-hidden="true" />
             <p className="text-body leading-snug">
-              {language === 'hi'
-                ? 'नमस्ते माँ / पिताजी! आप कैसे हैं?'
-                : language === 'ml'
-                ? 'നമസ്കാരം, സുഖമാണോ?'
-                : 'Hello! How are you doing today?'}
+              {r.chatReceived}
             </p>
             <div className="text-label font-normal text-ink-muted text-right mt-xs">10:15 AM</div>
           </div>
@@ -271,11 +269,7 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
             <div className="relative bg-[#D9FDD3] text-ink rounded-2xl rounded-tr-none px-md pt-sm pb-xs max-w-[85%] shadow-[0_1px_0_0_rgba(11,20,26,0.13)]">
               <span className="absolute -right-2 top-0 w-0 h-0 border-t-[12px] border-t-[#D9FDD3] border-r-[10px] border-r-transparent" aria-hidden="true" />
               <p className="text-body leading-snug">
-                {language === 'hi'
-                  ? 'मैं ठीक हूँ बेटा, सब कुशल है।'
-                  : language === 'ml'
-                  ? 'ഞാൻ ഇവിടെ സുഖമായിരിക്കുന്നു മകനേ.'
-                  : 'I am doing well son, all good!'}
+                {r.chatSent}
               </p>
               <div className="text-label font-normal text-ink-muted text-right mt-xs flex items-center justify-end gap-xs">
                 <span>10:16 AM</span>
@@ -288,19 +282,19 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
 
       {/* Attachment Tray Popup */}
       {screen === 'whatsapp_attachment_sheet' && (
-        <div className="bg-white rounded-t-[28px] px-xl pt-lg pb-xl border-t-2 border-line z-30 screen-enter">
+        <div className="bg-white rounded-t-[28px] px-lg pt-lg pb-xl border-t-2 border-line z-30 screen-enter">
           <div className="w-12 h-1.5 bg-line rounded-full mx-auto mb-lg" aria-hidden="true" />
           <div className="text-body font-bold text-ink mb-lg text-center">
-            {language === 'hi' ? 'अटैच करें' : language === 'ml' ? 'തിരഞ്ഞെടുക്കുക' : 'Share Content'}
+            {r.shareContent}
           </div>
-          <div className="grid grid-cols-3 gap-lg">
+          <div className="grid grid-cols-3 gap-sm">
             <HighlightTarget elementId="gallery_icon" {...tp}>
               <div className="flex flex-col items-center py-xs">
                 <div className="w-16 h-16 bg-[#BF59CF] rounded-full flex items-center justify-center">
                   <Image className="w-8 h-8 text-white" />
                 </div>
-                <span className="text-label text-ink mt-sm">
-                  {language === 'hi' ? 'गैलरी' : language === 'ml' ? 'ഗ്യാലറി' : 'Gallery'}
+                <span className="text-label text-ink mt-sm text-center leading-tight [overflow-wrap:anywhere]">
+                  {r.gallery}
                 </span>
               </div>
             </HighlightTarget>
@@ -309,14 +303,14 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
               <div className="w-16 h-16 bg-[#FF2E74] rounded-full flex items-center justify-center">
                 <Camera className="w-8 h-8 text-white" />
               </div>
-              <span className="text-label text-ink mt-sm">Camera</span>
+              <span className="text-label text-ink mt-sm text-center leading-tight [overflow-wrap:anywhere]">{r.camera}</span>
             </div>
 
             <div onClick={onWrongTap} className="flex flex-col items-center py-xs">
               <div className="w-16 h-16 bg-[#7F66FF] rounded-full flex items-center justify-center">
                 <FileText className="w-8 h-8 text-white" />
               </div>
-              <span className="text-label text-ink mt-sm">Document</span>
+              <span className="text-label text-ink mt-sm text-center leading-tight [overflow-wrap:anywhere]">{r.document}</span>
             </div>
           </div>
         </div>
@@ -330,18 +324,18 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
               <Phone className="w-8 h-8 text-wa-teal" />
             </div>
             <div className="text-title text-ink">
-              {language === 'hi' ? 'रमेश को वॉइस कॉल करें?' : language === 'ml' ? 'രമേഷിനെ കോൾ ചെയ്യണോ?' : 'Voice Call Ramesh?'}
+              {r.voiceCallQuestion}
             </div>
             <div className="flex gap-md">
               <button
                 onClick={onWrongTap}
                 className="flex-1 min-h-[64px] text-body font-bold text-wa-teal bg-white border-2 border-line rounded-full"
               >
-                Cancel
+                {r.cancel}
               </button>
               <HighlightTarget elementId="dialog_call_button" {...tp} className="flex-1 rounded-full">
                 <div className="w-full min-h-[64px] bg-wa-teal text-white rounded-full font-bold text-body flex items-center justify-center">
-                  {language === 'hi' ? 'कॉल करें' : language === 'ml' ? 'കോൾ' : 'Call'}
+                  {r.call}
                 </div>
               </HighlightTarget>
             </div>
@@ -357,18 +351,18 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
               <Video className="w-8 h-8 text-wa-teal" />
             </div>
             <div className="text-title text-ink">
-              {language === 'hi' ? 'रमेश को वीडियो कॉल करें?' : language === 'ml' ? 'വീഡിയോ കോൾ ചെയ്യണോ?' : 'Start Video Call?'}
+              {r.videoCallQuestion}
             </div>
             <div className="flex gap-md">
               <button
                 onClick={onWrongTap}
                 className="flex-1 min-h-[64px] text-body font-bold text-wa-teal bg-white border-2 border-line rounded-full"
               >
-                Cancel
+                {r.cancel}
               </button>
               <HighlightTarget elementId="dialog_video_button" {...tp} className="flex-1 rounded-full">
                 <div className="w-full min-h-[64px] bg-wa-teal text-white rounded-full font-bold text-body flex items-center justify-center px-sm">
-                  {language === 'hi' ? 'शुरू करें' : language === 'ml' ? 'തുടങ്ങുക' : 'Start Call'}
+                  {r.startCall}
                 </div>
               </HighlightTarget>
             </div>
@@ -388,7 +382,7 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
               <span className="text-body font-bold text-ink">00:04</span>
             </div>
             <div className="text-label text-ink-muted font-normal leading-snug">
-              {language === 'hi' ? 'आवाज़ रिकॉर्ड हो रही है...' : language === 'ml' ? 'ശബ്ദം റെക്കോർഡ് ചെയ്യുന്നു...' : 'Recording audio note...'}
+              {r.recordingNote}
             </div>
           </div>
 
@@ -408,10 +402,10 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
 
             <HighlightTarget elementId="chat_input" {...tp} className="flex-1 min-w-0 mx-sm">
               <div className="min-h-[64px] flex items-center text-body text-ink select-none min-w-0">
-                <span className={`truncate ${screen === 'whatsapp_chat_screen_typed' ? '' : 'text-ink-muted'}`}>
+                <span className={`line-clamp-2 leading-tight [overflow-wrap:anywhere] ${screen === 'whatsapp_chat_screen_typed' ? '' : 'text-ink-muted'}`}>
                   {screen === 'whatsapp_chat_screen_typed'
-                    ? (language === 'hi' ? 'मैं ठीक हूँ बेटा...' : language === 'ml' ? 'ഞാൻ സുഖമായിരിക്കുന്നു...' : 'I am doing well son...')
-                    : (language === 'hi' ? 'संदेश लिखें' : language === 'ml' ? 'സന്ദേശം എഴുതുക' : 'Message')}
+                    ? (r.chatTyped)
+                    : (r.messagePlaceholder)}
                 </span>
               </div>
             </HighlightTarget>

@@ -2,6 +2,7 @@ import React from 'react';
 import { SupportedLanguage } from '../types/task';
 import { HighlightTarget } from '../engine/HighlightTarget';
 import { MOCK_CONTACTS, MOCK_TRANSACTIONS, MOCK_BANK_BALANCE } from '../config/mockData';
+import { REPLICA_STRINGS, ReplicaStrings } from './replicaStrings';
 import {
   QrCode,
   Users,
@@ -36,24 +37,16 @@ const DEFAULT_PAYMENT_AMOUNT = 200;
 
 // Who the practice payment goes to, per task; other flows pay the shop.
 // The shop shows a "Banking Name Verified" line; a contact shows their phone number instead.
+// Names and initials come from the replica string table, so they follow the practice-screen language.
 interface Payee {
-  name: Record<SupportedLanguage, string>;
-  initial: string;
+  nameKey: 'shopName' | 'rameshSon';
+  initialKey: 'shopInitial' | 'rameshInitial';
   color: string;
   phone?: string;
 }
-const SHOP_PAYEE: Payee = {
-  name: { en: 'Sharma Groceries', hi: 'Sharma Groceries', ml: 'Sharma Groceries' },
-  initial: 'S',
-  color: '#E37400'
-};
+const SHOP_PAYEE: Payee = { nameKey: 'shopName', initialKey: 'shopInitial', color: '#E37400' };
 const PAYEES: Record<string, Payee> = {
-  gpay_send_contact: {
-    name: { en: 'Ramesh (Son)', hi: 'रमेश (बेटा)', ml: 'രമേഷ് (മകൻ)' },
-    initial: 'R',
-    color: '#1E8E3E',
-    phone: '+91 98765 43210'
-  }
+  gpay_send_contact: { nameKey: 'rameshSon', initialKey: 'rameshInitial', color: '#1E8E3E', phone: '+91 98765 43210' }
 };
 
 // Simple light app bar used by most Google Pay screens
@@ -74,12 +67,14 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
   taskId
 }) => {
   const tp = { activeHighlightId: highlightElement, onCorrectTap, onWrongTap, nudgeKey };
+  const r: ReplicaStrings = REPLICA_STRINGS[language] || REPLICA_STRINGS.en;
   // Indian digit grouping, e.g. ₹1,000 and ₹1,000.00
   const amountValue = (taskId && PAYMENT_AMOUNTS[taskId]) || DEFAULT_PAYMENT_AMOUNT;
   const amount = '₹' + amountValue.toLocaleString('en-IN');
   const amountExact = '₹' + amountValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const payee = (taskId && PAYEES[taskId]) || SHOP_PAYEE;
-  const payeeName = payee.name[language] || payee.name.en;
+  const payeeName = r[payee.nameKey];
+  const payeeInitial = r[payee.initialKey];
 
   // 1. QR SCANNER VIEWFINDER SCREEN
   if (screen === 'gpay_qr_scanner_viewfinder') {
@@ -88,7 +83,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
         <div className="w-full flex items-center justify-between">
           <ArrowLeft className="w-7 h-7 text-white" aria-hidden="true" />
           <span className="text-body font-bold">
-            {language === 'hi' ? 'दुकान का क्यूआर स्कैन करें' : language === 'ml' ? 'ക്യുആർ സ്കാൻ ചെയ്യുക' : 'Scan Shop QR'}
+            {r.scanShopQr}
           </span>
           <div className="w-7" />
         </div>
@@ -106,18 +101,18 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
                 <QrCode className="w-32 h-32 text-ink" />
               </div>
               <div className="bg-gpay-blue text-white text-label px-md py-xs rounded-full mt-md">
-                Sharma Kirana Store
+                {r.shopName}
               </div>
             </div>
           </HighlightTarget>
 
           <p className="text-body text-white font-bold mt-xl text-center">
-            {language === 'hi' ? 'कैमरा क्यूआर कोड के सामने रखें' : language === 'ml' ? 'ക്യാമറ ക്യുആർ കോഡിന് നേരെ പിടിക്കുക' : 'Point camera at shop QR code'}
+            {r.pointCamera}
           </p>
         </div>
 
         <div className="text-center text-white/70 text-label font-normal">
-          Google Pay UPI Sandbox
+          {r.sandboxFooter}
         </div>
       </div>
     );
@@ -132,7 +127,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
             className="w-12 h-12 rounded-full flex items-center justify-center text-white text-xl font-bold flex-shrink-0"
             style={{ background: payee.color }}
           >
-            {payee.initial}
+            {payeeInitial}
           </div>
           <div className="min-w-0">
             <div className="text-body font-bold leading-tight">
@@ -143,7 +138,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
             ) : (
               <div className="text-label font-normal text-ink-muted flex items-center gap-xs">
                 <BadgeCheck className="w-5 h-5 text-gpay-blue flex-shrink-0" aria-hidden="true" />
-                <span>Banking Name Verified</span>
+                <span>{r.bankingNameVerified}</span>
               </div>
             )}
           </div>
@@ -151,7 +146,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
 
         <div className="flex flex-col items-center my-auto gap-md px-xl">
           <span className="text-body text-ink-muted">
-            {language === 'hi' ? 'भुगतान राशि' : language === 'ml' ? 'നൽകേണ്ട തുക' : 'Paying Amount'}
+            {r.payingAmount}
           </span>
           <div className="text-6xl font-bold text-ink tracking-tight">
             {amount}
@@ -166,7 +161,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
         <div className="p-lg">
           <HighlightTarget elementId="proceed_to_pay_button" {...tp} className="w-full rounded-full">
             <div className="w-full min-h-[64px] bg-gpay-blue text-white text-body font-bold rounded-full flex items-center justify-center px-lg">
-              {language === 'hi' ? `भुगतान करें (${amount})` : language === 'ml' ? `പണം നൽകുക (${amount})` : `Proceed to Pay (${amount})`}
+              {r.proceedToPay(amount)}
             </div>
           </HighlightTarget>
         </div>
@@ -181,7 +176,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
         <div className="flex items-center justify-between px-lg py-xs border-b border-[#DADCE0]">
           <div className="flex items-center gap-sm">
             <Lock className="w-6 h-6 text-gpay-blue" aria-hidden="true" />
-            <span className="text-body font-bold tracking-wide">UPI PIN</span>
+            <span className="text-body font-bold tracking-wide">{r.upiPin}</span>
           </div>
           <span className="text-label bg-gpay-light-blue text-gpay-dark-blue px-md py-xs rounded-full">
             SBI Bank
@@ -190,7 +185,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
 
         <div className="flex flex-col items-center gap-xs text-center px-lg py-sm">
           <div className="text-body font-bold text-ink">
-            {language === 'hi' ? 'अपना 4-अंकों का गुप्त यूपीआई पिन डालें' : language === 'ml' ? 'നിങ്ങളുടെ 4 അക്ക യുപിഐ പിൻ നൽകുക' : 'Enter 4-Digit Secret UPI PIN'}
+            {r.enterUpiPin}
           </div>
 
           {/* 4 Masked PIN Dots (dummy, nothing is typed) */}
@@ -201,7 +196,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
           </div>
 
           <p className="text-label font-normal text-ink-muted">
-            {language === 'hi' ? 'यूपीआई पिन कभी किसी को न बताएं' : language === 'ml' ? 'യുപിഐ പിൻ ആരുമായും പങ്കിടരുത്' : 'Never share your UPI PIN with anyone'}
+            {r.neverSharePin}
           </p>
         </div>
 
@@ -248,22 +243,22 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
           <div className="space-y-sm">
             <div className="text-4xl font-bold tracking-tight">{amountExact}</div>
             <div className="text-title">
-              {language === 'hi' ? 'भुगतान सफल रहा!' : language === 'ml' ? 'പേയ്മെന്റ് വിജയകരം!' : 'Paid Successfully!'}
+              {r.paidSuccessfully}
             </div>
             <div className="text-label font-normal text-white/90">
-              {payeeName} • UPI Ref 428901847192
+              {payeeName} • {r.upiRef} 428901847192
             </div>
           </div>
 
           <div className="bg-white/15 rounded-card px-lg py-md border-2 border-white/30 text-left w-full max-w-xs space-y-xs">
-            <div className="text-label text-white/85 tracking-wide">DEBITED FROM</div>
+            <div className="text-label text-white/85 tracking-wide">{r.debitedFrom}</div>
             <div className="text-body font-bold">State Bank of India •••• 4829</div>
           </div>
         </div>
 
         <HighlightTarget elementId="success_done_button" {...tp} className="w-full rounded-full mt-md">
           <div className="w-full min-h-[64px] bg-white text-gpay-blue text-body font-bold rounded-full flex items-center justify-center">
-            {language === 'hi' ? 'समाप्त (डन)' : language === 'ml' ? 'പൂർത്തിയായി (ഡൺ)' : 'Done'}
+            {r.doneSuccess}
           </div>
         </HighlightTarget>
       </div>
@@ -276,7 +271,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
       <div className="h-full w-full bg-white text-ink flex flex-col">
         <AppBar>
           <div className="text-title">
-            {language === 'hi' ? 'संपर्क चुनें' : language === 'ml' ? 'കോൺടാക്റ്റ് തിരഞ്ഞെടുക്കുക' : 'Select Contact'}
+            {r.selectContact}
           </div>
         </AppBar>
 
@@ -284,14 +279,14 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
           <HighlightTarget elementId="contact_son_ramesh" {...tp}>
             <div className="min-h-[80px] bg-white px-md py-md rounded-2xl flex items-center gap-lg">
               <div className="w-14 h-14 bg-[#1E8E3E] rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
-                R
+                {r.rameshInitial}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-body font-bold text-ink">
-                  {language === 'hi' ? 'रमेश' : language === 'ml' ? 'രമേഷ്' : 'Ramesh'}
+                  {r.ramesh}
                 </div>
                 <div className="text-label font-normal text-ink-muted">
-                  {language === 'hi' ? 'बेटा • +91 98765 43210' : language === 'ml' ? 'മകൻ • +91 98765 43210' : 'Son • +91 98765 43210'}
+                  {`${r.son} • +91 98765 43210`}
                 </div>
               </div>
             </div>
@@ -302,14 +297,14 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
             className="min-h-[80px] bg-white px-md py-md rounded-2xl flex items-center gap-lg"
           >
             <div className="w-14 h-14 bg-[#8430CE] rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
-              P
+              {r.priyaInitial}
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-body font-bold text-ink">
-                {language === 'hi' ? 'प्रिया' : language === 'ml' ? 'പ്രിയ' : 'Priya'}
+                {r.priya}
               </div>
               <div className="text-label font-normal text-ink-muted">
-                {language === 'hi' ? 'बेटी' : language === 'ml' ? 'മകൾ' : 'Daughter'}
+                {r.daughter}
               </div>
             </div>
           </div>
@@ -324,11 +319,11 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
       <div className="h-full w-full bg-gpay-bg text-ink flex flex-col justify-between">
         <AppBar>
           <div className="w-12 h-12 bg-[#1E8E3E] rounded-full flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
-            R
+            {r.rameshInitial}
           </div>
           <div className="min-w-0">
             <div className="text-body font-bold leading-tight">
-              {language === 'hi' ? 'रमेश (बेटा)' : language === 'ml' ? 'രമേഷ് (മകൻ)' : 'Ramesh (Son)'}
+              {r.rameshSon}
             </div>
             <div className="text-label font-normal text-ink-muted">+91 98765 43210</div>
           </div>
@@ -338,7 +333,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
           <div className="bg-white border border-[#DADCE0] rounded-card p-lg text-center max-w-xs">
             <ShieldCheck className="w-9 h-9 text-gpay-blue mx-auto mb-sm" aria-hidden="true" />
             <div className="text-body font-bold text-ink">
-              {language === 'hi' ? 'सुरक्षित यूपीआई भुगतान' : language === 'ml' ? 'സുരക്ഷിത യുപിഐ പേയ്മെന്റ്' : 'Secure UPI Direct Transfer'}
+              {r.secureTransfer}
             </div>
           </div>
         </div>
@@ -346,15 +341,15 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
         <div className="flex gap-md p-lg bg-white border-t border-[#DADCE0]">
           <HighlightTarget elementId="contact_pay_button" {...tp} className="flex-1 rounded-full">
             <div className="w-full min-h-[64px] bg-gpay-blue text-white text-body font-bold rounded-full flex items-center justify-center px-md">
-              {language === 'hi' ? 'पैसे भेजें (पे)' : language === 'ml' ? 'പണം അയക്കുക (പേ)' : 'Pay Money'}
+              {r.payMoney}
             </div>
           </HighlightTarget>
 
           <div
             onClick={onWrongTap}
-            className="flex-1 min-h-[64px] bg-white text-gpay-blue border-2 border-[#DADCE0] text-body font-bold rounded-full flex items-center justify-center"
+            className="flex-1 min-w-0 min-h-[64px] px-sm bg-white text-gpay-blue border-2 border-[#DADCE0] text-label font-bold rounded-full flex items-center justify-center text-center"
           >
-            Request
+            {r.request}
           </div>
         </div>
       </div>
@@ -367,7 +362,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
       <div className="h-full w-full bg-gpay-bg text-ink flex flex-col justify-between">
         <AppBar>
           <div className="text-title">
-            {language === 'hi' ? 'बैंक बैलेंस' : language === 'ml' ? 'ബാങ്ക് ബാലൻസ്' : 'Account Balance'}
+            {r.accountBalance}
           </div>
         </AppBar>
 
@@ -388,7 +383,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
 
           <div className="border-t border-[#DADCE0] pt-lg">
             <div className="text-label font-normal text-ink-muted">
-              {language === 'hi' ? 'उपलब्ध शेष राशि' : language === 'ml' ? 'ലഭ്യമായ ബാലൻസ്' : 'Available Balance'}
+              {r.availableBalance}
             </div>
             <div className="text-5xl font-bold text-[#137333] mt-xs">
               {MOCK_BANK_BALANCE.balanceAmount}
@@ -399,7 +394,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
         <div className="p-lg">
           <HighlightTarget elementId="balance_done_button" {...tp} className="w-full rounded-full">
             <div className="w-full min-h-[64px] bg-gpay-blue text-white text-body font-bold rounded-full flex items-center justify-center">
-              {language === 'hi' ? 'पूर्ण (डन)' : language === 'ml' ? 'മടങ്ങുക (ഡൺ)' : 'Done'}
+              {r.doneBalance}
             </div>
           </HighlightTarget>
         </div>
@@ -413,7 +408,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
       <div className="h-full w-full bg-white text-ink flex flex-col">
         <AppBar>
           <div className="text-title">
-            {language === 'hi' ? 'लेन-देन इतिहास' : language === 'ml' ? 'ഇടപാട് ചരിത്രം' : 'Transaction History'}
+            {r.transactionHistory}
           </div>
         </AppBar>
 
@@ -478,7 +473,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
             </div>
           </HighlightTarget>
           <span className="text-body font-bold">
-            {language === 'hi' ? 'भुगतान रसीद' : language === 'ml' ? 'പേയ്മെന്റ് രസീത്' : 'Payment Receipt'}
+            {r.paymentReceipt}
           </span>
           <div className="w-16" />
         </div>
@@ -493,24 +488,24 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
               {MOCK_TRANSACTIONS[0].amount}
             </div>
             <div className="text-label text-[#137333] bg-[#E6F4EA] py-xs px-md rounded-full inline-block">
-              {language === 'hi' ? 'सफल भुगतान' : language === 'ml' ? 'വിജയകരം' : 'Completed'}
+              {r.completed}
             </div>
           </div>
 
           <div className="border-t border-[#DADCE0] pt-lg space-y-md text-label font-normal text-ink-muted">
             <div className="flex justify-between gap-md">
-              <span>UPI Ref No</span>
+              <span>{r.upiRefNo}</span>
               <span className="font-bold text-ink">428901847192</span>
             </div>
             <div className="flex justify-between gap-md">
-              <span>Payment Mode</span>
+              <span>{r.paymentMode}</span>
               <span className="font-bold text-ink text-right">SBI Bank •••• 4829</span>
             </div>
           </div>
         </div>
 
         <div className="text-center text-ink-muted text-label font-normal pb-lg">
-          OLearn Sandboxed Mock Data
+          {r.mockData}
         </div>
       </div>
     );
@@ -541,7 +536,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
                 <QrCode className="w-7 h-7" />
               </div>
               <div className="text-body font-bold leading-tight">
-                {language === 'hi' ? 'कोई भी क्यूआर स्कैन करें' : language === 'ml' ? 'ഏതെങ്കിലും ക്യുആർ സ്കാൻ ചെയ്യുക' : 'Scan any QR code'}
+                {r.scanAnyQr}
               </div>
             </div>
           </HighlightTarget>
@@ -552,7 +547,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
                 <Users className="w-7 h-7 text-gpay-blue" />
               </div>
               <div className="text-body font-bold leading-tight">
-                {language === 'hi' ? 'संपर्कों को पैसे भेजें' : language === 'ml' ? 'കോൺടാക്റ്റുകൾക്ക് പണം നൽകുക' : 'Pay contacts'}
+                {r.payContacts}
               </div>
             </div>
           </HighlightTarget>
@@ -564,7 +559,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
             <div className="min-h-[64px] px-md py-sm rounded-xl flex items-center gap-md">
               <Building2 className="w-7 h-7 text-gpay-blue flex-shrink-0" />
               <span className="text-body font-bold text-ink flex-1">
-                {language === 'hi' ? 'बैंक बैलेंस चेक करें' : language === 'ml' ? 'ബാങ്ക് ബാലൻസ് പരിശോധിക്കുക' : 'Check bank balance'}
+                {r.checkBalance}
               </span>
               <ChevronRight className="w-6 h-6 text-ink-muted flex-shrink-0" aria-hidden="true" />
             </div>
@@ -576,7 +571,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
             <div className="min-h-[64px] px-md py-sm rounded-xl flex items-center gap-md">
               <Receipt className="w-7 h-7 text-gpay-blue flex-shrink-0" />
               <span className="text-body font-bold text-ink flex-1">
-                {language === 'hi' ? 'लेन-देन का इतिहास देखें' : language === 'ml' ? 'ഇടപാട് ചരിത്രം കാണുക' : 'See transaction history'}
+                {r.seeHistory}
               </span>
               <ChevronRight className="w-6 h-6 text-ink-muted flex-shrink-0" aria-hidden="true" />
             </div>
@@ -585,7 +580,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
       </div>
 
       <div className="text-center text-ink-muted text-label font-normal px-lg pb-lg">
-        Mock Google Pay Replica • No real money is used
+        {r.mockFooter}
       </div>
     </div>
   );

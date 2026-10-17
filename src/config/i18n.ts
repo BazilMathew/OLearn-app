@@ -50,6 +50,9 @@ export interface TranslationDictionary {
   normalSpeed: string;
   slowSpeed: string;
   reduceMotion: string;
+  practiceScreens: string;
+  practiceScreensEnglish: string;
+  practiceScreensMine: string;
   languages: {
     en: string;
     hi: string;
@@ -108,6 +111,9 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     normalSpeed: 'Normal',
     slowSpeed: 'Slow & Clear',
     reduceMotion: 'Reduce motion',
+    practiceScreens: 'Practice screens',
+    practiceScreensEnglish: 'English',
+    practiceScreensMine: 'My language',
     languages: {
       en: 'English',
       hi: 'हिन्दी',
@@ -164,6 +170,9 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     normalSpeed: 'सामान्य',
     slowSpeed: 'धीमी और स्पष्ट',
     reduceMotion: 'हलचल कम करें',
+    practiceScreens: 'अभ्यास स्क्रीन',
+    practiceScreensEnglish: 'अंग्रेज़ी',
+    practiceScreensMine: 'मेरी भाषा',
     languages: {
       en: 'English',
       hi: 'हिन्दी',
@@ -220,6 +229,9 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     normalSpeed: 'സാധാരണ',
     slowSpeed: 'പതുക്കെ & വ്യക്തമായി',
     reduceMotion: 'ചലനം കുറയ്ക്കുക',
+    practiceScreens: 'പരിശീലന സ്ക്രീനുകൾ',
+    practiceScreensEnglish: 'ഇംഗ്ലീഷ്',
+    practiceScreensMine: 'എന്റെ ഭാഷ',
     languages: {
       en: 'English',
       hi: 'हिन्दी',

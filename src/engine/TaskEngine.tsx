@@ -12,6 +12,8 @@ import { Volume2, RotateCcw, X, List, Lightbulb, Sparkles } from 'lucide-react';
 interface TaskEngineProps {
   task: TaskConfig;
   language: SupportedLanguage;
+  /** Practice screens in English ('en', default) or in the learner's language ('follow'). */
+  replicaLanguage?: 'en' | 'follow';
   onExit: () => void;
 }
 
@@ -26,6 +28,7 @@ const SPARKLES: [number, number, number, string][] = [
 export const TaskEngine: React.FC<TaskEngineProps> = ({
   task,
   language,
+  replicaLanguage = 'en',
   onExit
 }) => {
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
@@ -37,6 +40,8 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
   const currentStep = task.steps[currentStepIndex];
   const totalSteps = task.steps.length;
   const t = I18N[language] || I18N.en;
+  // The mock app screens have their own language; the tutorial chrome and voice always use `language`
+  const screenLanguage: SupportedLanguage = replicaLanguage === 'follow' ? language : 'en';
 
   // Play audio narration when step changes
   useEffect(() => {
@@ -210,7 +215,7 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
           <WhatsAppReplica
             screen={currentStep.screen}
             highlightElement={currentStep.highlight_element}
-            language={language}
+            language={screenLanguage}
             onCorrectTap={handleCorrectTap}
             onWrongTap={handleWrongTap}
             nudgeKey={nudgeKey}
@@ -219,7 +224,7 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
           <GPayReplica
             screen={currentStep.screen}
             highlightElement={currentStep.highlight_element}
-            language={language}
+            language={screenLanguage}
             onCorrectTap={handleCorrectTap}
             onWrongTap={handleWrongTap}
             nudgeKey={nudgeKey}

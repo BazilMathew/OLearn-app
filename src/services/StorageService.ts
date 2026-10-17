@@ -7,7 +7,8 @@ const DEFAULT_PROFILE: AppProfile = {
   language: 'en',
   completedTasks: [],
   firstLaunchCompleted: false,
-  reduceMotion: false
+  reduceMotion: false,
+  replicaLanguage: 'en'
 };
 
 export const StorageService = {
@@ -22,7 +23,9 @@ export const StorageService = {
           language: merged.language,
           completedTasks: merged.completedTasks,
           firstLaunchCompleted: merged.firstLaunchCompleted,
-          reduceMotion: merged.reduceMotion === true
+          reduceMotion: merged.reduceMotion === true,
+          // Older profiles have no field: practice screens stay in English
+          replicaLanguage: merged.replicaLanguage === 'follow' ? 'follow' : 'en'
         };
         if (Object.keys(merged).length !== Object.keys(profile).length) {
           this.saveProfile(profile);
@@ -61,6 +64,12 @@ export const StorageService = {
   setReduceMotion(on: boolean): void {
     const profile = this.getProfile();
     profile.reduceMotion = on;
+    this.saveProfile(profile);
+  },
+
+  setReplicaLanguage(mode: 'en' | 'follow'): void {
+    const profile = this.getProfile();
+    profile.replicaLanguage = mode;
     this.saveProfile(profile);
   },
 
