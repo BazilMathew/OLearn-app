@@ -13,6 +13,8 @@ export interface TranslationDictionary {
   askMeSubtitle: string;
   listening: string;
   tapAndSpeak: string;
+  /** Start button on the Home screen's Ask card */
+  askStart: string;
   voiceNoSpeech: string;
   voiceMicDenied: string;
   voiceInsecure: string;
@@ -77,6 +79,7 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     askMeSubtitle: 'Tell me what you want to learn in WhatsApp or Google Pay',
     listening: 'Listening...',
     tapAndSpeak: 'Tap and speak',
+    askStart: 'Start',
     voiceNoSpeech: 'Didn’t catch that, tap and try again',
     voiceMicDenied: 'Please allow the microphone',
     voiceInsecure: 'Voice needs a secure connection, please type instead',
@@ -139,6 +142,7 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     askMeSubtitle: 'व्हाट्सएप या गूगल पे पर आप क्या सीखना चाहते हैं, बोलकर बताएं',
     listening: 'सुन रहा हूँ...',
     tapAndSpeak: 'बोलने के लिए दबाएं',
+    askStart: 'पूछें',
     voiceNoSpeech: 'समझ नहीं आया, फिर से दबाकर बोलें',
     voiceMicDenied: 'कृपया माइक्रोफ़ोन की अनुमति दें',
     voiceInsecure: 'आवाज़ के लिए सुरक्षित कनेक्शन चाहिए, कृपया टाइप करें',
@@ -201,6 +205,7 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     askMeSubtitle: 'വാട്ട്‌സ്ആപ്പിലോ ഗൂഗിൾ പേയിലോ എന്ത് ചെയ്യാനാണ് പഠിക്കേണ്ടത് എന്ന് പറയൂ',
     listening: 'കേൾക്കുന്നു...',
     tapAndSpeak: 'സംസാരിക്കാൻ തൊടുക',
+    askStart: 'തുടങ്ങുക',
     voiceNoSpeech: 'മനസ്സിലായില്ല, വീണ്ടും തൊട്ട് സംസാരിക്കുക',
     voiceMicDenied: 'ദയവായി മൈക്രോഫോൺ അനുവദിക്കുക',
     voiceInsecure: 'ശബ്ദത്തിന് സുരക്ഷിത കണക്ഷൻ വേണം, ദയവായി ടൈപ്പ് ചെയ്യുക',

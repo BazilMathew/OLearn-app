@@ -74,26 +74,32 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </Card>
       </div>
 
-      {/* Ask Me / Chatbot Router Banner with Mic */}
+      {/* Ask Me / Chatbot Router Banner with Mic.
+          One rule for every language: icon and text stay on one line each where they can; when they and the
+          Start button do not fit one row, the button wraps below at full width (flex-wrap, no measuring). */}
       <Card
         onClick={onOpenAskMe}
         shade="#8A5207"
-        className="bg-accent border-accent-deep active:bg-[#E59A2A] flex items-center gap-lg"
+        className="bg-accent border-accent-deep active:bg-[#E59A2A] flex flex-wrap items-center gap-md"
       >
-        <div className="w-14 h-14 bg-ink text-accent rounded-btn flex items-center justify-center flex-shrink-0">
-          <Mic className="w-8 h-8" strokeWidth={2.5} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="text-title font-extrabold text-ink">
-            {t.askMe}
+        {/* Never narrower than its text on one line (unless that is wider than the card), so nothing overlaps */}
+        <div className="flex items-center gap-lg min-w-[min(100%,max-content)] [flex:999_1_auto]">
+          <div className="w-14 h-14 bg-ink text-accent rounded-btn flex items-center justify-center flex-shrink-0">
+            <Mic className="w-8 h-8" strokeWidth={2.5} />
           </div>
-          <div className="text-label text-ink">
-            {t.tapAndSpeak}
+          <div className="min-w-0">
+            <div className="text-title font-extrabold text-ink break-words">
+              {t.askMe}
+            </div>
+            <div className="text-label text-ink break-words mt-xs">
+              {t.tapAndSpeak}
+            </div>
           </div>
         </div>
-        <div className="bg-ink text-surface text-label font-bold pl-md pr-sm py-sm rounded-btn flex items-center gap-xs flex-shrink-0">
-          <span>{language === 'hi' ? 'पूछें' : language === 'ml' ? 'തുടങ്ങുക' : 'Start'}</span>
-          <ChevronRight className="w-5 h-5" strokeWidth={3} />
+        {/* Grows to full width when it wraps onto its own line; at least 64px tall */}
+        <div className="min-h-[64px] [flex:1_0_auto] bg-ink text-surface text-label font-bold pl-md pr-sm py-sm rounded-btn flex items-center justify-center gap-xs">
+          <span>{t.askStart}</span>
+          <ChevronRight className="w-5 h-5 flex-shrink-0" strokeWidth={3} />
         </div>
       </Card>
     </div>
