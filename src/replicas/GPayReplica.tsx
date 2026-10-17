@@ -3,6 +3,7 @@ import { SupportedLanguage } from '../types/task';
 import { HighlightTarget } from '../engine/HighlightTarget';
 import { MOCK_CONTACTS, MOCK_TRANSACTIONS, MOCK_BANK_BALANCE } from '../config/mockData';
 import { REPLICA_STRINGS, ReplicaStrings } from './replicaStrings';
+import { PhoneHomeScreen } from './WhatsAppReplica';
 import {
   QrCode,
   Users,
@@ -75,6 +76,11 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
   const payee = (taskId && PAYEES[taskId]) || SHOP_PAYEE;
   const payeeName = r[payee.nameKey];
   const payeeInitial = r[payee.initialKey];
+
+  // 0. PHONE HOME SCREEN (every tutorial starts here; shared with the WhatsApp replica)
+  if (screen === 'phone_home_screen') {
+    return <PhoneHomeScreen r={r} tp={tp} />;
+  }
 
   // 1. QR SCANNER VIEWFINDER SCREEN
   if (screen === 'gpay_qr_scanner_viewfinder') {

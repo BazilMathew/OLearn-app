@@ -7,6 +7,8 @@ interface HighlightTargetProps {
   onWrongTap: () => void;
   /** Goes up by one on every wrong tap; the highlighted target answers with one gentle wobble. */
   nudgeKey?: number;
+  /** False on a scroll step: the learner scrolls to this target, so it must not be brought into view for them. */
+  autoScroll?: boolean;
   className?: string;
   children: React.ReactNode;
 }
@@ -36,6 +38,7 @@ export const HighlightTarget: React.FC<HighlightTargetProps> = ({
   onCorrectTap,
   onWrongTap,
   nudgeKey = 0,
+  autoScroll = true,
   className = '',
   children
 }) => {
@@ -45,7 +48,7 @@ export const HighlightTarget: React.FC<HighlightTargetProps> = ({
   // When this becomes the step's target (or its screen appears), bring it fully into view if it is not.
   // Waits for the 250ms screen-enter slide so the measurement is final.
   useEffect(() => {
-    if (!isHighlighted) return;
+    if (!isHighlighted || !autoScroll) return;
     const timer = setTimeout(() => {
       const el = ref.current;
       if (!el) return;
@@ -61,7 +64,7 @@ export const HighlightTarget: React.FC<HighlightTargetProps> = ({
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [isHighlighted]);
+  }, [isHighlighted, autoScroll]);
 
   useEffect(() => {
     if (!isHighlighted || nudgeKey === 0 || motionReduced()) return;

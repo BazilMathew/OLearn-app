@@ -40,6 +40,9 @@ export interface TranslationDictionary {
   back: string;
   exitTutorial: string;
   replayAudio: string;
+  swipeUp: string;
+  showMe: string;
+  scrollNudge: string;
   soundPlaying: string;
   deviceFrame: string;
   fullscreen: string;
@@ -101,6 +104,9 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     back: 'Back',
     exitTutorial: 'Exit',
     replayAudio: 'Repeat Voice',
+    swipeUp: 'Swipe up',
+    showMe: 'Show me',
+    scrollNudge: "Swipe up on the list to find Ramesh's chat.",
     soundPlaying: 'Playing instruction...',
     deviceFrame: 'Mobile View',
     fullscreen: 'Fullscreen',
@@ -160,6 +166,9 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     back: 'पीछे',
     exitTutorial: 'बाहर जाएं',
     replayAudio: 'आवाज़ दोबारा सुनें',
+    swipeUp: 'ऊपर की ओर स्वाइप करें',
+    showMe: 'मुझे दिखाएं',
+    scrollNudge: 'रमेश की चैट ढूँढने के लिए सूची पर ऊपर की ओर स्वाइप करें।',
     soundPlaying: 'निर्देश सुनाया जा रहा है...',
     deviceFrame: 'फ़ोन व्यू',
     fullscreen: 'फुल स्क्रीन',
@@ -219,6 +228,9 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     back: 'മടങ്ങുക',
     exitTutorial: 'പുറത്ത് കടക്കുക',
     replayAudio: 'ശബ്ദം വീണ്ടും കേൾക്കുക',
+    swipeUp: 'മുകളിലേക്ക് സ്വൈപ്പ് ചെയ്യുക',
+    showMe: 'കാണിച്ചു തരൂ',
+    scrollNudge: 'രമേഷിന്റെ ചാറ്റ് കണ്ടെത്താൻ ലിസ്റ്റിൽ മുകളിലേക്ക് സ്വൈപ്പ് ചെയ്യുക.',
     soundPlaying: 'നിർദ്ദേശം കേൾപ്പിക്കുന്നു...',
     deviceFrame: 'ഫോൺ കാഴ്ച',
     fullscreen: 'പൂർണ്ണ സ്ക്രീൻ',

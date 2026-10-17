@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TaskConfig, SupportedLanguage } from '../types/task';
 import { AudioService } from '../services/AudioService';
 import { StorageService } from '../services/StorageService';
@@ -7,7 +7,7 @@ import { WhatsAppReplica } from '../replicas/WhatsAppReplica';
 import { GPayReplica } from '../replicas/GPayReplica';
 import { Button } from '../components/Button';
 import { MitraSvg } from '../components/Mascot';
-import { Volume2, RotateCcw, X, List, Lightbulb, Sparkles } from 'lucide-react';
+import { Volume2, RotateCcw, X, List, Lightbulb, Sparkles, ArrowUp, Hand, Eye } from 'lucide-react';
 
 interface TaskEngineProps {
   task: TaskConfig;
@@ -25,6 +25,16 @@ const SPARKLES: [number, number, number, string][] = [
   [150, 52, 10, '#276B43'], [-84, -104, 10, '#1A73E8'], [90, -100, 10, '#F2A93B'], [-132, -46, 10, '#F08A6C']
 ];
 
+const motionReduced = () =>
+  document.documentElement.classList.contains('reduce-motion') ||
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Swipe hint: the hand slides up twice, then rests (transform/opacity only, never loops)
+const SWIPE: Keyframe[] = [
+  { transform: 'translateY(20px)', opacity: 0.4 },
+  { transform: 'translateY(0)', opacity: 1 }
+];
+
 export const TaskEngine: React.FC<TaskEngineProps> = ({
   task,
   language,
@@ -36,9 +46,19 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
   const [nudgeKey, setNudgeKey] = useState<number>(0);
+  const [showMeVisible, setShowMeVisible] = useState<boolean>(false);
+  const replicaRef = useRef<HTMLDivElement>(null);
+  const handRef = useRef<HTMLDivElement>(null);
+  const scrollDoneRef = useRef<boolean>(false);
+  const showMeTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const currentStep = task.steps[currentStepIndex];
   const totalSteps = task.steps.length;
+  // Steps without a recorded clip yet are caption-only: no narration, no speech synthesis
+  const clipPath = currentStep
+    ? ((currentStep[`audio_${language}`] as string) || currentStep.audio_en)
+    : '';
+  const isScrollStep = currentStep?.action === 'scroll';
   const t = I18N[language] || I18N.en;
   // The mock app screens have their own language; the tutorial chrome and voice always use `language`
   const screenLanguage: SupportedLanguage = replicaLanguage === 'follow' ? language : 'en';
@@ -51,21 +71,98 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
       return;
     }
 
-    if (currentStep) {
-      const audioField = `audio_${language}` as keyof typeof currentStep;
-      const audioPath = (currentStep[audioField] as string) || currentStep.audio_en;
+    if (currentStep && clipPath) {
       const hintText = currentStep.hint_text[language] || currentStep.hint_text.en;
 
       setIsAudioPlaying(true);
-      AudioService.playNarration(audioPath, language, hintText, () => {
+      AudioService.playNarration(clipPath, language, hintText, () => {
         setIsAudioPlaying(false);
       });
+    } else {
+      setIsAudioPlaying(false);
     }
 
     return () => {
       AudioService.stopAudio();
     };
   }, [currentStepIndex, isCompleted, language, task]);
+
+  // Scroll step: the learner scrolls the list themselves. The step completes once scrolling settles
+  // with the target fully visible above the floating button. "Show me" appears after 10s without scrolling.
+  useEffect(() => {
+    setShowMeVisible(false);
+    scrollDoneRef.current = false;
+    if (!isScrollStep || isCompleted) return;
+    const list = replicaRef.current?.querySelector<HTMLElement>('[data-scroll-area]');
+    if (!list) return;
+
+    if (!motionReduced()) {
+      handRef.current?.animate?.(SWIPE, { duration: 400, iterations: 2, easing: 'ease-in-out', delay: 300 });
+    }
+
+    let settleTimer: ReturnType<typeof setTimeout> | undefined;
+    let idleTimer: ReturnType<typeof setTimeout> | undefined;
+    const waitForIdle = () => {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => setShowMeVisible(true), 10000);
+    };
+    const onScroll = () => {
+      waitForIdle();
+      clearTimeout(settleTimer);
+      settleTimer = setTimeout(() => {
+        if (scrollTargetVisible()) completeScrollStep();
+      }, 150);
+    };
+
+    list.addEventListener('scroll', onScroll, { passive: true });
+    waitForIdle();
+    return () => {
+      list.removeEventListener('scroll', onScroll);
+      clearTimeout(settleTimer);
+      clearTimeout(idleTimer);
+      clearTimeout(showMeTimerRef.current);
+    };
+  }, [currentStepIndex, isCompleted, task]);
+
+  // The scroll list, its target row and the visible area: above the floating button and the hint
+  const scrollParts = () => {
+    const list = replicaRef.current?.querySelector<HTMLElement>('[data-scroll-area]');
+    const row = list?.querySelector<HTMLElement>(`[data-element-id="${currentStep.highlight_element}"]`);
+    if (!list || !row) return null;
+    const lr = list.getBoundingClientRect();
+    let bottom = lr.bottom;
+    list.parentElement?.querySelectorAll('[data-scroll-cover]').forEach((c) => {
+      bottom = Math.min(bottom, c.getBoundingClientRect().top);
+    });
+    return { list, rr: row.getBoundingClientRect(), top: lr.top, bottom };
+  };
+
+  // Fully visible with room for the highlight ring (12px)
+  const scrollTargetVisible = () => {
+    const p = scrollParts();
+    return !!p && p.rr.top >= p.top + 12 && p.rr.bottom <= p.bottom - 12;
+  };
+
+  const completeScrollStep = () => {
+    if (scrollDoneRef.current) return;
+    scrollDoneRef.current = true;
+    handleCorrectTap();
+  };
+
+  // "Show me": scrolls the list for the learner so the target sits in the middle of the visible area
+  const handleShowMe = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const p = scrollParts();
+    if (!p) return;
+    const instant = motionReduced();
+    const delta = p.rr.top - p.top - (p.bottom - p.top - p.rr.height) / 2;
+    p.list.scrollBy({ top: delta, behavior: instant ? 'auto' : 'smooth' });
+    // Backstop for when the list cannot move any further (no scroll event follows)
+    clearTimeout(showMeTimerRef.current);
+    showMeTimerRef.current = setTimeout(() => {
+      if (scrollTargetVisible()) completeScrollStep();
+    }, instant ? 200 : 900);
+  };
 
   // Handle correct tap on the highlighted element
   const handleCorrectTap = () => {
@@ -90,13 +187,11 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
   };
 
   const handleReplayAudio = () => {
-    if (currentStep) {
-      const audioField = `audio_${language}` as keyof typeof currentStep;
-      const audioPath = (currentStep[audioField] as string) || currentStep.audio_en;
+    if (currentStep && clipPath) {
       const hintText = currentStep.hint_text[language] || currentStep.hint_text.en;
 
       setIsAudioPlaying(true);
-      AudioService.playNarration(audioPath, language, hintText, () => {
+      AudioService.playNarration(clipPath, language, hintText, () => {
         setIsAudioPlaying(false);
       });
     }
@@ -169,6 +264,26 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
   const stepLabel = t.stepXofY.replace('{n}', String(currentStepIndex + 1)).replace('{total}', String(totalSteps));
   const hint = currentStep.hint_text[language] || currentStep.hint_text.en;
 
+  // Drawn over the bottom of the chat list, beside the floating button, so the chats stay clear.
+  // Taps pass through the swipe hint; after 10s without scrolling "Show me" takes its place.
+  const scrollHint = (
+    <div data-scroll-cover className="absolute left-lg right-[96px] bottom-lg">
+      {showMeVisible ? (
+        <div className="pointer-events-auto screen-enter">
+          <Button icon={Eye} label={t.showMe} variant="primary" fullWidth onClick={handleShowMe} className="!px-md" />
+        </div>
+      ) : (
+        <div className="min-h-[64px] bg-surface border-2 border-accent-deep rounded-btn px-md py-xs flex items-center gap-sm">
+          <div ref={handRef} className="flex flex-col items-center text-accent-deep flex-shrink-0" aria-hidden="true">
+            <ArrowUp className="w-6 h-6" strokeWidth={2.5} />
+            <Hand className="w-7 h-7" strokeWidth={2.5} />
+          </div>
+          <span className="text-label font-bold text-ink min-w-0">{t.swipeUp}</span>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div
       className="h-full w-full flex flex-col justify-between bg-canvas relative overflow-hidden select-none"
@@ -186,15 +301,17 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
             }}
             className="!px-sm !py-sm !text-label !gap-xs min-w-0 [overflow-wrap:anywhere] [&>svg]:!w-6 [&>svg]:!h-6"
           />
+          {/* Greyed out (but kept in place) on steps that have no recorded clip yet */}
           <Button
             icon={Volume2}
             label={t.replayAudio}
             variant={isAudioPlaying ? 'primary' : 'secondary'}
+            aria-disabled={!clipPath}
             onClick={(e) => {
               e.stopPropagation();
               handleReplayAudio();
             }}
-            className="!px-sm !py-sm !text-label !gap-xs min-w-0 [overflow-wrap:anywhere] [&>svg]:!w-6 [&>svg]:!h-6"
+            className={`!px-sm !py-sm !text-label !gap-xs min-w-0 [overflow-wrap:anywhere] [&>svg]:!w-6 [&>svg]:!h-6 ${clipPath ? '' : 'opacity-50 cursor-default'}`}
           />
         </div>
 
@@ -203,14 +320,14 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
           <div className="screen-enter absolute top-0 left-0 right-0 min-h-full z-50 pointer-events-none bg-surface border-b-4 border-accent px-lg py-sm flex items-center gap-md" role="status">
             <Lightbulb className="w-8 h-8 text-accent-deep flex-shrink-0" aria-hidden="true" />
             <div className="text-label font-bold text-ink leading-snug">
-              {t.gentleNudge}
+              {isScrollStep ? t.scrollNudge : t.gentleNudge}
             </div>
           </div>
         )}
       </div>
 
       {/* Screen Replica Container */}
-      <div className="flex-1 relative overflow-y-auto bg-canvas flex flex-col">
+      <div ref={replicaRef} className="flex-1 relative overflow-y-auto bg-canvas flex flex-col">
         {task.app === 'whatsapp' ? (
           <WhatsAppReplica
             screen={currentStep.screen}
@@ -219,6 +336,7 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
             onCorrectTap={handleCorrectTap}
             onWrongTap={handleWrongTap}
             nudgeKey={nudgeKey}
+            scrollHint={isScrollStep ? scrollHint : undefined}
           />
         ) : (
           <GPayReplica

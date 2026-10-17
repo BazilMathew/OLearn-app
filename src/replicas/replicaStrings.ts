@@ -45,6 +45,38 @@ export interface ReplicaStrings {
   grandchild: string;
   birthday: string;
 
+  // Phone home screen
+  homeDate: string;
+  appPhone: string;
+  appWhatsApp: string;
+  appGPay: string;
+
+  // WhatsApp chat list
+  search: string;
+  chipAll: string;
+  chipUnread: string;
+  chipFavorites: string;
+  chipGroups: string;
+  tabChats: string;
+  tabUpdates: string;
+  tabCommunities: string;
+  tabCalls: string;
+  /** Other sample chats, top to bottom: Priya, family group, shop, doctor, temple, neighbours, walking group, pharmacy (Ramesh comes last) */
+  chatListPriyaMsg: string;
+  chatListFamily: string;
+  chatListFamilyMsg: string;
+  chatListShopMsg: string;
+  chatListDoctor: string;
+  chatListDoctorMsg: string;
+  chatListTemple: string;
+  chatListTempleMsg: string;
+  chatListNeighbours: string;
+  chatListNeighboursMsg: string;
+  chatListWalking: string;
+  chatListWalkingMsg: string;
+  chatListPharmacy: string;
+  chatListPharmacyMsg: string;
+
   // Google Pay
   scanShopQr: string;
   pointCamera: string;
@@ -119,6 +151,35 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     grandchild: 'Grandchild',
     birthday: 'Birthday',
 
+    homeDate: 'Monday, 9 March',
+    appPhone: 'Phone',
+    appWhatsApp: 'WhatsApp',
+    appGPay: 'Google Pay',
+
+    search: 'Search',
+    chipAll: 'All',
+    chipUnread: 'Unread',
+    chipFavorites: 'Favorites',
+    chipGroups: 'Groups',
+    tabChats: 'Chats',
+    tabUpdates: 'Updates',
+    tabCommunities: 'Communities',
+    tabCalls: 'Calls',
+    chatListPriyaMsg: 'Lunch is ready!',
+    chatListFamily: 'Family Group',
+    chatListFamilyMsg: 'Happy birthday!',
+    chatListShopMsg: 'Your order is ready',
+    chatListDoctor: 'Dr. Sharma',
+    chatListDoctorMsg: 'Please come at 5 PM',
+    chatListTemple: 'Temple Committee',
+    chatListTempleMsg: 'Puja at 6 PM today',
+    chatListNeighbours: 'Neighbours',
+    chatListNeighboursMsg: 'No water supply on Sunday',
+    chatListWalking: 'Walking Group',
+    chatListWalkingMsg: 'See you at the park',
+    chatListPharmacy: 'Pharmacy',
+    chatListPharmacyMsg: 'Your medicines are ready',
+
     scanShopQr: 'Scan Shop QR',
     pointCamera: 'Point camera at shop QR code',
     sandboxFooter: 'Google Pay UPI Sandbox',
@@ -190,6 +251,35 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     grandchild: 'पोता-पोती',
     birthday: 'जन्मदिन',
 
+    homeDate: 'सोमवार, 9 मार्च',
+    appPhone: 'फ़ोन',
+    appWhatsApp: 'व्हाट्सएप',
+    appGPay: 'गूगल पे',
+
+    search: 'खोजें',
+    chipAll: 'सभी',
+    chipUnread: 'बिना पढ़े',
+    chipFavorites: 'पसंदीदा',
+    chipGroups: 'ग्रुप',
+    tabChats: 'चैट',
+    tabUpdates: 'अपडेट',
+    tabCommunities: 'कम्युनिटी',
+    tabCalls: 'कॉल',
+    chatListPriyaMsg: 'खाना तैयार है!',
+    chatListFamily: 'परिवार ग्रुप',
+    chatListFamilyMsg: 'जन्मदिन मुबारक हो!',
+    chatListShopMsg: 'आपका सामान तैयार है',
+    chatListDoctor: 'डॉ. शर्मा',
+    chatListDoctorMsg: 'शाम 5 बजे आइए',
+    chatListTemple: 'मंदिर समिति',
+    chatListTempleMsg: 'आज शाम 6 बजे पूजा है',
+    chatListNeighbours: 'पड़ोसी',
+    chatListNeighboursMsg: 'रविवार को पानी नहीं आएगा',
+    chatListWalking: 'सैर ग्रुप',
+    chatListWalkingMsg: 'पार्क में मिलते हैं',
+    chatListPharmacy: 'दवा की दुकान',
+    chatListPharmacyMsg: 'आपकी दवाइयाँ तैयार हैं',
+
     scanShopQr: 'दुकान का क्यूआर स्कैन करें',
     pointCamera: 'कैमरा क्यूआर कोड के सामने रखें',
     sandboxFooter: 'अभ्यास के लिए डेमो स्क्रीन',
@@ -260,6 +350,35 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     temple: 'ക്ഷേത്രം',
     grandchild: 'പേരക്കുട്ടി',
     birthday: 'ജന്മദിനം',
+
+    homeDate: 'തിങ്കൾ, 9 മാർച്ച്',
+    appPhone: 'ഫോൺ',
+    appWhatsApp: 'വാട്ട്സ്ആപ്പ്',
+    appGPay: 'ഗൂഗിൾ പേ',
+
+    search: 'തിരയുക',
+    chipAll: 'എല്ലാം',
+    chipUnread: 'വായിക്കാത്തവ',
+    chipFavorites: 'പ്രിയപ്പെട്ടവ',
+    chipGroups: 'ഗ്രൂപ്പുകൾ',
+    tabChats: 'ചാറ്റുകൾ',
+    tabUpdates: 'അപ്ഡേറ്റുകൾ',
+    tabCommunities: 'കമ്മ്യൂണിറ്റികൾ',
+    tabCalls: 'കോളുകൾ',
+    chatListPriyaMsg: 'ഊണ് തയ്യാർ!',
+    chatListFamily: 'കുടുംബ ഗ്രൂപ്പ്',
+    chatListFamilyMsg: 'ജന്മദിനാശംസകൾ!',
+    chatListShopMsg: 'നിങ്ങളുടെ സാധനങ്ങൾ തയ്യാർ',
+    chatListDoctor: 'ഡോ. ശർമ്മ',
+    chatListDoctorMsg: 'വൈകുന്നേരം 5 മണിക്ക് വരൂ',
+    chatListTemple: 'ക്ഷേത്ര കമ്മിറ്റി',
+    chatListTempleMsg: 'ഇന്ന് വൈകുന്നേരം 6 മണിക്ക് പൂജ',
+    chatListNeighbours: 'അയൽക്കാർ',
+    chatListNeighboursMsg: 'ഞായറാഴ്ച വെള്ളം ഉണ്ടാകില്ല',
+    chatListWalking: 'നടത്ത ഗ്രൂപ്പ്',
+    chatListWalkingMsg: 'പാർക്കിൽ കാണാം',
+    chatListPharmacy: 'മെഡിക്കൽ ഷോപ്പ്',
+    chatListPharmacyMsg: 'നിങ്ങളുടെ മരുന്നുകൾ തയ്യാർ',
 
     scanShopQr: 'ക്യുആർ സ്കാൻ ചെയ്യുക',
     pointCamera: 'ക്യാമറ ക്യുആർ കോഡിന് നേരെ പിടിക്കുക',

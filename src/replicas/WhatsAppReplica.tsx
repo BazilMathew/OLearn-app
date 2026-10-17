@@ -1,7 +1,7 @@
 import React from 'react';
 import { SupportedLanguage } from '../types/task';
 import { HighlightTarget } from '../engine/HighlightTarget';
-import { REPLICA_STRINGS } from './replicaStrings';
+import { REPLICA_STRINGS, ReplicaStrings } from './replicaStrings';
 import {
   Phone,
   Video,
@@ -20,7 +20,16 @@ import {
   VideoOff,
   X,
   Trash2,
-  Lock
+  Lock,
+  Search,
+  MoreVertical,
+  IndianRupee,
+  MessageSquarePlus,
+  MessageSquareText,
+  MessageCircle,
+  CircleDashed,
+  Users,
+  Plus
 } from 'lucide-react';
 
 interface WhatsAppReplicaProps {
@@ -30,6 +39,8 @@ interface WhatsAppReplicaProps {
   onCorrectTap: () => void;
   onWrongTap: () => void;
   nudgeKey?: number;
+  /** Scroll step only: the swipe hint and "Show me" button, drawn over the chat list. */
+  scrollHint?: React.ReactNode;
 }
 
 // Round, inert call control (mute, speaker, camera): taps fall through to the gentle nudge
@@ -39,17 +50,213 @@ const CallControl: React.FC<{ icon: React.ElementType }> = ({ icon: Icon }) => (
   </div>
 );
 
+type TapProps = { activeHighlightId: string; onCorrectTap: () => void; onWrongTap: () => void; nudgeKey?: number };
+
+// One app on the mock phone dock: a plain coloured tile and its name (no real logos)
+const DockApp: React.FC<{ icon: React.ElementType; color: string; label: string }> = ({ icon: Icon, color, label }) => (
+  <div className="flex flex-col items-center gap-xs py-xs">
+    <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: color }}>
+      <Icon className="w-9 h-9 text-white" aria-hidden="true" />
+    </div>
+    <span className="text-label text-white text-center leading-tight">{label}</span>
+  </div>
+);
+
+/**
+ * Mock phone home screen where every tutorial starts. Shared by the WhatsApp and Google Pay replicas:
+ * the WhatsApp and Google Pay icons are targets (only the task's own app is highlighted), Phone and Camera are inert.
+ */
+export const PhoneHomeScreen: React.FC<{ r: ReplicaStrings; tp: TapProps }> = ({ r, tp }) => (
+  <div
+    className="h-full w-full text-white flex flex-col justify-between"
+    style={{ background: 'linear-gradient(180deg, #14243B 0%, #2B3D60 45%, #6E5475 75%, #B9775F 100%)' }}
+  >
+    <div className="px-xl pt-2xl text-right">
+      <div className="text-body font-semibold">{r.homeDate}</div>
+      <div className="text-[64px] leading-none font-bold tracking-tight mt-xs">12:05</div>
+    </div>
+
+    <div className="px-lg pb-lg">
+      {/* Wraps to a second row only when the names are too wide (e.g. Malayalam at 18px) */}
+      <div className="bg-black/50 rounded-[28px] px-sm py-sm flex flex-wrap justify-around gap-x-xs gap-y-sm">
+        <div onClick={tp.onWrongTap} className="flex-auto">
+          <DockApp icon={Phone} color="#1E8E3E" label={r.appPhone} />
+        </div>
+        <HighlightTarget elementId="home_whatsapp_icon" {...tp} className="flex-auto">
+          <DockApp icon={MessageCircle} color="#075E54" label={r.appWhatsApp} />
+        </HighlightTarget>
+        <HighlightTarget elementId="home_gpay_icon" {...tp} className="flex-auto">
+          <DockApp icon={IndianRupee} color="#1A73E8" label={r.appGPay} />
+        </HighlightTarget>
+        <div onClick={tp.onWrongTap} className="flex-auto">
+          <DockApp icon={Camera} color="#54656F" label={r.camera} />
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// One chat in the chat list: round avatar (initial or group icon), name, time and last message
+const ChatRow: React.FC<{ name: string; msg: string; time: string; color: string; group?: boolean }> = ({
+  name,
+  msg,
+  time,
+  color,
+  group
+}) => (
+  <div className="min-h-[80px] flex items-center gap-md px-sm py-sm">
+    <div
+      className="w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0"
+      style={{ background: color }}
+    >
+      {group ? <Users className="w-7 h-7" aria-hidden="true" /> : name.charAt(0)}
+    </div>
+    <div className="flex-1 min-w-0">
+      <div className="flex items-baseline justify-between gap-sm">
+        <span className="text-body font-bold text-ink truncate">{name}</span>
+        <span className="text-label font-normal text-ink-muted flex-shrink-0">{time}</span>
+      </div>
+      <div className="text-label font-normal text-ink-muted truncate">{msg}</div>
+    </div>
+  </div>
+);
+
 export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
   screen,
   highlightElement,
   language,
   onCorrectTap,
   onWrongTap,
-  nudgeKey
+  nudgeKey,
+  scrollHint
 }) => {
   const r = REPLICA_STRINGS[language] || REPLICA_STRINGS.en;
   const contactName = r.rameshSon;
   const tp = { activeHighlightId: highlightElement, onCorrectTap, onWrongTap, nudgeKey };
+
+  // 0a. PHONE HOME SCREEN (every tutorial starts here)
+  if (screen === 'phone_home_screen') {
+    return <PhoneHomeScreen r={r} tp={tp} />;
+  }
+
+  // 0b. CHAT LIST: the learner scrolls it to find Ramesh's chat, then taps it
+  if (screen === 'whatsapp_chat_list_screen') {
+    const chats = [
+      { name: `${r.priya} (${r.daughter})`, msg: r.chatListPriyaMsg, time: '11:58 AM', color: '#8430CE' },
+      { name: r.chatListFamily, msg: r.chatListFamilyMsg, time: '11:40 AM', color: '#54656F', group: true },
+      { name: r.shopName, msg: r.chatListShopMsg, time: '11:32 AM', color: '#A35200' },
+      { name: r.chatListDoctor, msg: r.chatListDoctorMsg, time: '11:20 AM', color: '#3B5BA9' },
+      { name: r.chatListTemple, msg: r.chatListTempleMsg, time: '11:05 AM', color: '#54656F', group: true },
+      { name: r.chatListNeighbours, msg: r.chatListNeighboursMsg, time: '10:52 AM', color: '#54656F', group: true },
+      { name: r.chatListWalking, msg: r.chatListWalkingMsg, time: '10:40 AM', color: '#54656F', group: true },
+      { name: r.chatListPharmacy, msg: r.chatListPharmacyMsg, time: '10:30 AM', color: '#00796B' }
+    ];
+    const chips = [r.chipAll, r.chipUnread, r.chipFavorites, r.chipGroups];
+    const tabs: [React.ElementType, string][] = [
+      [MessageSquareText, r.tabChats],
+      [CircleDashed, r.tabUpdates],
+      [Users, r.tabCommunities],
+      [Phone, r.tabCalls]
+    ];
+
+    return (
+      <div className="h-full w-full bg-white text-ink flex flex-col">
+        {/* Header: title, payments, camera and menu (inert) */}
+        <div className="flex items-center justify-between gap-sm pl-lg pr-xs py-xs">
+          <span className="text-title text-wa-teal">WhatsApp</span>
+          <div className="flex items-center flex-shrink-0">
+            <div onClick={onWrongTap} className="w-16 h-16 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full border-2 border-ink flex items-center justify-center">
+                <IndianRupee className="w-5 h-5 text-ink" aria-hidden="true" />
+              </div>
+            </div>
+            <div onClick={onWrongTap} className="w-16 h-16 rounded-full flex items-center justify-center">
+              <Camera className="w-7 h-7 text-ink" aria-hidden="true" />
+            </div>
+            <div onClick={onWrongTap} className="w-16 h-16 rounded-full flex items-center justify-center">
+              <MoreVertical className="w-7 h-7 text-ink" aria-hidden="true" />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 min-h-0 relative">
+          {/* Its own scrolling area: search, filter chips and chats. The bottom padding lets the
+              last chat rise above the floating new-chat button. */}
+          <div
+            data-scroll-area
+            tabIndex={0}
+            aria-label={r.tabChats}
+            className="absolute inset-0 overflow-y-auto overflow-x-hidden overscroll-contain pb-[96px] outline-none"
+            style={{ touchAction: 'pan-y' }}
+          >
+            <div onClick={onWrongTap} className="mx-lg mt-xs min-h-[64px] rounded-full bg-[#F0F2F5] flex items-center gap-md px-lg">
+              <Search className="w-7 h-7 text-ink-muted flex-shrink-0" aria-hidden="true" />
+              <span className="text-body text-ink-muted">{r.search}</span>
+            </div>
+
+            <div className="flex flex-wrap gap-x-sm px-lg pt-xs">
+              {chips.map((chip, i) => (
+                <div key={chip} onClick={onWrongTap} className="py-sm">
+                  <div
+                    className={`min-h-[48px] px-lg rounded-full border-2 flex items-center text-label ${
+                      i === 0 ? 'bg-[#D9FDD3] border-[#B6E9AE] text-[#0A3D2E]' : 'bg-white border-line text-ink-muted'
+                    }`}
+                  >
+                    {chip}
+                  </div>
+                </div>
+              ))}
+              <div onClick={onWrongTap} className="py-sm">
+                <div className="w-[56px] min-h-[48px] rounded-full border-2 border-line flex items-center justify-center">
+                  <Plus className="w-6 h-6 text-ink-muted" aria-hidden="true" />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-xs">
+              {chats.map((chat) => (
+                <div key={chat.name} onClick={onWrongTap} className="mx-lg">
+                  <ChatRow {...chat} />
+                </div>
+              ))}
+              <HighlightTarget elementId="chat_row_ramesh" {...tp} autoScroll={!scrollHint} className="mx-lg">
+                <ChatRow name={contactName} msg={r.chatReceived} time="10:15 AM" color="#128C7E" />
+              </HighlightTarget>
+            </div>
+          </div>
+
+          {/* Floating new-chat button (inert) */}
+          <div
+            data-scroll-cover
+            onClick={onWrongTap}
+            className="absolute right-lg bottom-lg z-20 w-16 h-16 rounded-2xl bg-wa-green flex items-center justify-center"
+          >
+            <MessageSquarePlus className="w-8 h-8 text-white" aria-hidden="true" />
+          </div>
+
+          {scrollHint && <div className="absolute inset-0 z-50 pointer-events-none">{scrollHint}</div>}
+        </div>
+
+        {/* Bottom tabs: Chats is selected and named; the other tabs are inert icons (named for screen readers),
+            because four names at 18px do not fit one row in every language */}
+        <div className="flex border-t border-[#E9EDEF] bg-white px-xs">
+          {tabs.map(([Icon, label], i) => (
+            <div
+              key={label}
+              onClick={onWrongTap}
+              aria-label={i === 0 ? undefined : label}
+              className={`min-h-[64px] flex flex-col items-center justify-center gap-xs py-xs ${i === 0 ? 'flex-none px-sm' : 'flex-1 min-w-[64px]'}`}
+            >
+              <div className={`w-16 h-8 rounded-full flex items-center justify-center ${i === 0 ? 'bg-[#D9FDD3]' : ''}`}>
+                <Icon className={`text-ink ${i === 0 ? 'w-6 h-6' : 'w-7 h-7'}`} aria-hidden="true" />
+              </div>
+              {i === 0 && <span className="text-label font-bold text-ink text-center leading-tight">{label}</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   // 1. ACTIVE VOICE CALL SCREEN
   if (screen === 'whatsapp_active_voice_call') {

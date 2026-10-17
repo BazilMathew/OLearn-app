@@ -14,6 +14,43 @@
     },
     "steps": [
       {
+        "screen": "phone_home_screen",
+        "highlight_element": "home_whatsapp_icon",
+        "audio_en": "",
+        "audio_hi": "",
+        "audio_ml": "",
+        "hint_text": {
+          "en": "Tap the green WhatsApp icon.",
+          "hi": "हरे व्हाट्सएप आइकॉन पर टैप करें।",
+          "ml": "പച്ച വാട്ട്സ്ആപ്പ് ഐക്കണിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_list_screen",
+        "highlight_element": "chat_row_ramesh",
+        "action": "scroll",
+        "audio_en": "",
+        "audio_hi": "",
+        "audio_ml": "",
+        "hint_text": {
+          "en": "Swipe up to find your chat with Ramesh.",
+          "hi": "रमेश की चैट ढूँढने के लिए ऊपर की ओर स्वाइप करें।",
+          "ml": "രമേഷിന്റെ ചാറ്റ് കണ്ടെത്താൻ മുകളിലേക്ക് സ്വൈപ്പ് ചെയ്യുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_list_screen",
+        "highlight_element": "chat_row_ramesh",
+        "audio_en": "",
+        "audio_hi": "",
+        "audio_ml": "",
+        "hint_text": {
+          "en": "Tap your chat with Ramesh.",
+          "hi": "रमेश की चैट पर टैप करें।",
+          "ml": "രമേഷിന്റെ ചാറ്റിൽ തൊടുക."
+        }
+      },
+      {
         "screen": "whatsapp_chat_screen",
         "highlight_element": "chat_input",
         "audio_en": "assets/audio/en/wa_text_step1.mp3",
@@ -53,6 +90,43 @@
       "ml": "ഗ്യാലറിയിൽ നിന്ന് രമേഷിന് ഒരു ഫോട്ടോ അയക്കുക"
     },
     "steps": [
+      {
+        "screen": "phone_home_screen",
+        "highlight_element": "home_whatsapp_icon",
+        "audio_en": "",
+        "audio_hi": "",
+        "audio_ml": "",
+        "hint_text": {
+          "en": "Tap the green WhatsApp icon.",
+          "hi": "हरे व्हाट्सएप आइकॉन पर टैप करें।",
+          "ml": "പച്ച വാട്ട്സ്ആപ്പ് ഐക്കണിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_list_screen",
+        "highlight_element": "chat_row_ramesh",
+        "action": "scroll",
+        "audio_en": "",
+        "audio_hi": "",
+        "audio_ml": "",
+        "hint_text": {
+          "en": "Swipe up to find your chat with Ramesh.",
+          "hi": "रमेश की चैट ढूँढने के लिए ऊपर की ओर स्वाइप करें।",
+          "ml": "രമേഷിന്റെ ചാറ്റ് കണ്ടെത്താൻ മുകളിലേക്ക് സ്വൈപ്പ് ചെയ്യുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_list_screen",
+        "highlight_element": "chat_row_ramesh",
+        "audio_en": "",
+        "audio_hi": "",
+        "audio_ml": "",
+        "hint_text": {
+          "en": "Tap your chat with Ramesh.",
+          "hi": "रमेश की चैट पर टैप करें।",
+          "ml": "രമേഷിന്റെ ചാറ്റിൽ തൊടുക."
+        }
+      },
       {
         "screen": "whatsapp_chat_screen",
         "highlight_element": "attachment_icon",
@@ -118,6 +192,43 @@
     },
     "steps": [
       {
+        "screen": "phone_home_screen",
+        "highlight_element": "home_whatsapp_icon",
+        "audio_en": "",
+        "audio_hi": "",
+        "audio_ml": "",
+        "hint_text": {
+          "en": "Tap the green WhatsApp icon.",
+          "hi": "हरे व्हाट्सएप आइकॉन पर टैप करें।",
+          "ml": "പച്ച വാട്ട്സ്ആപ്പ് ഐക്കണിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_list_screen",
+        "highlight_element": "chat_row_ramesh",
+        "action": "scroll",
+        "audio_en": "",
+        "audio_hi": "",
+        "audio_ml": "",
+        "hint_text": {
+          "en": "Swipe up to find your chat with Ramesh.",
+          "hi": "रमेश की चैट ढूँढने के लिए ऊपर की ओर स्वाइप करें।",
+          "ml": "രമേഷിന്റെ ചാറ്റ് കണ്ടെത്താൻ മുകളിലേക്ക് സ്വൈപ്പ് ചെയ്യുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_list_screen",
+        "highlight_element": "chat_row_ramesh",
+        "audio_en": "",
+        "audio_hi": "",
+        "audio_ml": "",
+        "hint_text": {
+          "en": "Tap your chat with Ramesh.",
+          "hi": "रमेश की चैट पर टैप करें।",
+          "ml": "രമേഷിന്റെ ചാറ്റിൽ തൊടുക."
+        }
+      },
+      {
         "screen": "whatsapp_chat_screen",
         "highlight_element": "voice_call_icon",
         "audio_en": "assets/audio/en/wa_voicecall_step1.mp3",
@@ -169,6 +280,43 @@
       "ml": "കണ്ട് സംസാരിക്കാൻ വാട്ട്സ്ആപ്പ് വീഡിയോ കോൾ ചെയ്യുക"
     },
     "steps": [
+      {
+        "screen": "phone_home_screen",
+        "highlight_element": "home_whatsapp_icon",
+        "audio_en": "",
+        "audio_hi": "",
+        "audio_ml": "",
+        "hint_text": {
+          "en": "Tap the green WhatsApp icon.",
+          "hi": "हरे व्हाट्सएप आइकॉन पर टैप करें।",
+          "ml": "പച്ച വാട്ട്സ്ആപ്പ് ഐക്കണിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_list_screen",
+        "highlight_element": "chat_row_ramesh",
+        "action": "scroll",
+        "audio_en": "",
+        "audio_hi": "",
+        "audio_ml": "",
+        "hint_text": {
+          "en": "Swipe up to find your chat with Ramesh.",
+          "hi": "रमेश की चैट ढूँढने के लिए ऊपर की ओर स्वाइप करें।",
+          "ml": "രമേഷിന്റെ ചാറ്റ് കണ്ടെത്താൻ മുകളിലേക്ക് സ്വൈപ്പ് ചെയ്യുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_list_screen",
+        "highlight_element": "chat_row_ramesh",
+        "audio_en": "",
+        "audio_hi": "",
+        "audio_ml": "",
+        "hint_text": {
+          "en": "Tap your chat with Ramesh.",
+          "hi": "रमेश की चैट पर टैप करें।",
+          "ml": "രമേഷിന്റെ ചാറ്റിൽ തൊടുക."
+        }
+      },
       {
         "screen": "whatsapp_chat_screen",
         "highlight_element": "video_call_icon",
@@ -222,6 +370,18 @@
     },
     "steps": [
       {
+        "screen": "phone_home_screen",
+        "highlight_element": "home_gpay_icon",
+        "audio_en": "",
+        "audio_hi": "",
+        "audio_ml": "",
+        "hint_text": {
+          "en": "Tap the blue Google Pay icon.",
+          "hi": "नीले गूगल पे आइकॉन पर टैप करें।",
+          "ml": "നീല ഗൂഗിൾ പേ ഐക്കണിൽ തൊടുക."
+        }
+      },
+      {
         "screen": "gpay_home_screen",
         "highlight_element": "check_balance_button",
         "audio_en": "assets/audio/en/gpay_bal_step1.mp3",
@@ -273,6 +433,18 @@
       "ml": "കടയിലെ ക്യുആർ കോഡ് സ്കാൻ ചെയ്ത് പണം നൽകുക"
     },
     "steps": [
+      {
+        "screen": "phone_home_screen",
+        "highlight_element": "home_gpay_icon",
+        "audio_en": "",
+        "audio_hi": "",
+        "audio_ml": "",
+        "hint_text": {
+          "en": "Tap the blue Google Pay icon.",
+          "hi": "नीले गूगल पे आइकॉन पर टैप करें।",
+          "ml": "നീല ഗൂഗിൾ പേ ഐക്കണിൽ തൊടുക."
+        }
+      },
       {
         "screen": "gpay_home_screen",
         "highlight_element": "scan_qr_button",
@@ -349,6 +521,18 @@
       "ml": "ഫോണിലുള്ള കുടുംബാംഗത്തിന് പണം അയക്കുക"
     },
     "steps": [
+      {
+        "screen": "phone_home_screen",
+        "highlight_element": "home_gpay_icon",
+        "audio_en": "",
+        "audio_hi": "",
+        "audio_ml": "",
+        "hint_text": {
+          "en": "Tap the blue Google Pay icon.",
+          "hi": "नीले गूगल पे आइकॉन पर टैप करें।",
+          "ml": "നീല ഗൂഗിൾ പേ ഐക്കണിൽ തൊടുക."
+        }
+      },
       {
         "screen": "gpay_home_screen",
         "highlight_element": "pay_contacts_button",
@@ -438,6 +622,18 @@
     },
     "steps": [
       {
+        "screen": "phone_home_screen",
+        "highlight_element": "home_gpay_icon",
+        "audio_en": "",
+        "audio_hi": "",
+        "audio_ml": "",
+        "hint_text": {
+          "en": "Tap the blue Google Pay icon.",
+          "hi": "नीले गूगल पे आइकॉन पर टैप करें।",
+          "ml": "നീല ഗൂഗിൾ പേ ഐക്കണിൽ തൊടുക."
+        }
+      },
+      {
         "screen": "gpay_home_screen",
         "highlight_element": "transaction_history_button",
         "audio_en": "assets/audio/en/gpay_hist_step1.mp3",
@@ -489,6 +685,43 @@
       "ml": "ടൈപ്പ് ചെയ്യാതെ സംസാരിച്ച് വോയ്സ് നോട്ട് അയക്കുക"
     },
     "steps": [
+      {
+        "screen": "phone_home_screen",
+        "highlight_element": "home_whatsapp_icon",
+        "audio_en": "",
+        "audio_hi": "",
+        "audio_ml": "",
+        "hint_text": {
+          "en": "Tap the green WhatsApp icon.",
+          "hi": "हरे व्हाट्सएप आइकॉन पर टैप करें।",
+          "ml": "പച്ച വാട്ട്സ്ആപ്പ് ഐക്കണിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_list_screen",
+        "highlight_element": "chat_row_ramesh",
+        "action": "scroll",
+        "audio_en": "",
+        "audio_hi": "",
+        "audio_ml": "",
+        "hint_text": {
+          "en": "Swipe up to find your chat with Ramesh.",
+          "hi": "रमेश की चैट ढूँढने के लिए ऊपर की ओर स्वाइप करें।",
+          "ml": "രമേഷിന്റെ ചാറ്റ് കണ്ടെത്താൻ മുകളിലേക്ക് സ്വൈപ്പ് ചെയ്യുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_list_screen",
+        "highlight_element": "chat_row_ramesh",
+        "audio_en": "",
+        "audio_hi": "",
+        "audio_ml": "",
+        "hint_text": {
+          "en": "Tap your chat with Ramesh.",
+          "hi": "रमेश की चैट पर टैप करें।",
+          "ml": "രമേഷിന്റെ ചാറ്റിൽ തൊടുക."
+        }
+      },
       {
         "screen": "whatsapp_chat_screen",
         "highlight_element": "mic_record_button",
