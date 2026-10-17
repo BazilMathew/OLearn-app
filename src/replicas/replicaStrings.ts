@@ -131,6 +131,9 @@ export interface ReplicaStrings {
   billPhone: string;
   billElectricity: string;
   billWater: string;
+  sectionMoney: string;
+  moneyReceived: string;
+  choosePhoto: string;
 }
 
 export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
@@ -251,7 +254,10 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     sectionBills: 'Pay bills',
     billPhone: 'Phone recharge',
     billElectricity: 'Electricity',
-    billWater: 'Water'
+    billWater: 'Water',
+    sectionMoney: 'Your money',
+    moneyReceived: 'Money received',
+    choosePhoto: 'Choose from photos'
   },
   hi: {
     rameshSon: 'रमेश (बेटा)',
@@ -370,7 +376,10 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     sectionBills: 'बिल भरें',
     billPhone: 'फ़ोन रिचार्ज',
     billElectricity: 'बिजली',
-    billWater: 'पानी'
+    billWater: 'पानी',
+    sectionMoney: 'आपका पैसा',
+    moneyReceived: 'पैसे मिले',
+    choosePhoto: 'फ़ोटो से चुनें'
   },
   ml: {
     rameshSon: 'രമേഷ് (മകൻ)',
@@ -489,6 +498,9 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     sectionBills: 'ബില്ലുകൾ അടയ്ക്കുക',
     billPhone: 'ഫോൺ റീചാർജ്',
     billElectricity: 'കറന്റ് ബിൽ',
-    billWater: 'വെള്ളം'
+    billWater: 'വെള്ളം',
+    sectionMoney: 'നിങ്ങളുടെ പണം',
+    moneyReceived: 'പണം ലഭിച്ചു',
+    choosePhoto: 'ഫോട്ടോയിൽ നിന്ന് തിരഞ്ഞെടുക്കുക'
   }
 };

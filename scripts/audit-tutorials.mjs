@@ -191,9 +191,17 @@ const PAGE_HELPERS = `
       }
       return out;
     },
-    // Typed text that wraps in the middle of a word: a new line must start right after a space
-    midWordBreaks(id) {
-      const el = document.querySelector('[data-element-id="' + id + '"]');
+    // The engine's practice-screen container (holds the WhatsApp or Google Pay replica)
+    replicaRoot() {
+      return [...document.querySelectorAll('div')].find((d) => {
+        const c = typeof d.className === 'string' ? d.className : '';
+        return c.includes('flex-1') && c.includes('overflow-y-auto') && c.includes('overflow-x-hidden') && c.includes('bg-canvas');
+      }) || null;
+    },
+    // Text that wraps in the middle of a word, anywhere on the practice screen: a new line must start
+    // right after a space, a hyphen, a bullet, an opening bracket or a slash
+    midWordBreaks() {
+      const el = this.replicaRoot();
       const out = [];
       if (!el) return out;
       const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
@@ -205,8 +213,10 @@ const PAGE_HELPERS = `
         for (const { segment, index } of parts) {
           const range = document.createRange();
           range.setStart(n, index); range.setEnd(n, index + segment.length);
-          const top = range.getBoundingClientRect().top;
-          if (lastTop !== null && top > lastTop + 4 && segment.trim() && index > 0 && s[index - 1] !== ' ')
+          const rect = range.getBoundingClientRect();
+          if (!rect.width) continue; // hidden or collapsed text
+          const top = rect.top;
+          if (lastTop !== null && top > lastTop + 4 && segment.trim() && index > 0 && !' -•(/'.includes(s[index - 1]))
             out.push('line breaks inside a word at "' + s.slice(Math.max(0, index - 6), index + 6) + '"');
           if (segment.trim()) lastTop = top;
         }
@@ -493,9 +503,8 @@ for (const [w, h] of SIZES) {
           check(info.hitInside, `${at}: ${step.highlight_element} is covered by another element`);
           const rc = await A(`ringContrast(${JSON.stringify(step.highlight_element)})`);
           check(rc && rc.ratio >= 3, `${at}: highlight ring washed out on ${rc && rc.bg} (contrast ${rc && rc.ratio.toFixed(1)})`);
-          if (step.screen === 'whatsapp_chat_screen_typed') {
-            for (const s of await A(`midWordBreaks('chat_input')`)) check(false, `${at}: typed message ${s}`);
-          }
+          // Every label on the practice screen wraps by word (both replicas, every step)
+          for (const s of [...new Set(await A('midWordBreaks()'))]) check(false, `${at}: ${s}`);
           if (w === 360 && h === 690 && !reduce) await shot(`${tag}_${task.task_id}_step${i + 1}`);
           if (step.highlight_element === 'chat_row_ramesh' && !reduce) await shot(`${tag}_${task.task_id}_tap_chat`);
 
