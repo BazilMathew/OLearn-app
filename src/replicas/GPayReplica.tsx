@@ -26,7 +26,13 @@ interface GPayReplicaProps {
   onCorrectTap: () => void;
   onWrongTap: () => void;
   nudgeKey?: number;
+  /** Running task, used only to pick the practice payment amount. */
+  taskId?: string;
 }
+
+// Practice payment amount (rupees) per task, matching its narration; other flows use the default
+const PAYMENT_AMOUNTS: Record<string, number> = { gpay_send_contact: 1000 };
+const DEFAULT_PAYMENT_AMOUNT = 200;
 
 // Simple light app bar used by most Google Pay screens
 const AppBar: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -42,9 +48,14 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
   language,
   onCorrectTap,
   onWrongTap,
-  nudgeKey
+  nudgeKey,
+  taskId
 }) => {
   const tp = { activeHighlightId: highlightElement, onCorrectTap, onWrongTap, nudgeKey };
+  // Indian digit grouping, e.g. ₹1,000 and ₹1,000.00
+  const amountValue = (taskId && PAYMENT_AMOUNTS[taskId]) || DEFAULT_PAYMENT_AMOUNT;
+  const amount = '₹' + amountValue.toLocaleString('en-IN');
+  const amountExact = '₹' + amountValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   // 1. QR SCANNER VIEWFINDER SCREEN
   if (screen === 'gpay_qr_scanner_viewfinder') {
@@ -114,7 +125,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
             {language === 'hi' ? 'भुगतान राशि' : language === 'ml' ? 'നൽകേണ്ട തുക' : 'Paying Amount'}
           </span>
           <div className="text-6xl font-bold text-ink tracking-tight">
-            ₹200
+            {amount}
           </div>
           <div className="bg-gpay-light-blue text-ink px-lg py-sm rounded-full text-label flex items-center gap-sm">
             <Building2 className="w-5 h-5 text-gpay-blue flex-shrink-0" aria-hidden="true" />
@@ -126,7 +137,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
         <div className="p-lg">
           <HighlightTarget elementId="proceed_to_pay_button" {...tp} className="w-full rounded-full">
             <div className="w-full min-h-[64px] bg-gpay-blue text-white text-body font-bold rounded-full flex items-center justify-center px-lg">
-              {language === 'hi' ? 'भुगतान करें (₹200)' : language === 'ml' ? 'പണം നൽകുക (₹200)' : 'Proceed to Pay (₹200)'}
+              {language === 'hi' ? `भुगतान करें (${amount})` : language === 'ml' ? `പണം നൽകുക (${amount})` : `Proceed to Pay (${amount})`}
             </div>
           </HighlightTarget>
         </div>
@@ -206,7 +217,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
           </div>
 
           <div className="space-y-sm">
-            <div className="text-4xl font-bold tracking-tight">₹200.00</div>
+            <div className="text-4xl font-bold tracking-tight">{amountExact}</div>
             <div className="text-title">
               {language === 'hi' ? 'भुगतान सफल रहा!' : language === 'ml' ? 'പേയ്മെന്റ് വിജയകരം!' : 'Paid Successfully!'}
             </div>

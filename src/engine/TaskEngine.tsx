@@ -223,6 +223,7 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
             onCorrectTap={handleCorrectTap}
             onWrongTap={handleWrongTap}
             nudgeKey={nudgeKey}
+            taskId={task.task_id}
           />
         )}
       </div>
