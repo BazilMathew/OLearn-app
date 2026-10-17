@@ -11,8 +11,8 @@ OLearn is an Android digital literacy training application designed specifically
   - **Dummy 9th Task (Extensibility Test)**: Send voice note — added solely via JSON configuration and audio assets with zero code changes.
 - **Trilingual Voice Narration**:
   - English, Hindi, and Malayalam voice narration for all steps.
-  - Malayalam narration powered by Google Translate public TTS endpoint per PRD decision log.
-  - 93 pre-bundled offline MP3 audio clips in `public/assets/audio/`.
+  - One neural voice per language (edge-tts, generated from `tasks.json` by `scripts/generate-audio.py`; see `docs/audio.md`).
+  - 105 pre-bundled offline MP3 audio clips (35 per language) in `public/assets/audio/`.
 - **"Ask Me" Natural Language Task Router**:
   - Large centered microphone with persistent "Tap and speak" label.
   - Natural language intent routing in English, Hindi, and Malayalam.

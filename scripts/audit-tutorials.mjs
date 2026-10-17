@@ -8,13 +8,15 @@
 //   node --experimental-websocket --import tsx scripts/audit-tutorials.mjs --out <screenshot folder>
 //
 // Options: --url (default http://localhost:3000), --out (required: keep screenshots OUT of the
-// project), --browser (path to msedge.exe / chrome.exe), --quick (one size, motion off).
+// project), --browser (path to msedge.exe / chrome.exe), --quick (one size, motion off),
+// --audio-only (only the narration clip check; no browser, server or --out needed).
 // Exit code 1 if any check fails.
 
-import { spawn } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, existsSync, readFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { I18N } from '../src/config/i18n.ts';
 import { REPLICA_STRINGS } from '../src/replicas/replicaStrings.ts';
 
@@ -22,6 +24,48 @@ const args = Object.fromEntries(
   process.argv.slice(2).map((a, i, all) => (a.startsWith('--') ? [a.slice(2), all[i + 1]?.startsWith('--') ? true : all[i + 1] ?? true] : null)).filter(Boolean)
 );
 const URL_BASE = args.url || 'http://localhost:3000';
+const TASKS = JSON.parse(readFileSync(new URL('../src/config/tasks.json', import.meta.url), 'utf8'));
+const LANGS = ['en', 'hi', 'ml'];
+
+// ---------- Narration clips (no browser needed) ----------
+// Every non-empty audio path is a git-tracked file with the exact same case, each step's three
+// fields are all empty or name the same clip, and every language has the same set of clips.
+const audioFailures = [];
+{
+  const tracked = new Set(
+    execFileSync('git', ['ls-files', '-z', 'public/assets/audio'], { cwd: fileURLToPath(new URL('..', import.meta.url)), encoding: 'utf8' })
+      .split('\0')
+      .filter(Boolean)
+  );
+  const names = Object.fromEntries(LANGS.map((l) => [l, new Set()]));
+  for (const task of TASKS) {
+    task.steps.forEach((step, i) => {
+      const where = `${task.task_id} step ${i + 1}`;
+      const paths = LANGS.map((l) => step[`audio_${l}`] || '');
+      if (paths.every((p) => !p)) return;
+      const clip = paths[0].split('/').pop();
+      LANGS.forEach((l, k) => {
+        const p = paths[k];
+        if (!p) return audioFailures.push(`${where}: audio_${l} is empty but other languages have a clip`);
+        if (p !== `assets/audio/${l}/${clip}`) audioFailures.push(`${where}: audio_${l} is ${p}, expected assets/audio/${l}/${clip}`);
+        if (!tracked.has('public/' + p)) audioFailures.push(`${where}: ${p} is not a git-tracked file (exact case)`);
+        names[l].add(p.split('/').pop());
+      });
+    });
+  }
+  for (const l of LANGS.slice(1)) {
+    const only = (a, b) => [...names[a]].filter((n) => !names[b].has(n));
+    for (const n of only('en', l)) audioFailures.push(`clip ${n} exists for en but not ${l}`);
+    for (const n of only(l, 'en')) audioFailures.push(`clip ${n} exists for ${l} but not en`);
+  }
+  const used = new Set(LANGS.flatMap((l) => [...names[l]].map((n) => `public/assets/audio/${l}/${n}`)));
+  const orphans = [...tracked].filter((f) => !used.has(f));
+  console.log(`Narration clips: ${LANGS.map((l) => `${names[l].size} ${l}`).join(', ')}; ${audioFailures.length} problem(s)`);
+  for (const f of audioFailures) console.log('  FAIL ' + f);
+  if (orphans.length) console.log('  Not referenced by tasks.json (report only): ' + orphans.join(', '));
+}
+if (args['audio-only']) process.exit(audioFailures.length ? 1 : 0);
+
 if (!args.out || args.out === true) {
   console.error('Pass --out <folder outside the project> for screenshots.');
   process.exit(2);
@@ -33,7 +77,6 @@ if (OUT.startsWith(resolve('.'))) {
 }
 mkdirSync(OUT, { recursive: true });
 
-const TASKS = JSON.parse(readFileSync(new URL('../src/config/tasks.json', import.meta.url), 'utf8'));
 const BROWSERS = [
   args.browser,
   'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
@@ -48,13 +91,12 @@ if (!BROWSERS.length) {
 }
 
 const SIZES = args.quick ? [[360, 690]] : [[360, 690], [360, 780], [412, 915]];
-const LANGS = ['en', 'hi', 'ml'];
 const MOTIONS = args.quick ? [false] : [false, true];
 const SCROLL_METHODS = ['touch', 'wheel', 'keyboard'];
 const MARGIN = 12;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const failures = [];
+const failures = [...audioFailures];
 const notes = [];
 const screenshots = [];
 let checks = 0;
@@ -409,7 +451,7 @@ for (const [w, h] of SIZES) {
 
         for (let i = 0; i < total; i++) {
           const step = task.steps[i];
-          // Original steps keep their clips; new steps have none yet. Tag findings on unchanged screens.
+          // Steps with a clip are tagged [existing screen]; a step without one must stay silent.
           const clip = step[`audio_${lang}`] || step.audio_en;
           const at = `${where} step ${i + 1}${clip ? ' [existing screen]' : ''}`;
           if (!check(await waitFor(async () => (await A('label()')) === stepText(t, i + 1, total)), `${at}: step label not shown`)) break;
