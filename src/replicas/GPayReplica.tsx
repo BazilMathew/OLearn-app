@@ -16,9 +16,17 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   Lock,
-  ChevronRight,
   Delete,
-  BadgeCheck
+  BadgeCheck,
+  ChevronRight,
+  Search,
+  House,
+  Landmark,
+  CircleUserRound,
+  X,
+  Flashlight,
+  MoreVertical,
+  Phone
 } from 'lucide-react';
 
 interface GPayReplicaProps {
@@ -49,6 +57,16 @@ const SHOP_PAYEE: Payee = { nameKey: 'shopName', initialKey: 'shopInitial', colo
 const PAYEES: Record<string, Payee> = {
   gpay_send_contact: { nameKey: 'rameshSon', initialKey: 'rameshInitial', color: '#1E8E3E', phone: '+91 98765 43210' }
 };
+
+// Home shortcut: light-blue rounded square with a dark-blue icon and its name below
+const Shortcut: React.FC<{ icon: React.ElementType; label: string }> = ({ icon: Icon, label }) => (
+  <div className="flex flex-col items-center gap-sm px-xs py-sm text-center">
+    <div className="w-16 h-16 rounded-2xl bg-[#D3E3FD] flex items-center justify-center">
+      <Icon className="w-8 h-8 text-[#0B57D0]" aria-hidden="true" />
+    </div>
+    <span className="text-label font-semibold text-ink leading-tight">{label}</span>
+  </div>
+);
 
 // Simple light app bar used by most Google Pay screens
 const AppBar: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -85,24 +103,30 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
   // 1. QR SCANNER VIEWFINDER SCREEN
   if (screen === 'gpay_qr_scanner_viewfinder') {
     return (
-      <div className="h-full w-full bg-[#202124] text-white flex flex-col justify-between items-center p-xl">
-        <div className="w-full flex items-center justify-between">
-          <ArrowLeft className="w-7 h-7 text-white" aria-hidden="true" />
-          <span className="text-body font-bold">
-            {r.scanShopQr}
-          </span>
-          <div className="w-7" />
+      <div className="h-full w-full bg-black text-white flex flex-col justify-between items-center">
+        {/* Top: close, torch and menu (inert) */}
+        <div className="w-full flex items-center justify-between px-sm">
+          <div className="w-16 h-16 flex items-center justify-center">
+            <X className="w-7 h-7 text-white" aria-hidden="true" />
+          </div>
+          <div className="flex items-center">
+            <div className="w-16 h-16 flex items-center justify-center">
+              <Flashlight className="w-7 h-7 text-white" aria-hidden="true" />
+            </div>
+            <div className="w-16 h-16 flex items-center justify-center">
+              <MoreVertical className="w-7 h-7 text-white" aria-hidden="true" />
+            </div>
+          </div>
         </div>
 
-        {/* Viewfinder Frame with Shop QR Code */}
-        <div className="flex flex-col items-center">
+        {/* Viewfinder Frame with Shop QR Code: four coloured corner brackets */}
+        <div className="flex flex-col items-center px-lg">
           <HighlightTarget elementId="qr_target_box" {...tp} className="rounded-[28px]">
-            <div className="w-64 h-64 rounded-[28px] bg-[#303134] flex flex-col items-center justify-center p-lg relative">
-              {/* Viewfinder corners */}
-              <span className="absolute top-3 left-3 w-10 h-10 border-t-4 border-l-4 border-white rounded-tl-xl" aria-hidden="true" />
-              <span className="absolute top-3 right-3 w-10 h-10 border-t-4 border-r-4 border-white rounded-tr-xl" aria-hidden="true" />
-              <span className="absolute bottom-3 left-3 w-10 h-10 border-b-4 border-l-4 border-white rounded-bl-xl" aria-hidden="true" />
-              <span className="absolute bottom-3 right-3 w-10 h-10 border-b-4 border-r-4 border-white rounded-br-xl" aria-hidden="true" />
+            <div className="w-64 h-64 rounded-[28px] bg-[#121212] flex flex-col items-center justify-center p-lg relative">
+              <span className="absolute top-2 left-2 w-11 h-11 border-t-[5px] border-l-[5px] border-[#EA4335] rounded-tl-2xl" aria-hidden="true" />
+              <span className="absolute top-2 right-2 w-11 h-11 border-t-[5px] border-r-[5px] border-[#FBBC04] rounded-tr-2xl" aria-hidden="true" />
+              <span className="absolute bottom-2 left-2 w-11 h-11 border-b-[5px] border-l-[5px] border-[#4285F4] rounded-bl-2xl" aria-hidden="true" />
+              <span className="absolute bottom-2 right-2 w-11 h-11 border-b-[5px] border-r-[5px] border-[#34A853] rounded-br-2xl" aria-hidden="true" />
               <div className="bg-white rounded-xl p-sm">
                 <QrCode className="w-32 h-32 text-ink" />
               </div>
@@ -112,13 +136,16 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
             </div>
           </HighlightTarget>
 
-          <p className="text-body text-white font-bold mt-xl text-center">
+          <p className="text-body text-white font-bold mt-lg text-center">
             {r.pointCamera}
           </p>
         </div>
 
-        <div className="text-center text-white/70 text-label font-normal">
-          {r.sandboxFooter}
+        {/* Bottom sheet with a handle */}
+        <div className="w-full bg-[#303134] rounded-t-[28px] px-lg pt-sm pb-lg text-center">
+          <div className="w-10 h-1 bg-white/60 rounded-full mx-auto mb-sm" aria-hidden="true" />
+          <div className="text-body font-bold text-white">{r.scanShopQr}</div>
+          <div className="text-label font-normal text-white/80">{r.sandboxFooter}</div>
         </div>
       </div>
     );
@@ -207,13 +234,14 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
         </div>
 
         {/* Numpad Simulator with Blue Checkmark */}
-        <div className="bg-[#F1F3F4] px-sm pt-xs pb-lg border-t border-[#DADCE0]">
+        {/* 16px at the sides keeps the check button's pointer badge on screen */}
+        <div className="bg-[#F1F3F4] px-lg pt-xs pb-lg border-t border-[#DADCE0]">
           <div className="grid grid-cols-3 gap-1 text-center text-title">
             {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(num => (
               <div
                 key={num}
                 onClick={onWrongTap}
-                className="min-h-[64px] flex items-center justify-center bg-white rounded-xl cursor-pointer text-ink"
+                className="min-h-[64px] flex items-center justify-center rounded-xl cursor-pointer text-ink"
               >
                 {num}
               </div>
@@ -221,7 +249,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
             <div onClick={onWrongTap} className="min-h-[64px] flex items-center justify-center cursor-pointer text-ink">
               <Delete className="w-8 h-8" aria-hidden="true" />
             </div>
-            <div onClick={onWrongTap} className="min-h-[64px] flex items-center justify-center bg-white rounded-xl text-ink">
+            <div onClick={onWrongTap} className="min-h-[64px] flex items-center justify-center rounded-xl text-ink">
               0
             </div>
 
@@ -327,16 +355,24 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
           <div className="w-12 h-12 bg-[#1E8E3E] rounded-full flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
             {r.rameshInitial}
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="text-body font-bold leading-tight">
               {r.rameshSon}
             </div>
             <div className="text-label font-normal text-ink-muted">+91 98765 43210</div>
           </div>
+          <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
+            <Phone className="w-7 h-7 text-ink" aria-hidden="true" />
+          </div>
         </AppBar>
 
+        <div className="flex items-center justify-center gap-xs px-lg pt-md text-label font-normal text-ink">
+          <ShieldCheck className="w-5 h-5 text-[#1E8E3E] flex-shrink-0" aria-hidden="true" />
+          <span>{r.bankingNameVerified}</span>
+        </div>
+
         <div className="flex-1 flex flex-col justify-center items-center p-xl">
-          <div className="bg-white border border-[#DADCE0] rounded-card p-lg text-center max-w-xs">
+          <div className="bg-white border border-[#DADCE0] rounded-[28px] p-lg text-center max-w-xs">
             <ShieldCheck className="w-9 h-9 text-gpay-blue mx-auto mb-sm" aria-hidden="true" />
             <div className="text-body font-bold text-ink">
               {r.secureTransfer}
@@ -344,16 +380,17 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
           </div>
         </div>
 
-        <div className="flex gap-md p-lg bg-white border-t border-[#DADCE0]">
-          <HighlightTarget elementId="contact_pay_button" {...tp} className="flex-1 rounded-full">
-            <div className="w-full min-h-[64px] bg-gpay-blue text-white text-body font-bold rounded-full flex items-center justify-center px-md">
+        {/* Pay and Request pills, each as wide as its name; they stack when both do not fit one row */}
+        <div className="flex flex-wrap gap-sm p-lg bg-white border-t border-[#DADCE0]">
+          <HighlightTarget elementId="contact_pay_button" {...tp} className="flex-auto rounded-full">
+            <div className="w-full min-h-[64px] bg-gpay-blue text-white text-body font-bold rounded-full flex items-center justify-center px-xl whitespace-nowrap">
               {r.payMoney}
             </div>
           </HighlightTarget>
 
           <div
             onClick={onWrongTap}
-            className="flex-1 min-w-0 min-h-[64px] px-sm bg-white text-gpay-blue border-2 border-[#DADCE0] text-label font-bold rounded-full flex items-center justify-center text-center"
+            className="flex-auto min-h-[64px] px-lg bg-white text-[#0B57D0] border-2 border-[#DADCE0] text-body font-bold rounded-full flex items-center justify-center text-center whitespace-nowrap"
           >
             {r.request}
           </div>
@@ -519,74 +556,72 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
 
   // 10. GPAY HOME SCREEN (Default)
   return (
-    <div className="h-full w-full bg-gpay-bg text-ink flex flex-col justify-between overflow-y-auto">
-      {/* Top Header */}
-      <div className="bg-white flex items-center justify-between px-lg py-md border-b border-[#DADCE0]">
-        <div className="flex items-center gap-sm">
-          <div className="w-10 h-10 bg-gpay-blue rounded-xl flex items-center justify-center font-bold text-white text-xl">
-            G
+    <div className="h-full w-full bg-white text-ink flex flex-col">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden flex flex-col">
+        {/* Top: search (inert) and the learner's profile picture */}
+        <div className="flex items-center gap-sm px-lg pt-md pb-sm">
+          <div onClick={onWrongTap} className="flex-1 min-w-0 min-h-[64px] rounded-full bg-[#F1F3F4] flex items-center gap-md px-lg">
+            <Search className="w-7 h-7 text-ink-muted flex-shrink-0" aria-hidden="true" />
+            <span className="text-body text-ink-muted truncate">{r.search}</span>
           </div>
-          <span className="text-title text-ink">Google Pay</span>
+          <div className="w-12 h-12 bg-gpay-light-blue rounded-full flex items-center justify-center text-2xl flex-shrink-0">
+            👵
+          </div>
         </div>
-        <div className="w-12 h-12 bg-gpay-light-blue rounded-full flex items-center justify-center text-2xl">
-          👵
-        </div>
-      </div>
 
-      <div className="space-y-lg p-lg my-auto">
-        {/* Large Action Tiles: Minimum 64dp high */}
-        <div className="space-y-md">
+        {/* Shortcuts at the top, two per row so 18px names fit in every language */}
+        <div className="grid grid-cols-2 gap-x-md px-lg py-md">
           <HighlightTarget elementId="scan_qr_button" {...tp}>
-            <div className="min-h-[80px] bg-gpay-blue text-white px-lg py-md rounded-2xl flex items-center gap-lg">
-              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                <QrCode className="w-7 h-7" />
-              </div>
-              <div className="text-body font-bold leading-tight">
-                {r.scanAnyQr}
-              </div>
-            </div>
+            <Shortcut icon={QrCode} label={r.scanAnyQr} />
           </HighlightTarget>
 
           <HighlightTarget elementId="pay_contacts_button" {...tp}>
-            <div className="min-h-[80px] bg-white text-ink px-lg py-md rounded-2xl flex items-center gap-lg border border-[#DADCE0]">
-              <div className="w-12 h-12 bg-gpay-light-blue rounded-full flex items-center justify-center flex-shrink-0">
-                <Users className="w-7 h-7 text-gpay-blue" />
+            <Shortcut icon={Users} label={r.payContacts} />
+          </HighlightTarget>
+        </div>
+
+        {/* Bank balance and history rows further down (the narration places them at the bottom) */}
+        <div className="px-lg pb-sm space-y-xs">
+          <HighlightTarget elementId="check_balance_button" {...tp}>
+            <div className="min-h-[64px] px-sm py-sm flex items-center gap-md">
+              <div className="w-12 h-12 rounded-full bg-[#D3E3FD] flex items-center justify-center flex-shrink-0">
+                <Building2 className="w-7 h-7 text-[#0B57D0]" />
               </div>
-              <div className="text-body font-bold leading-tight">
-                {r.payContacts}
+              <span className="text-body font-semibold text-ink flex-1 min-w-0">{r.checkBalance}</span>
+              <ChevronRight className="w-6 h-6 text-ink-muted flex-shrink-0" aria-hidden="true" />
+            </div>
+          </HighlightTarget>
+
+          <HighlightTarget elementId="transaction_history_button" {...tp}>
+            <div className="min-h-[64px] px-sm py-sm flex items-center gap-md">
+              <div className="w-12 h-12 rounded-full bg-[#D3E3FD] flex items-center justify-center flex-shrink-0">
+                <Receipt className="w-7 h-7 text-[#0B57D0]" />
               </div>
+              <span className="text-body font-semibold text-ink flex-1 min-w-0">{r.seeHistory}</span>
+              <ChevronRight className="w-6 h-6 text-ink-muted flex-shrink-0" aria-hidden="true" />
             </div>
           </HighlightTarget>
         </div>
 
-        {/* Banking and History Links */}
-        <div className="bg-white rounded-card p-sm border border-[#DADCE0] space-y-xs">
-          <HighlightTarget elementId="check_balance_button" {...tp}>
-            <div className="min-h-[64px] px-md py-sm rounded-xl flex items-center gap-md">
-              <Building2 className="w-7 h-7 text-gpay-blue flex-shrink-0" />
-              <span className="text-body font-bold text-ink flex-1">
-                {r.checkBalance}
-              </span>
-              <ChevronRight className="w-6 h-6 text-ink-muted flex-shrink-0" aria-hidden="true" />
-            </div>
-          </HighlightTarget>
-
-          <div className="border-t border-[#DADCE0] mx-md" />
-
-          <HighlightTarget elementId="transaction_history_button" {...tp}>
-            <div className="min-h-[64px] px-md py-sm rounded-xl flex items-center gap-md">
-              <Receipt className="w-7 h-7 text-gpay-blue flex-shrink-0" />
-              <span className="text-body font-bold text-ink flex-1">
-                {r.seeHistory}
-              </span>
-              <ChevronRight className="w-6 h-6 text-ink-muted flex-shrink-0" aria-hidden="true" />
-            </div>
-          </HighlightTarget>
+        <div className="mt-auto text-center text-ink-muted text-label font-normal px-lg pb-md">
+          {r.mockFooter}
         </div>
       </div>
 
-      <div className="text-center text-ink-muted text-label font-normal px-lg pb-lg">
-        {r.mockFooter}
+      {/* Bottom bar (inert): Main selected */}
+      <div className="flex border-t border-[#DADCE0] bg-white px-xs">
+        {([
+          [House, r.tabMain],
+          [Landmark, r.tabBank],
+          [CircleUserRound, r.tabProfile]
+        ] as [React.ElementType, string][]).map(([Icon, label], i) => (
+          <div key={label} onClick={onWrongTap} className="flex-1 min-w-0 min-h-[64px] flex flex-col items-center justify-center gap-xs py-xs">
+            <div className={`w-16 h-8 rounded-full flex items-center justify-center ${i === 0 ? 'bg-[#D3E3FD]' : ''}`}>
+              <Icon className={`w-6 h-6 ${i === 0 ? 'text-[#0B57D0]' : 'text-ink'}`} aria-hidden="true" />
+            </div>
+            <span className={`text-label text-ink text-center leading-tight ${i === 0 ? 'font-bold' : 'font-normal'}`}>{label}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

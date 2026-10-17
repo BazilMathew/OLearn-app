@@ -327,7 +327,7 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
       </div>
 
       {/* Screen Replica Container */}
-      <div ref={replicaRef} className="flex-1 relative overflow-y-auto bg-canvas flex flex-col">
+      <div ref={replicaRef} className="flex-1 relative overflow-y-auto overflow-x-hidden bg-canvas flex flex-col">
         {task.app === 'whatsapp' ? (
           <WhatsAppReplica
             screen={currentStep.screen}

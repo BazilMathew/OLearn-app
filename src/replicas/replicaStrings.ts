@@ -34,6 +34,16 @@ export interface ReplicaStrings {
   startCall: string;
   recordingNote: string;
   voiceCallInProgress: string;
+  /** Call screen controls (voice and video) */
+  callSecure: string;
+  callSpeaker: string;
+  callMicOff: string;
+  callOptions: string;
+  callAddPeople: string;
+  endCall: string;
+  switchCamera: string;
+  cameraOff: string;
+  pauseRecording: string;
   you: string;
   photoPreview: string;
   beautifulFlower: string;
@@ -109,6 +119,10 @@ export interface ReplicaStrings {
   checkBalance: string;
   seeHistory: string;
   mockFooter: string;
+  /** Google Pay bottom bar (inert) */
+  tabMain: string;
+  tabBank: string;
+  tabProfile: string;
 }
 
 export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
@@ -140,6 +154,15 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     startCall: 'Start Call',
     recordingNote: 'Recording audio note...',
     voiceCallInProgress: 'WhatsApp Voice Call in progress',
+    callSecure: 'Secure call',
+    callSpeaker: 'Loud speaker',
+    callMicOff: 'Mic off',
+    callOptions: 'Options',
+    callAddPeople: 'Add people',
+    endCall: 'End call',
+    switchCamera: 'Switch camera',
+    cameraOff: 'Camera off',
+    pauseRecording: 'Pause recording',
     you: 'You',
     photoPreview: 'Photo Preview',
     beautifulFlower: 'Beautiful Flower',
@@ -210,7 +233,10 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     payContacts: 'Pay contacts',
     checkBalance: 'Check bank balance',
     seeHistory: 'See transaction history',
-    mockFooter: 'Mock Google Pay Replica • No real money is used'
+    mockFooter: 'Mock Google Pay Replica • No real money is used',
+    tabMain: 'Main',
+    tabBank: 'My bank',
+    tabProfile: 'Profile'
   },
   hi: {
     rameshSon: 'रमेश (बेटा)',
@@ -240,6 +266,15 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     startCall: 'शुरू करें',
     recordingNote: 'आवाज़ रिकॉर्ड हो रही है...',
     voiceCallInProgress: 'व्हाट्सएप वॉइस कॉल जारी है',
+    callSecure: 'सुरक्षित कॉल',
+    callSpeaker: 'लाउड स्पीकर',
+    callMicOff: 'माइक बंद',
+    callOptions: 'विकल्प',
+    callAddPeople: 'लोग जोड़ें',
+    endCall: 'कॉल काटें',
+    switchCamera: 'कैमरा बदलें',
+    cameraOff: 'कैमरा बंद',
+    pauseRecording: 'रिकॉर्डिंग रोकें',
     you: 'आप',
     photoPreview: 'फोटो पूर्वावलोकन',
     beautifulFlower: 'सुंदर फूल',
@@ -310,7 +345,10 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     payContacts: 'संपर्कों को पैसे भेजें',
     checkBalance: 'बैंक बैलेंस चेक करें',
     seeHistory: 'लेन-देन का इतिहास देखें',
-    mockFooter: 'डेमो गूगल पे • असली पैसे का उपयोग नहीं होता'
+    mockFooter: 'डेमो गूगल पे • असली पैसे का उपयोग नहीं होता',
+    tabMain: 'मुख्य',
+    tabBank: 'मेरा बैंक',
+    tabProfile: 'प्रोफ़ाइल'
   },
   ml: {
     rameshSon: 'രമേഷ് (മകൻ)',
@@ -327,7 +365,7 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     today: 'ഇന്ന്',
     chatReceived: 'നമസ്കാരം, സുഖമാണോ?',
     chatSent: 'ഞാൻ ഇവിടെ സുഖമായിരിക്കുന്നു മകനേ.',
-    chatTyped: 'ഞാൻ സുഖമായിരിക്കുന്നു...',
+    chatTyped: 'ഞാൻ സുഖമായി ഇരിക്കുന്നു...',
     messagePlaceholder: 'സന്ദേശം എഴുതുക',
     shareContent: 'തിരഞ്ഞെടുക്കുക',
     gallery: 'ഗ്യാലറി',
@@ -340,6 +378,15 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     startCall: 'തുടങ്ങുക',
     recordingNote: 'ശബ്ദം റെക്കോർഡ് ചെയ്യുന്നു...',
     voiceCallInProgress: 'വോയ്സ് കോൾ നടക്കുന്നു',
+    callSecure: 'സുരക്ഷിത കോൾ',
+    callSpeaker: 'ലൗഡ് സ്പീക്കർ',
+    callMicOff: 'മൈക്ക് ഓഫ്',
+    callOptions: 'ഓപ്ഷനുകൾ',
+    callAddPeople: 'ആളെ ചേർക്കുക',
+    endCall: 'കോൾ നിർത്തുക',
+    switchCamera: 'ക്യാമറ മാറ്റുക',
+    cameraOff: 'ക്യാമറ ഓഫ്',
+    pauseRecording: 'റെക്കോർഡിംഗ് നിർത്തുക',
     you: 'നിങ്ങൾ',
     photoPreview: 'ഫോട്ടോ കാഴ്ച്ച',
     beautifulFlower: 'സുന്ദരമായ പൂവ്',
@@ -410,6 +457,9 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     payContacts: 'കോൺടാക്റ്റുകൾക്ക് പണം നൽകുക',
     checkBalance: 'ബാങ്ക് ബാലൻസ് പരിശോധിക്കുക',
     seeHistory: 'ഇടപാട് ചരിത്രം കാണുക',
-    mockFooter: 'മാതൃക ഗൂഗിൾ പേ • യഥാർത്ഥ പണം ഉപയോഗിക്കുന്നില്ല'
+    mockFooter: 'മാതൃക ഗൂഗിൾ പേ • യഥാർത്ഥ പണം ഉപയോഗിക്കുന്നില്ല',
+    tabMain: 'പ്രധാനം',
+    tabBank: 'എന്റെ ബാങ്ക്',
+    tabProfile: 'പ്രൊഫൈൽ'
   }
 };

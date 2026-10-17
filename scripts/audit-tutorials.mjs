@@ -191,6 +191,44 @@ const PAGE_HELPERS = `
       }
       return out;
     },
+    // Typed text that wraps in the middle of a word: a new line must start right after a space
+    midWordBreaks(id) {
+      const el = document.querySelector('[data-element-id="' + id + '"]');
+      const out = [];
+      if (!el) return out;
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+        const s = n.textContent;
+        let lastTop = null;
+        // Step by grapheme so Indic clusters are measured whole
+        const parts = [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(s)];
+        for (const { segment, index } of parts) {
+          const range = document.createRange();
+          range.setStart(n, index); range.setEnd(n, index + segment.length);
+          const top = range.getBoundingClientRect().top;
+          if (lastTop !== null && top > lastTop + 4 && segment.trim() && index > 0 && s[index - 1] !== ' ')
+            out.push('line breaks inside a word at "' + s.slice(Math.max(0, index - 6), index + 6) + '"');
+          if (segment.trim()) lastTop = top;
+        }
+      }
+      return out;
+    },
+    // The highlight's dark outer ring (#2B2620) or its amber outline must stand out from what the target sits on
+    ringContrast(id) {
+      const el = document.querySelector('[data-element-id="' + id + '"]');
+      if (!el) return null;
+      const lum = (c) => {
+        const [r, g, b] = c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      };
+      const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+      let bg = [255, 255, 255];
+      for (let p = el.parentElement; p; p = p.parentElement) {
+        const m = getComputedStyle(p).backgroundColor.match(/[\\d.]+/g);
+        if (m && (m.length < 4 || +m[3] > 0.5)) { bg = m.slice(0, 3).map(Number); break; }
+      }
+      return { bg: 'rgb(' + bg.join(',') + ')', ratio: Math.max(ratio([0x2b, 0x26, 0x20], bg), ratio([0xf2, 0xa9, 0x3b], bg)) };
+    },
     // Looping animations: inside a tutorial only the highlight ring may loop
     loops() {
       return document.getAnimations()
@@ -449,8 +487,16 @@ for (const [w, h] of SIZES) {
           const vertOk = g.top >= MARGIN && g.bottom >= MARGIN;
           const horzOk = g.left >= MARGIN && g.right >= MARGIN;
           check(vertOk, `${at}: ${step.highlight_element} not 12px clear top/bottom (top ${Math.round(g.top)}, bottom ${Math.round(g.bottom)})`);
-          if (!horzOk) notes.push(`${at}: ${step.highlight_element} is ${Math.round(Math.min(g.left, g.right))}px from a side edge`);
+          check(horzOk, `${at}: ${step.highlight_element} is ${Math.round(Math.min(g.left, g.right))}px from a side edge (needs 12px)`);
+          // The pointer badge reaches 16px past the target's right edge: keep it on screen (not clipped sideways)
+          check(g.right >= 16, `${at}: ${step.highlight_element} pointer badge clipped at the right edge (${Math.round(g.right)}px clear, needs 16px)`);
           check(info.hitInside, `${at}: ${step.highlight_element} is covered by another element`);
+          const rc = await A(`ringContrast(${JSON.stringify(step.highlight_element)})`);
+          check(rc && rc.ratio >= 3, `${at}: highlight ring washed out on ${rc && rc.bg} (contrast ${rc && rc.ratio.toFixed(1)})`);
+          if (step.screen === 'whatsapp_chat_screen_typed') {
+            for (const s of await A(`midWordBreaks('chat_input')`)) check(false, `${at}: typed message ${s}`);
+          }
+          if (w === 360 && h === 690 && !reduce) await shot(`${tag}_${task.task_id}_step${i + 1}`);
           if (step.highlight_element === 'chat_row_ramesh' && !reduce) await shot(`${tag}_${task.task_id}_tap_chat`);
 
           playMark = await cdp.eval('window.__plays.length');
