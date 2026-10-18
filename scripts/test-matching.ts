@@ -44,6 +44,21 @@ const CASES: Record<string, Record<SupportedLanguage, string[]>> = {
     hi: ['लोकेशन भेजनी है', 'मैं कहाँ हूँ यह भेजना', 'अपनी लोकेशन शेयर करें'],
     ml: ['ലൊക്കേഷൻ അയക്കണം', 'ഞാൻ എവിടെയാണെന്ന് അയക്കാൻ', 'സ്ഥലം ഷെയർ ചെയ്യുന്നത് എങ്ങനെ']
   },
+  whatsapp_add_status: {
+    en: ['add a status', 'how to put a whatsapp status', 'post a story'],
+    hi: ['स्टेटस लगाना है', 'व्हाट्सएप पर स्टेटस कैसे डालें', 'अपना स्टेटस अपडेट करना'],
+    ml: ['സ്റ്റാറ്റസ് ഇടണം', 'വാട്ട്സ്ആപ്പിൽ സ്റ്റാറ്റസ് ഇടുന്നത് എങ്ങനെ', 'സ്റ്റാറ്റസ് അപ്ഡേറ്റ് ചെയ്യാൻ']
+  },
+  whatsapp_block_number: {
+    en: ['block a number', 'how to block someone', 'stop scam messages', 'block unknown number'],
+    hi: ['नंबर ब्लॉक करना है', 'अनजान नंबर को ब्लॉक करें', 'फ्रॉड मैसेज रोकना'],
+    ml: ['നമ്പർ ബ്ലോക്ക് ചെയ്യണം', 'അറിയാത്ത നമ്പർ ബ്ലോക്ക് ചെയ്യുന്നത് എങ്ങനെ', 'തട്ടിപ്പ് മെസ്സേജ് തടയാൻ']
+  },
+  whatsapp_forward_message: {
+    en: ['forward a message', 'how to forward on whatsapp', 'forward this message to my daughter'],
+    hi: ['मैसेज फॉरवर्ड करना है', 'मैसेज आगे भेजना', 'फॉरवर्ड कैसे करें'],
+    ml: ['മെസ്സേജ് ഫോർവേഡ് ചെയ്യണം', 'ഫോർവേഡ് ചെയ്യുന്നത് എങ്ങനെ', 'ഈ സന്ദേശം ഫോർവേഡ് ചെയ്യാൻ']
+  },
   gpay_check_balance: {
     en: ['check balance', 'check my bank balance', 'how much money do I have', 'show account balance in google pay'],
     hi: ['बैलेंस चेक करना है', 'मेरे खाते में कितने पैसे हैं', 'बैंक बैलेंस देखना', 'गूगल पे में बैलेंस'],
@@ -77,6 +92,17 @@ const EXTRA: Array<[SupportedLanguage, string, string]> = [
   ['en', 'send a photo to Ramesh', 'whatsapp_send_photo'],
   ['hi', 'बेटे को फोटो भेजो', 'whatsapp_send_photo'],
   ['ml', 'മകന് ഫോട്ടോ അയക്കണം', 'whatsapp_send_photo'],
+  // The new tasks take only their own requests: a photo status, a forwarded photo and a blocked number are theirs,
+  // while plain photo, message, search and location requests stay where they were
+  ['en', 'post a photo status', 'whatsapp_add_status'],
+  ['en', 'forward a photo', 'whatsapp_forward_message'],
+  ['en', 'block an unknown number', 'whatsapp_block_number'],
+  ['en', 'find a number', 'whatsapp_search_contact'],
+  ['en', 'search', 'whatsapp_search_contact'],
+  ['en', 'send a message', 'whatsapp_send_text'],
+  ['hi', 'मैसेज भेजना है', 'whatsapp_send_text'],
+  ['en', 'send location', 'whatsapp_share_location'],
+  ['ml', 'സ്റ്റാറ്റസ് ഫോട്ടോ ഇടണം', 'whatsapp_add_status'],
   ['en', 'whatsapp', 'none'],
   ['ml', 'ജിപേ', 'none'],
   ['hi', 'नमस्ते', 'none'],

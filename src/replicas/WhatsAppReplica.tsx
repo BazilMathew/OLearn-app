@@ -1,8 +1,8 @@
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { SupportedLanguage } from '../types/task';
 import { HighlightTarget } from '../engine/HighlightTarget';
 import { REPLICA_STRINGS, ReplicaStrings } from './replicaStrings';
-import { MOCK_CHAT_PHONES } from '../config/mockData';
+import { MOCK_CHAT_PHONES, UNKNOWN_NUMBER } from '../config/mockData';
 import {
   Phone,
   Video,
@@ -46,7 +46,19 @@ import {
   Folder,
   RefreshCw,
   Radio,
-  FileImage
+  FileImage,
+  Forward,
+  Reply,
+  Star,
+  Copy,
+  Ban,
+  ShieldCheck,
+  Pencil,
+  Music,
+  LayoutPanelLeft,
+  Check,
+  Palette,
+  Type
 } from 'lucide-react';
 
 interface WhatsAppReplicaProps {
@@ -143,30 +155,84 @@ export const PhoneHomeScreen: React.FC<{ r: ReplicaStrings; tp: TapProps }> = ({
   </div>
 );
 
-// One chat in the chat list: round avatar (initial or group icon), name, time and last message
-const ChatRow: React.FC<{ name: string; msg: string; time: string; color: string; group?: boolean }> = ({
+// One chat in the chat list: round avatar (initial, group or person icon), name, time and last message,
+// and a green unread count when there is one
+const ChatRow: React.FC<{ name: string; msg: string; time: string; color: string; group?: boolean; unknown?: boolean; unread?: number }> = ({
   name,
   msg,
   time,
   color,
-  group
+  group,
+  unknown,
+  unread
 }) => (
   <div className="min-h-[80px] flex items-center gap-md px-sm py-sm">
     <div
       className="w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0"
       style={{ background: color }}
     >
-      {group ? <Users className="w-7 h-7" aria-hidden="true" /> : name.charAt(0)}
+      {group ? <Users className="w-7 h-7" aria-hidden="true" /> : unknown ? <User className="w-7 h-7" aria-hidden="true" /> : name.charAt(0)}
     </div>
     <div className="flex-1 min-w-0">
       <div className="flex items-baseline justify-between gap-sm">
         <span className="text-body font-semibold text-ink truncate">{name}</span>
-        <span className="text-label font-normal text-ink-muted flex-shrink-0">{time}</span>
+        <span className={`text-label flex-shrink-0 ${unread ? 'font-bold' : 'font-normal text-ink-muted'}`} style={unread ? { color: WA_ACCENT } : undefined}>
+          {time}
+        </span>
       </div>
-      <div className="text-label font-normal text-ink-muted truncate">{msg}</div>
+      <div className="flex items-center gap-sm">
+        <div className="flex-1 min-w-0 text-label font-normal text-ink-muted truncate">{msg}</div>
+        {!!unread && (
+          <span className="min-w-[28px] h-7 px-xs rounded-full text-white text-label font-bold flex items-center justify-center flex-shrink-0" style={{ background: WA_ACCENT }}>
+            {unread}
+          </span>
+        )}
+      </div>
     </div>
   </div>
 );
+
+// Bottom tabs of the chat list and Updates (inert but for Updates, a target in the status task). Each tab is as
+// wide as its name, so all four names fit one row at 18px in English and Hindi. The Malayalam names do not fit
+// 360px: there only the selected tab (and Updates while it is the step's target) is named and the other tabs are
+// icons (named for screen readers). While Updates is the target, room below it keeps its ring on screen.
+const BottomTabs: React.FC<{ r: ReplicaStrings; language: SupportedLanguage; selected: number; tp: TapProps }> = ({ r, language, selected, tp }) => {
+  const tabs: [React.ElementType, string][] = [
+    [MessageSquareText, r.tabChats],
+    [CircleDashed, r.tabUpdates],
+    [Users, r.tabCommunities],
+    [Phone, r.tabCalls]
+  ];
+  return (
+    <div className={`flex justify-between border-t border-[#E9EDEF] bg-white px-xs ${tp.activeHighlightId === 'tab_updates' ? 'pb-md' : ''}`}>
+      {tabs.map(([Icon, label], i) => {
+        const named = i === selected || language !== 'ml' || (i === 1 && tp.activeHighlightId === 'tab_updates');
+        const className = `min-h-[64px] min-w-[64px] flex flex-col items-center justify-center gap-xs py-xs ${named ? 'flex-auto px-xs' : 'flex-1'}`;
+        const content = (
+          <>
+            <div className={`w-16 h-8 rounded-full flex items-center justify-center ${i === selected ? 'bg-[#D9FDD3]' : ''}`}>
+              <Icon className={`text-ink ${named ? 'w-6 h-6' : 'w-7 h-7'}`} aria-hidden="true" />
+            </div>
+            {named && (
+              <span className={`text-label text-ink text-center leading-tight whitespace-nowrap ${i === selected ? 'font-bold' : 'font-normal'}`}>
+                {label}
+              </span>
+            )}
+          </>
+        );
+        return i === 1 ? (
+          <HighlightTarget key={label} elementId="tab_updates" {...tp} className={className}>
+            <div aria-label={named ? undefined : label} className="contents">{content}</div>
+          </HighlightTarget>
+        ) : (
+          <div key={label} onClick={tp.onWrongTap} aria-label={named ? undefined : label} className={className}>
+            {content}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 // Outgoing message bubble with time and blue ticks; fades in once when it appears.
 // As in the app, the chat scrolls to the newest message so the bubble is in view.
@@ -226,6 +292,74 @@ const DOC_FILES = [
   { name: 'Garden_flower.jpg', size: '3.4 MB', time: '9:48 AM', colors: 'from-amber-300 to-orange-500', emoji: '🌼' },
   { name: 'Sunrise_view.jpg', size: '2.6 MB', time: '9:05 AM', colors: 'from-rose-300 to-amber-400', emoji: '🌅' }
 ];
+
+// Ramesh's messages in the forward task, top to bottom; any of them can be held and forwarded
+const FWD_MESSAGES = [
+  { key: 'greeting', time: '9:40 AM' },
+  { key: 'photo', time: '9:52 AM' },
+  { key: 'festival', time: '10:15 AM' }
+];
+
+// Press and hold: the time a finger must stay down, and how far it may drift before the hold is dropped
+// (a drift or a scroll is not a tap: no nudge)
+const HOLD_MS = 400;
+const HOLD_SLOP_PX = 14;
+
+// A forwarded or held message's content: text, or the flower photo. The photo is a drawing, not an image file;
+// it ignores the pointer and cannot be dragged, so the phone's own image long-press never takes over the hold.
+const FwdContent: React.FC<{ msgKey: string; r: ReplicaStrings }> = ({ msgKey, r }) =>
+  msgKey === 'photo' ? (
+    <div
+      draggable={false}
+      className="w-[200px] max-w-full h-[150px] rounded-lg bg-gradient-to-br from-amber-300 to-orange-500 flex items-center justify-center text-6xl pointer-events-none [-webkit-user-drag:none]"
+    >
+      <span aria-label={r.flower}>🌸</span>
+    </div>
+  ) : (
+    <p className="text-body leading-snug">{msgKey === 'festival' ? r.fwdMsg : r.chatReceived}</p>
+  );
+
+// Received message bubble (white, tail on the left) with its time
+const ReceivedBubble: React.FC<{ time: string; children: React.ReactNode }> = ({ time, children }) => (
+  <div className="relative bg-white text-ink rounded-[10px] rounded-tl-none px-md pt-sm pb-xs max-w-[85%] shadow-[0_1px_0_0_rgba(11,20,26,0.13)]">
+    <span className="absolute -left-2 top-0 w-0 h-0 border-t-[12px] border-t-white border-l-[10px] border-l-transparent" aria-hidden="true" />
+    {children}
+    <div className="text-label font-normal text-ink-muted text-right mt-xs">{time}</div>
+  </div>
+);
+
+// One row of the Forward to list: avatar, name and a round tick box
+const ForwardRow: React.FC<{ chat: SampleChat; ticked: boolean }> = ({ chat, ticked }) => (
+  <div className="min-h-[72px] flex items-center gap-md px-sm py-xs">
+    <div
+      className="w-12 h-12 rounded-full flex items-center justify-center text-white text-xl font-bold flex-shrink-0"
+      style={{ background: chat.color }}
+    >
+      {chat.group ? <Users className="w-6 h-6" aria-hidden="true" /> : chat.name.charAt(0)}
+    </div>
+    <span className="flex-1 min-w-0 text-body text-ink truncate">{chat.name}</span>
+    <span
+      className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${ticked ? '' : 'border-2 border-ink-muted'}`}
+      style={ticked ? { background: WA_ACCENT } : undefined}
+      aria-hidden="true"
+    >
+      {ticked && <Check className="w-5 h-5 text-white" strokeWidth={3} />}
+    </span>
+  </div>
+);
+
+// Status card on the Updates tab: a coloured picture with the person's round photo and name
+const StatusCard: React.FC<{ name: string; initial: string; colors: string; emoji: string }> = ({ name, initial, colors, emoji }) => (
+  <div className={`relative w-full h-[168px] rounded-2xl overflow-hidden bg-gradient-to-br ${colors}`}>
+    <span className="absolute inset-0 flex items-center justify-center text-5xl" aria-hidden="true">{emoji}</span>
+    <div className="absolute top-sm left-sm w-11 h-11 rounded-full border-[3px] border-[#1DAA61] bg-[#54656F] text-white text-label font-bold flex items-center justify-center">
+      {initial}
+    </div>
+    <div className="absolute inset-x-0 bottom-0 px-sm pb-sm pt-lg bg-gradient-to-t from-black/80 to-black/0 text-white text-label font-bold leading-tight break-words">
+      {name}
+    </div>
+  </div>
+);
 
 // Inert filter chip (chat search and document picker)
 const Chip: React.FC<{ label: string; onTap: () => void }> = ({ label, onTap }) => (
@@ -287,6 +421,67 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
   const [openedChat, setOpenedChat] = useState<string | null>(null);
   const [fileIndex, setFileIndex] = useState(0);
   const docFile = DOC_FILES[fileIndex];
+  // Also kept only while the practice runs: the status text typed, the message held and the contact it goes to
+  const [statusText, setStatusText] = useState('');
+  const [fwdKey, setFwdKey] = useState('greeting');
+  const [fwdTo, setFwdTo] = useState<string | null>(null);
+  // Press and hold on a message: the running hold (its timer and start point), and whether the click that
+  // follows a finished hold or a short tap has already been answered
+  const hold = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number } | null>(null);
+  const clickHandled = useRef(false);
+  useEffect(() => () => clearTimeout(hold.current?.timer), []);
+  // Block task: the chat list opens scrolled to the new chat from the unknown number (the search bar and chips
+  // scroll out of view), so it is clear of the floating button on a short screen
+  const chatListRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (screen !== 'whatsapp_chat_list_unknown') return;
+    const row = chatListRef.current?.querySelector<HTMLElement>('[data-element-id="chat_row_unknown"]');
+    if (chatListRef.current && row) chatListRef.current.scrollTop = row.offsetTop - 16;
+  }, [screen]);
+
+  const dropHold = () => {
+    if (hold.current) clearTimeout(hold.current.timer);
+    hold.current = null;
+  };
+  // Touch or mouse (primary button only). After HOLD_MS the message is selected, even with the finger still
+  // down, as in the app. Lifting sooner is a short tap: the gentle nudge. Drifting or scrolling drops it quietly.
+  const holdHandlers = (key: string) => ({
+    onPointerDown: (e: React.PointerEvent) => {
+      clickHandled.current = false;
+      if (screen !== 'whatsapp_chat_forward' || !e.isPrimary || e.button !== 0) return;
+      dropHold();
+      const timer = setTimeout(() => {
+        hold.current = null;
+        clickHandled.current = true;
+        setFwdKey(key);
+        if (highlightElement === 'chat_messages') onCorrectTap();
+      }, HOLD_MS);
+      hold.current = { timer, x: e.clientX, y: e.clientY };
+    },
+    onPointerMove: (e: React.PointerEvent) => {
+      const h = hold.current;
+      if (h && Math.hypot(e.clientX - h.x, e.clientY - h.y) > HOLD_SLOP_PX) {
+        dropHold();
+        // A mouse still clicks when it is let go after a drift: that is not a tap either
+        clickHandled.current = true;
+      }
+    },
+    onPointerUp: () => {
+      if (!hold.current) return;
+      dropHold();
+      clickHandled.current = true;
+      onWrongTap();
+    },
+    onPointerCancel: dropHold,
+    onPointerLeave: dropHold,
+    // No long-press menu or text selection from the phone
+    onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
+    onClick: (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (clickHandled.current) clickHandled.current = false;
+      else onWrongTap();
+    }
+  });
   // Header title of the document picker and send location screens. Malayalam words (അടുത്തിടെ, ലൊക്കേഷൻ)
   // are wider than the room between the header icons at 26px, so they use the 20px bold size.
   const headerTitle = language === 'ml' ? 'text-body font-bold' : 'text-title';
@@ -296,17 +491,12 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
     return <PhoneHomeScreen r={r} tp={tp} />;
   }
 
-  // 0b. CHAT LIST: the learner scrolls it to find Ramesh's chat, then taps it
-  if (screen === 'whatsapp_chat_list_screen') {
+  // 0b. CHAT LIST: the learner scrolls it to find Ramesh's chat, then taps it. In the block task a chat from an
+  // unknown number (invented scam message) is new at the top.
+  if (screen === 'whatsapp_chat_list_screen' || screen === 'whatsapp_chat_list_unknown') {
     // Every sample chat but Ramesh's, which is the target row below
     const chats = sampleChats(r).filter((c) => c.key !== 'ramesh');
     const chips = [r.chipAll, r.chipUnread, r.chipFavorites, r.chipGroups];
-    const tabs: [React.ElementType, string][] = [
-      [MessageSquareText, r.tabChats],
-      [CircleDashed, r.tabUpdates],
-      [Users, r.tabCommunities],
-      [Phone, r.tabCalls]
-    ];
 
     return (
       <div className="h-full w-full bg-white text-ink flex flex-col">
@@ -332,6 +522,7 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
           {/* Its own scrolling area: search, filter chips and chats. The bottom padding lets the
               last chat rise above the floating new-chat button. */}
           <div
+            ref={chatListRef}
             data-scroll-area
             tabIndex={0}
             aria-label={r.tabChats}
@@ -366,6 +557,11 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
             </div>
 
             <div className="pt-xs">
+              {screen === 'whatsapp_chat_list_unknown' && (
+                <HighlightTarget elementId="chat_row_unknown" {...tp} className="mx-lg">
+                  <ChatRow name={UNKNOWN_NUMBER} msg={r.scamMsg} time="12:02 PM" color="#8696A0" unknown unread={1} />
+                </HighlightTarget>
+              )}
               {chats.map((chat) => (
                 <div key={chat.key} onClick={onWrongTap} className="mx-lg">
                   <ChatRow name={chat.name} msg={chat.msg} time={chat.time} color={chat.color} group={chat.group} />
@@ -390,33 +586,407 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
           {scrollHint && <div className="absolute inset-0 z-50 pointer-events-none">{scrollHint}</div>}
         </div>
 
-        {/* Bottom tabs (inert), Chats selected. Each tab is as wide as its name, so all four names fit one row
-            at 18px in English and Hindi. The Malayalam names do not fit 360px: there only Chats is named and
-            the other tabs are icons (named for screen readers). */}
-        <div className="flex justify-between border-t border-[#E9EDEF] bg-white px-xs">
-          {tabs.map(([Icon, label], i) => {
-            const named = i === 0 || language !== 'ml';
-            return (
-              <div
-                key={label}
-                onClick={onWrongTap}
-                aria-label={named ? undefined : label}
-                className={`min-h-[64px] min-w-[64px] flex flex-col items-center justify-center gap-xs py-xs ${
-                  named ? 'flex-auto px-xs' : 'flex-1'
-                }`}
-              >
-                <div className={`w-16 h-8 rounded-full flex items-center justify-center ${i === 0 ? 'bg-[#D9FDD3]' : ''}`}>
-                  <Icon className={`text-ink ${named ? 'w-6 h-6' : 'w-7 h-7'}`} aria-hidden="true" />
-                </div>
-                {named && (
-                  <span className={`text-label text-ink text-center leading-tight whitespace-nowrap ${i === 0 ? 'font-bold' : 'font-normal'}`}>
-                    {label}
-                  </span>
+        {/* Bottom tabs, Chats selected */}
+        <BottomTabs r={r} language={language} selected={0} tp={tp} />
+      </div>
+    );
+  }
+
+  // 0c. UPDATES: the Status row (Add status first, then sample contacts' statuses), Channels (heading only, no
+  // channels) and the pencil and camera buttons (inert). After posting, the first card is "My status".
+  if (screen === 'whatsapp_updates_screen' || screen === 'whatsapp_updates_status_posted') {
+    const posted = screen === 'whatsapp_updates_status_posted';
+    const others: [string, string, string, string][] = [
+      [r.priya, r.priyaInitial, 'from-rose-300 to-pink-600', '🌺'],
+      [r.ramesh, r.rameshInitial, 'from-sky-300 to-indigo-600', '🏏']
+    ];
+    return (
+      <div className="h-full w-full bg-white text-ink flex flex-col">
+        <div onClick={onWrongTap} className="flex items-center justify-between gap-sm pl-lg pr-xs py-xs">
+          <span className="text-title text-ink">{r.tabUpdates}</span>
+          <div className="flex items-center flex-shrink-0">
+            <div className="w-14 h-16 flex items-center justify-center">
+              <Search className="w-7 h-7 text-ink" aria-hidden="true" />
+            </div>
+            <div className="w-12 h-16 flex items-center justify-center">
+              <MoreVertical className="w-7 h-7 text-ink" aria-hidden="true" />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 min-h-0 relative">
+          <div className="absolute inset-0 overflow-y-auto overflow-x-hidden pb-[160px]">
+            <div className="text-body font-bold text-ink px-lg pt-xs">{r.statusTitle}</div>
+            {/* Three cards share the width (no sideways scrolling); 16px above them leaves room for the ring */}
+            <div className="flex gap-sm px-lg pt-lg pb-md">
+              <div className="flex-1 min-w-0 max-w-[112px]">
+                {posted ? (
+                  <div data-status-posted className="relative w-full h-[168px] rounded-2xl overflow-hidden bg-[#075E54] border-[3px] border-[#1DAA61]">
+                    <div className="absolute inset-x-0 top-0 bottom-[64px] px-sm pt-sm text-white text-label font-bold leading-tight break-words line-clamp-3">
+                      {statusText}
+                    </div>
+                    <div className="absolute inset-x-0 bottom-0 px-sm pb-sm bg-black/30 pt-xs text-white text-label leading-tight">
+                      <div className="font-bold">{r.myStatus}</div>
+                      <div className="font-normal">{r.justNow}</div>
+                    </div>
+                  </div>
+                ) : (
+                  <HighlightTarget elementId="add_status_card" {...tp} className="rounded-2xl">
+                    <div className="w-full h-[168px] rounded-2xl border border-[#D1D7DB] bg-[#F6F5F3] flex flex-col items-center justify-between px-xs pt-md pb-sm">
+                      <div className="relative">
+                        <div className="w-16 h-16 rounded-full bg-[#DFE5E7] flex items-center justify-center">
+                          <User className="w-9 h-9 text-[#54656F]" aria-hidden="true" />
+                        </div>
+                        <span className="absolute -right-1 -bottom-1 w-7 h-7 rounded-full border-2 border-white flex items-center justify-center" style={{ background: WA_ACCENT }}>
+                          <Plus className="w-5 h-5 text-white" strokeWidth={3} aria-hidden="true" />
+                        </span>
+                      </div>
+                      <span className="text-label font-bold text-ink text-center leading-tight break-words">{r.addStatus}</span>
+                    </div>
+                  </HighlightTarget>
                 )}
               </div>
-            );
-          })}
+              {others.map(([name, initial, colors, emoji]) => (
+                <div key={name} onClick={onWrongTap} className="flex-1 min-w-0 max-w-[112px]">
+                  <StatusCard name={name} initial={initial} colors={colors} emoji={emoji} />
+                </div>
+              ))}
+            </div>
+
+            <div onClick={onWrongTap} className="flex items-center justify-between gap-sm px-lg pt-sm">
+              <span className="text-body font-bold text-ink">{r.channels}</span>
+              <span className="min-h-[48px] px-lg rounded-full bg-[#F0F2F5] flex items-center text-label font-bold text-ink">{r.explore}</span>
+            </div>
+          </div>
+
+          {/* Pencil (text status) and camera buttons (inert) */}
+          <div onClick={onWrongTap} className="absolute right-lg bottom-lg z-20 flex flex-col items-center gap-md">
+            <div className="w-12 h-12 rounded-xl bg-[#F0F2F5] flex items-center justify-center shadow-[0_2px_6px_rgba(11,20,26,0.2)]">
+              <Pencil className="w-6 h-6 text-ink" aria-hidden="true" />
+            </div>
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-[0_2px_6px_rgba(11,20,26,0.25)]" style={{ background: WA_ACCENT }}>
+              <Camera className="w-8 h-8 text-white" aria-hidden="true" />
+            </div>
+          </div>
         </div>
+
+        <BottomTabs r={r} language={language} selected={1} tp={tp} />
+      </div>
+    );
+  }
+
+  // 0d. ADD STATUS sheet: Text (the target), Music, Layout and Voice, then Recents (camera and photos, inert)
+  if (screen === 'whatsapp_add_status_sheet') {
+    const options: [React.ElementType, string][] = [
+      [Music, r.statusMusic],
+      [LayoutPanelLeft, r.statusLayout],
+      [Mic, r.statusVoice]
+    ];
+    const option = (Icon: React.ElementType, label: string) => (
+      <div className="flex flex-col items-center gap-xs px-xs py-xs">
+        <div className="w-16 h-16 rounded-full bg-[#F0F2F5] flex items-center justify-center">
+          <Icon className="w-7 h-7 text-ink" aria-hidden="true" />
+        </div>
+        <span className="text-label font-normal text-ink text-center leading-tight whitespace-nowrap">{label}</span>
+      </div>
+    );
+    return (
+      <div className="min-h-full shrink-0 w-full bg-white text-ink flex flex-col rounded-t-[28px]">
+        <div className="w-10 h-1 bg-[#C4C9CC] rounded-full mx-auto mt-sm" aria-hidden="true" />
+        <div onClick={onWrongTap} className="flex items-center gap-xs px-xs">
+          <div className="w-14 h-14 flex items-center justify-center flex-shrink-0">
+            <X className="w-7 h-7 text-ink" aria-hidden="true" />
+          </div>
+          <div className={`flex-1 min-w-0 text-center text-ink pr-14 ${headerTitle}`}>{r.addStatus}</div>
+        </div>
+
+        <div className="flex flex-wrap justify-around px-md pt-sm">
+          <HighlightTarget elementId="status_text_option" {...tp} className="flex-none">
+            {option(Pencil, r.statusText)}
+          </HighlightTarget>
+          {options.map(([Icon, label]) => (
+            <div key={label} onClick={onWrongTap} className="flex-none">
+              {option(Icon, label)}
+            </div>
+          ))}
+        </div>
+
+        <div onClick={onWrongTap} className="px-lg pt-md pb-lg">
+          <div className="text-body font-bold text-ink-muted pb-sm">{r.recents}</div>
+          <div className="grid grid-cols-3 gap-xs" aria-hidden="true">
+            <div className="aspect-square rounded-lg bg-[#F0F2F5] flex flex-col items-center justify-center gap-xs">
+              <Camera className="w-8 h-8" style={{ color: WA_ACCENT }} />
+            </div>
+            {[['from-amber-300 to-orange-500', '🌸'], ['from-sky-400 to-indigo-700', '🛕'], ['from-emerald-400 to-teal-700', '👶'], ['from-rose-400 to-pink-700', '🎂'], ['from-amber-200 to-rose-400', '🌅']].map(([colors, emoji]) => (
+              <div key={emoji} className={`aspect-square rounded-lg bg-gradient-to-br ${colors} flex items-center justify-center text-4xl`}>
+                {emoji}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 0e. TEXT STATUS: a real text field on a dark teal page, so the phone's own keyboard opens. The first character
+  // completes the "type" step; Send appears once there is text (if it is all deleted, the ring goes back to the
+  // field). The text lives only in the replica's state: never stored, logged or sent.
+  if (screen === 'whatsapp_status_text') {
+    const typed = statusText.trim() !== '';
+    const statusTp = {
+      ...tp,
+      activeHighlightId: highlightElement === 'status_send_button' && !typed ? 'status_text_input' : highlightElement
+    };
+    return (
+      <div className="h-full w-full bg-[#075E54] text-white flex flex-col">
+        <div onClick={onWrongTap} className="flex items-center justify-between px-xs">
+          <div className="w-14 h-14 flex items-center justify-center">
+            <X className="w-7 h-7 text-white" aria-hidden="true" />
+          </div>
+          <div className="flex items-center">
+            {[Smile, Type, Palette].map((Icon, i) => (
+              <div key={i} className="w-12 h-14 flex items-center justify-center">
+                <Icon className="w-7 h-7 text-white" aria-hidden="true" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex-1 min-h-0 flex items-center px-lg py-sm [@media(max-height:480px)]:py-0">
+          <HighlightTarget elementId="status_text_input" {...statusTp} className="w-full">
+            {/* Taps on the field only focus it: never a nudge, never a step */}
+            <div onClick={(e) => e.stopPropagation()}>
+              <textarea
+                data-status-input
+                rows={3}
+                inputMode="text"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="sentences"
+                spellCheck={false}
+                autoFocus
+                aria-label={r.typeStatus}
+                placeholder={r.typeStatus}
+                value={statusText}
+                onChange={(e) => {
+                  setStatusText(e.target.value);
+                  if (highlightElement === 'status_text_input' && e.target.value) onCorrectTap();
+                }}
+                className="block w-full min-h-[64px] bg-transparent outline-none resize-none select-text text-center text-title text-white placeholder:text-white/75"
+              />
+            </div>
+          </HighlightTarget>
+        </div>
+
+        <div className="flex items-center justify-between gap-md px-lg pt-sm pb-lg [@media(max-height:480px)]:pb-sm">
+          <div onClick={onWrongTap} className="min-w-0 min-h-[48px] bg-black/25 rounded-full px-lg flex items-center gap-sm text-label font-normal text-white">
+            <CircleDashed className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+            <span className="truncate">{r.statusAudience}</span>
+          </div>
+          {typed && (
+            // Keeps the keyboard open (focus stays in the field)
+            <HighlightTarget elementId="status_send_button" {...statusTp} className="rounded-full flex-shrink-0">
+              <div onPointerDown={(e) => e.preventDefault()} className="w-16 h-16 rounded-full border-2 border-white flex items-center justify-center" style={{ background: WA_ACCENT }}>
+                <Send className="w-8 h-8 text-white ml-0.5" />
+              </div>
+            </HighlightTarget>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // 0f. UNKNOWN NUMBER CHAT (block task): the "Not a contact" card with Block (the target) and Add, then the
+  // invented scam message with its link (inert: a tap gets the gentle nudge). Then the Block confirmation, and
+  // after it the blocked chat.
+  if (screen === 'whatsapp_unknown_chat' || screen === 'whatsapp_block_dialog' || screen === 'whatsapp_unknown_chat_blocked') {
+    const blocked = screen === 'whatsapp_unknown_chat_blocked';
+    return (
+      <div className="h-full w-full flex flex-col bg-wa-bg relative">
+        <div onClick={onWrongTap} className="bg-white text-ink pl-xs pr-xs py-sm flex items-center gap-xs">
+          <ArrowLeft className="w-7 h-7 text-ink flex-shrink-0" aria-hidden="true" />
+          <div className="w-9 h-9 rounded-full bg-[#8696A0] flex items-center justify-center flex-shrink-0">
+            <User className="w-5 h-5 text-white" aria-hidden="true" />
+          </div>
+          <div data-chat-name className="flex-1 min-w-0 text-body font-semibold leading-tight truncate">{UNKNOWN_NUMBER}</div>
+          <div className="w-12 h-14 flex items-center justify-center flex-shrink-0">
+            <Phone className="w-7 h-7 text-ink" aria-hidden="true" />
+          </div>
+          <div className="w-10 h-14 flex items-center justify-center flex-shrink-0">
+            <MoreVertical className="w-7 h-7 text-ink" aria-hidden="true" />
+          </div>
+        </div>
+
+        <div className="flex-1 min-h-0 overflow-y-auto px-lg py-md space-y-md">
+          <div onClick={onWrongTap} className="flex justify-center">
+            <span className="bg-white text-ink-muted text-label px-md py-xs rounded-lg shadow-[0_1px_0_0_rgba(11,20,26,0.13)]">{r.today}</span>
+          </div>
+
+          <div className="bg-white rounded-[20px] px-md py-md flex flex-col items-center gap-xs text-center">
+            <div onClick={onWrongTap} className="flex flex-col items-center gap-xs">
+              <div className="w-16 h-16 rounded-full bg-[#8696A0] flex items-center justify-center">
+                <User className="w-9 h-9 text-white" aria-hidden="true" />
+              </div>
+              <div className="text-body font-semibold text-ink">{UNKNOWN_NUMBER}</div>
+              <div className="text-label font-normal text-ink-muted leading-snug">{r.notAContact}</div>
+              <div className="flex items-center gap-xs text-label font-bold" style={{ color: WA_ACCENT }}>
+                <ShieldCheck className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                <span>{r.safetyTools}</span>
+              </div>
+            </div>
+            {!blocked && (
+              <div className="w-full flex gap-sm pt-sm">
+                <HighlightTarget elementId="unknown_block_button" {...tp} className="flex-1 rounded-full">
+                  <div className="min-h-[64px] rounded-full border-2 border-[#D1D7DB] flex items-center justify-center gap-xs px-sm text-body font-bold text-[#C5221F]">
+                    <Ban className="w-6 h-6 flex-shrink-0" aria-hidden="true" />
+                    <span>{r.block}</span>
+                  </div>
+                </HighlightTarget>
+                <div onClick={onWrongTap} className="flex-1 min-h-[64px] rounded-full border-2 border-[#D1D7DB] flex items-center justify-center gap-xs px-sm text-body font-bold" style={{ color: WA_ACCENT }}>
+                  <UserPlus className="w-6 h-6 flex-shrink-0" aria-hidden="true" />
+                  <span>{r.add}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div onClick={onWrongTap} className="flex justify-start">
+            <ReceivedBubble time="12:02 PM">
+              <p data-scam-message className="text-body leading-snug">{r.scamMsg}</p>
+              <p data-scam-link className="text-body leading-snug underline text-[#027EB5] break-all">prize-claim.example/win</p>
+            </ReceivedBubble>
+          </div>
+        </div>
+
+        {/* The message bar (inert); once blocked, the notice takes its place */}
+        {blocked ? (
+          <div data-blocked className="bg-white px-lg py-md text-label font-normal text-ink-muted text-center">{r.youBlocked}</div>
+        ) : (
+          <div onClick={onWrongTap} className="px-lg pt-xs pb-md flex items-end gap-sm">
+            <div className="flex-1 min-w-0 min-h-[64px] bg-white rounded-[32px] flex items-center gap-sm px-md shadow-[0_1px_0_0_rgba(11,20,26,0.13)]">
+              <Smile className="w-7 h-7 text-ink-muted flex-shrink-0" aria-hidden="true" />
+              <span className="flex-1 min-w-0 text-body text-ink-muted truncate">{r.messagePlaceholder}</span>
+              <Paperclip className="w-7 h-7 text-ink-muted -rotate-45 flex-shrink-0" aria-hidden="true" />
+            </div>
+            <div className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: WA_ACCENT }}>
+              <Mic className="w-8 h-8 text-white" aria-hidden="true" />
+            </div>
+          </div>
+        )}
+
+        {/* Block confirmation: "Report to WhatsApp" is ticked as in the app (inert); Cancel gets the gentle nudge */}
+        {screen === 'whatsapp_block_dialog' && (
+          <div className="absolute inset-0 bg-black/50 z-40 overflow-y-auto">
+            <div className="min-h-full flex items-center justify-center p-md">
+              <div data-block-dialog className="bg-white rounded-[28px] px-lg py-lg w-full max-w-sm space-y-md screen-enter">
+                <div onClick={onWrongTap} className="space-y-sm">
+                  <Ban className="w-8 h-8 text-ink-muted mx-auto" aria-hidden="true" />
+                  <div className="text-title text-ink text-center break-words">{r.blockQuestion(UNKNOWN_NUMBER)}</div>
+                  <div className="text-label font-normal text-ink-muted leading-snug">{r.blockBody}</div>
+                  <div className="flex items-start gap-sm pt-xs">
+                    <span className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: WA_ACCENT }} aria-hidden="true">
+                      <Check className="w-5 h-5 text-white" strokeWidth={3} />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="text-label font-bold text-ink">{r.reportTo}</div>
+                      <div className="text-label font-normal text-ink-muted leading-snug">{r.reportBody}</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-md">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onWrongTap();
+                    }}
+                    className="flex-1 min-h-[64px] text-body font-bold bg-white border-2 border-[#D1D7DB] rounded-full"
+                    style={{ color: WA_ACCENT }}
+                  >
+                    {r.cancel}
+                  </button>
+                  <HighlightTarget elementId="dialog_block_button" {...tp} className="flex-1 rounded-full">
+                    <div className="w-full min-h-[64px] text-white rounded-full font-bold text-body flex items-center justify-center px-sm" style={{ background: WA_ACCENT }}>
+                      {r.block}
+                    </div>
+                  </HighlightTarget>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // 0g. FORWARD TO: any contact can be chosen, so the ring is on the whole list ("My status" is not a contact:
+  // a tap gets the gentle nudge). Once one is ticked, the bottom bar shows its name and Send; tapping another
+  // contact then moves the tick quietly.
+  if (screen === 'whatsapp_forward_list') {
+    const contacts = sampleChats(r).filter((c) => c.key !== 'ramesh');
+    const chosen = contacts.find((c) => c.key === fwdTo);
+    const row = (chat: SampleChat) => (
+      <div
+        key={chat.key}
+        data-forward-row={chat.key}
+        onClick={() => {
+          setFwdTo(chat.key);
+          if (highlightElement === 'forward_contacts') onCorrectTap();
+        }}
+        className="cursor-pointer"
+      >
+        <ForwardRow chat={chat} ticked={chat.key === fwdTo} />
+      </div>
+    );
+    return (
+      <div className="h-full w-full bg-white text-ink flex flex-col">
+        <div onClick={onWrongTap} className="flex items-center gap-xs pl-xs pr-xs">
+          <div className="w-14 h-16 flex items-center justify-center flex-shrink-0">
+            <ArrowLeft className="w-7 h-7 text-ink" aria-hidden="true" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-body font-bold text-ink leading-tight truncate">{r.forwardTo}</div>
+            {chosen && <div className="text-label font-normal text-ink-muted">{r.nSelected(1)}</div>}
+          </div>
+          <div className="w-12 h-16 flex items-center justify-center flex-shrink-0">
+            <UserPlus className="w-7 h-7 text-ink" aria-hidden="true" />
+          </div>
+          <div className="w-12 h-16 flex items-center justify-center flex-shrink-0">
+            <Search className="w-7 h-7 text-ink" aria-hidden="true" />
+          </div>
+        </div>
+
+        <div onClick={onWrongTap} data-forward-status className="mx-lg min-h-[64px] flex items-center gap-md px-sm">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: WA_ACCENT }}>
+            <CircleDashed className="w-6 h-6 text-white" aria-hidden="true" />
+          </div>
+          <span className="flex-1 min-w-0 text-body text-ink truncate">{r.myStatus}</span>
+          <span className="w-8 h-8 rounded-full border-2 border-ink-muted flex-shrink-0" aria-hidden="true" />
+        </div>
+        {/* The ring is on the contact list's own scrolling area, so it always fits the screen */}
+        <HighlightTarget elementId="forward_contacts" {...tp} className="flex-1 min-h-0 flex flex-col mx-lg mt-md mb-md">
+          <div data-forward-list onClick={(e) => e.stopPropagation()} className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+            <div className="text-label font-bold text-ink-muted px-sm pt-xs">{r.frequentlyContacted}</div>
+            {contacts.slice(0, 3).map(row)}
+            <div className="text-label font-bold text-ink-muted px-sm pt-sm">{r.recentChats}</div>
+            {contacts.slice(3).map(row)}
+          </div>
+        </HighlightTarget>
+
+        {chosen && (
+          <div className="border-t border-[#E9EDEF] bg-white px-lg pt-sm pb-md space-y-sm">
+            <div onClick={onWrongTap} className="min-h-[56px] rounded-full bg-[#F0F2F5] px-lg flex items-center text-body text-ink-muted">
+              {r.addMessage}
+            </div>
+            <div className="flex items-center justify-between gap-md">
+              <span data-forward-chosen className="min-w-0 text-body text-ink truncate">{chosen.name}</span>
+              <HighlightTarget elementId="forward_send_button" {...tp} className="rounded-full flex-shrink-0">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: WA_ACCENT }}>
+                  <Send className="w-8 h-8 text-white ml-0.5" />
+                </div>
+              </HighlightTarget>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -852,14 +1422,46 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
   }
 
   // 5. STANDARD CHAT SCREEN / ATTACHMENT SHEET / DIALOGS
-  // The chat opened from the search results (search task's result screen); otherwise Ramesh's chat
-  const opened = screen === 'whatsapp_search_chat_opened' ? sampleChats(r).find((c) => c.key === openedChat) : undefined;
+  // The chat opened from the search results (search task's result screen) or the contact a message was forwarded
+  // to (forward task's result screen); otherwise Ramesh's chat
+  const openedKey = screen === 'whatsapp_search_chat_opened' ? openedChat : screen === 'whatsapp_chat_screen_forwarded' ? fwdTo : null;
+  const opened = openedKey ? sampleChats(r).find((c) => c.key === openedKey) : undefined;
   const chatName = opened ? opened.name : contactName;
+  // Forward task: Ramesh's three messages, and the one held (selected) on the next step
+  const fwdChat = screen === 'whatsapp_chat_forward' || screen === 'whatsapp_chat_message_selected';
+  const selecting = screen === 'whatsapp_chat_message_selected';
   return (
     <div className="h-full w-full flex flex-col justify-between bg-wa-bg relative">
+      {/* A message is selected: the selection bar takes the header's place. Only Forward is a target. */}
+      {selecting && (
+        <div className="bg-white text-ink pl-xs pr-xs py-md flex items-center gap-xs z-10">
+          <div onClick={onWrongTap} className="flex items-center flex-1 min-w-0">
+            <div className="w-10 h-16 flex items-center justify-center flex-shrink-0">
+              <ArrowLeft className="w-7 h-7 text-ink" aria-hidden="true" />
+            </div>
+            <span data-selected-count className="text-title text-ink px-xs">1</span>
+          </div>
+          <div onClick={onWrongTap} className="flex items-center flex-shrink-0">
+            {[Reply, Star, Trash2, Copy].map((Icon, i) => (
+              <div key={i} data-select-action className="w-10 h-16 flex items-center justify-center">
+                <Icon className="w-6 h-6 text-ink" aria-hidden="true" />
+              </div>
+            ))}
+          </div>
+          <HighlightTarget elementId="forward_arrow" {...tp} className="rounded-full flex-shrink-0">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center">
+              <Forward className="w-7 h-7 text-ink" />
+            </div>
+          </HighlightTarget>
+          <div onClick={onWrongTap} className="w-8 h-16 flex items-center justify-center flex-shrink-0">
+            <MoreVertical className="w-6 h-6 text-ink" aria-hidden="true" />
+          </div>
+        </div>
+      )}
+
       {/* WhatsApp Header (light): back, avatar, name and status, then video and voice call.
           16px on the right keeps the call icon's pointer badge on screen. */}
-      <div className="bg-white text-ink pl-xs pr-lg py-md flex items-center justify-between z-10">
+      {!selecting && <div className="bg-white text-ink pl-xs pr-lg py-md flex items-center justify-between z-10">
         <div className="flex items-center gap-xs min-w-0 flex-1">
           <ArrowLeft className="w-7 h-7 text-ink flex-shrink-0" aria-hidden="true" />
           <div
@@ -890,10 +1492,40 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
             </div>
           </HighlightTarget>
         </div>
-      </div>
+      </div>}
+
+      {/* Forward task: any message can be pressed and held, so the ring is on the whole message area, which
+          scrolls inside it. Each message takes the hold itself (pan-y keeps the chat scrollable; no text
+          selection or long-press menu). */}
+      {fwdChat && (
+        <HighlightTarget elementId="chat_messages" {...tp} className="flex-1 min-h-0 flex flex-col mx-lg my-md">
+          {/* Taps between the messages do nothing */}
+          <div data-fwd-messages onClick={(e) => e.stopPropagation()} className="flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-sm px-xs py-sm">
+            <div className="flex justify-center">
+              <span className="bg-white text-ink-muted text-label px-md py-xs rounded-lg shadow-[0_1px_0_0_rgba(11,20,26,0.13)]">{r.today}</span>
+            </div>
+            {FWD_MESSAGES.map((m) => (
+              <div
+                key={m.key}
+                data-fwd-msg={m.key}
+                data-selected={selecting && fwdKey === m.key ? '' : undefined}
+                {...holdHandlers(m.key)}
+                className={`flex justify-start select-none [-webkit-touch-callout:none] px-sm py-xs rounded-lg ${
+                  selecting && fwdKey === m.key ? 'bg-[#B7E4D6]' : ''
+                }`}
+                style={{ touchAction: 'pan-y' }}
+              >
+                <ReceivedBubble time={m.time}>
+                  <FwdContent msgKey={m.key} r={r} />
+                </ReceivedBubble>
+              </div>
+            ))}
+          </div>
+        </HighlightTarget>
+      )}
 
       {/* Chat Messages Body */}
-      <div className="flex-1 px-lg py-md space-y-sm overflow-y-auto">
+      {!fwdChat && <div className="flex-1 px-lg py-md space-y-sm overflow-y-auto">
         <div className="flex justify-center">
           <span className="bg-white text-ink-muted text-label px-md py-xs rounded-lg shadow-[0_1px_0_0_rgba(11,20,26,0.13)]">
             {r.today}
@@ -902,14 +1534,23 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
 
         {/* Received Message Bubble */}
         <div className="flex justify-start">
-          <div className="relative bg-white text-ink rounded-[10px] rounded-tl-none px-md pt-sm pb-xs max-w-[85%] shadow-[0_1px_0_0_rgba(11,20,26,0.13)]">
-            <span className="absolute -left-2 top-0 w-0 h-0 border-t-[12px] border-t-white border-l-[10px] border-l-transparent" aria-hidden="true" />
-            <p className="text-body leading-snug">
-              {opened ? opened.msg : r.chatReceived}
-            </p>
-            <div className="text-label font-normal text-ink-muted text-right mt-xs">{opened ? opened.time : '10:15 AM'}</div>
-          </div>
+          <ReceivedBubble time={opened ? opened.time : '10:15 AM'}>
+            <p className="text-body leading-snug">{opened ? opened.msg : r.chatReceived}</p>
+          </ReceivedBubble>
         </div>
+
+        {/* The forwarded message, marked Forwarded */}
+        {screen === 'whatsapp_chat_screen_forwarded' && (
+          <SentBubble>
+            <div data-forwarded className="flex items-center gap-xs text-label font-normal italic text-ink-muted">
+              <Forward className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+              <span>{r.forwarded}</span>
+            </div>
+            <div data-forwarded-msg={fwdKey}>
+              <FwdContent msgKey={fwdKey} r={r} />
+            </div>
+          </SentBubble>
+        )}
 
         {/* Result screens, shown only after the final Send tap: the sent message, photo or voice note */}
         {screen === 'whatsapp_chat_screen_sent' && (
@@ -963,7 +1604,7 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
             </div>
           </SentBubble>
         )}
-      </div>
+      </div>}
 
       {/* Voice Call Confirmation Dialog */}
       {screen === 'whatsapp_call_confirm_dialog' && (

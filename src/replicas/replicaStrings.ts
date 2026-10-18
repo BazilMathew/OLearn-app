@@ -90,6 +90,39 @@ export interface ReplicaStrings {
   addrMainRoad: string;
   addrStation: string;
   addrTemple: string;
+  /** Updates tab and posting a text status */
+  statusTitle: string;
+  addStatus: string;
+  channels: string;
+  explore: string;
+  statusText: string;
+  statusMusic: string;
+  statusLayout: string;
+  statusVoice: string;
+  recents: string;
+  typeStatus: string;
+  statusAudience: string;
+  myStatus: string;
+  justNow: string;
+  /** Unknown-number chat (invented scam message), the block confirmation and the blocked chat */
+  notAContact: string;
+  safetyTools: string;
+  block: string;
+  add: string;
+  scamMsg: string;
+  blockQuestion: (number: string) => string;
+  blockBody: string;
+  reportTo: string;
+  reportBody: string;
+  youBlocked: string;
+  /** Forwarding a message: the extra practice message, the Forward to list and the forwarded label */
+  fwdMsg: string;
+  forwardTo: string;
+  nSelected: (n: number) => string;
+  frequentlyContacted: string;
+  recentChats: string;
+  addMessage: string;
+  forwarded: string;
 
   // Phone home screen
   homeDate: string;
@@ -261,6 +294,36 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     addrMainRoad: 'Main Road, Practice Town',
     addrStation: 'Station Road, Practice Town',
     addrTemple: 'Temple Street, Practice Town',
+    statusTitle: 'Status',
+    addStatus: 'Add status',
+    channels: 'Channels',
+    explore: 'Explore',
+    statusText: 'Text',
+    statusMusic: 'Music',
+    statusLayout: 'Layout',
+    statusVoice: 'Voice',
+    recents: 'Recents',
+    typeStatus: 'Type a status',
+    statusAudience: 'Status (Contacts)',
+    myStatus: 'My status',
+    justNow: 'Just now',
+    notAContact: 'Not a contact • No common groups',
+    safetyTools: 'Safety tools',
+    block: 'Block',
+    add: 'Add',
+    scamMsg: 'Congratulations! You have won a prize of ₹25,00,000. Send your bank details to claim it today.',
+    blockQuestion: (number) => `Block ${number}?`,
+    blockBody: "This person won't be able to message or call you. They won't know you blocked them.",
+    reportTo: 'Report to WhatsApp',
+    reportBody: 'The last 5 messages in this chat will be sent to WhatsApp.',
+    youBlocked: 'You blocked this contact. Tap to unblock.',
+    fwdMsg: 'Temple festival on Sunday at 6 PM. Please come!',
+    forwardTo: 'Forward to…',
+    nSelected: (n) => `${n} selected`,
+    frequentlyContacted: 'Frequently contacted',
+    recentChats: 'Recent chats',
+    addMessage: 'Add a message…',
+    forwarded: 'Forwarded',
 
     homeDate: 'Monday, 9 March',
     appPhone: 'Phone',
@@ -423,6 +486,36 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     addrMainRoad: 'मेन रोड, अभ्यास नगर',
     addrStation: 'स्टेशन रोड, अभ्यास नगर',
     addrTemple: 'मंदिर मार्ग, अभ्यास नगर',
+    statusTitle: 'स्टेटस',
+    addStatus: 'स्टेटस जोड़ें',
+    channels: 'चैनल',
+    explore: 'एक्सप्लोर',
+    statusText: 'टेक्स्ट',
+    statusMusic: 'संगीत',
+    statusLayout: 'लेआउट',
+    statusVoice: 'आवाज़',
+    recents: 'हाल के',
+    typeStatus: 'स्टेटस लिखें',
+    statusAudience: 'स्टेटस (संपर्क)',
+    myStatus: 'मेरा स्टेटस',
+    justNow: 'अभी',
+    notAContact: 'संपर्क में नहीं • कोई साझा ग्रुप नहीं',
+    safetyTools: 'सुरक्षा टूल',
+    block: 'ब्लॉक',
+    add: 'जोड़ें',
+    scamMsg: 'बधाई हो! आपने ₹25,00,000 का इनाम जीता है। इनाम पाने के लिए आज ही अपने बैंक की जानकारी भेजें।',
+    blockQuestion: (number) => `${number} को ब्लॉक करें?`,
+    blockBody: 'यह व्यक्ति आपको मैसेज या कॉल नहीं कर पाएगा। उसे पता नहीं चलेगा कि आपने ब्लॉक किया है।',
+    reportTo: 'व्हाट्सएप को रिपोर्ट करें',
+    reportBody: 'इस चैट के आखिरी 5 मैसेज व्हाट्सएप को भेजे जाएँगे।',
+    youBlocked: 'आपने इस संपर्क को ब्लॉक किया है। अनब्लॉक करने के लिए टैप करें।',
+    fwdMsg: 'रविवार शाम 6 बजे मंदिर में उत्सव है। ज़रूर आइए!',
+    forwardTo: 'इसे भेजें…',
+    nSelected: (n) => `${n} चुना गया`,
+    frequentlyContacted: 'अक्सर संपर्क किए गए',
+    recentChats: 'हाल की चैट',
+    addMessage: 'मैसेज जोड़ें…',
+    forwarded: 'फॉरवर्ड किया गया',
 
     homeDate: 'सोमवार, 9 मार्च',
     appPhone: 'फ़ोन',
@@ -585,6 +678,36 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     addrMainRoad: 'മെയിൻ റോഡ്, പരിശീലന നഗരം',
     addrStation: 'സ്റ്റേഷൻ റോഡ്, പരിശീലന നഗരം',
     addrTemple: 'ക്ഷേത്ര റോഡ്, പരിശീലന നഗരം',
+    statusTitle: 'സ്റ്റാറ്റസ്',
+    addStatus: 'സ്റ്റാറ്റസ് ചേർക്കുക',
+    channels: 'ചാനലുകൾ',
+    explore: 'എക്സ്പ്ലോർ',
+    statusText: 'ടെക്സ്റ്റ്',
+    statusMusic: 'സംഗീതം',
+    statusLayout: 'ലേഔട്ട്',
+    statusVoice: 'വോയ്സ്',
+    recents: 'സമീപകാലം',
+    typeStatus: 'സ്റ്റാറ്റസ് ടൈപ്പ് ചെയ്യുക',
+    statusAudience: 'സ്റ്റാറ്റസ് (കോൺടാക്റ്റുകൾ)',
+    myStatus: 'എന്റെ സ്റ്റാറ്റസ്',
+    justNow: 'ഇപ്പോൾ',
+    notAContact: 'കോൺടാക്റ്റിൽ ഇല്ല • പൊതു ഗ്രൂപ്പുകൾ ഇല്ല',
+    safetyTools: 'സുരക്ഷാ ടൂളുകൾ',
+    block: 'ബ്ലോക്ക്',
+    add: 'ചേർക്കുക',
+    scamMsg: 'അഭിനന്ദനങ്ങൾ! നിങ്ങൾക്ക് ₹25,00,000 സമ്മാനം ലഭിച്ചു. അത് നേടാൻ ഇന്നുതന്നെ ബാങ്ക് വിവരങ്ങൾ അയക്കുക.',
+    blockQuestion: (number) => `${number} ബ്ലോക്ക് ചെയ്യണോ?`,
+    blockBody: 'ഈ ആൾക്ക് നിങ്ങൾക്ക് മെസ്സേജ് അയക്കാനോ വിളിക്കാനോ കഴിയില്ല. ബ്ലോക്ക് ചെയ്തത് അവർ അറിയില്ല.',
+    reportTo: 'വാട്ട്സ്ആപ്പിൽ റിപ്പോർട്ട് ചെയ്യുക',
+    reportBody: 'ഈ ചാറ്റിലെ അവസാന 5 മെസ്സേജുകൾ വാട്ട്സ്ആപ്പിന് അയക്കും.',
+    youBlocked: 'നിങ്ങൾ ഈ കോൺടാക്റ്റ് ബ്ലോക്ക് ചെയ്തു. അൺബ്ലോക്ക് ചെയ്യാൻ തൊടുക.',
+    fwdMsg: 'ഞായറാഴ്ച വൈകിട്ട് 6 മണിക്ക് ക്ഷേത്രോത്സവം. വരണേ!',
+    forwardTo: 'ഫോർവേഡ് ചെയ്യുക…',
+    nSelected: (n) => `${n} തിരഞ്ഞെടുത്തു`,
+    frequentlyContacted: 'പതിവായി ബന്ധപ്പെടുന്നവർ',
+    recentChats: 'സമീപകാല ചാറ്റുകൾ',
+    addMessage: 'മെസ്സേജ് ചേർക്കുക…',
+    forwarded: 'ഫോർവേഡ് ചെയ്തത്',
 
     homeDate: 'തിങ്കൾ, 9 മാർച്ച്',
     appPhone: 'ഫോൺ',

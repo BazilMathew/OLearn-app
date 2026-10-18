@@ -44,6 +44,9 @@ export const MOCK_CHAT_PHONES: Record<string, string> = {
   pharmacy: '+91 90000 00002'
 };
 
+// The unknown number of the block tutorial (same fake range). It is not a contact and not in the chat search.
+export const UNKNOWN_NUMBER = '+91 90000 00003';
+
 export interface MockTransaction {
   id: string;
   merchant: { en: string; hi: string; ml: string };

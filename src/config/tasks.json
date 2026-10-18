@@ -1031,5 +1031,262 @@
         }
       }
     ]
+  },
+  {
+    "task_id": "whatsapp_add_status",
+    "app": "whatsapp",
+    "title": {
+      "en": "Add a Status",
+      "hi": "स्टेटस लगाएँ",
+      "ml": "സ്റ്റാറ്റസ് ഇടുക"
+    },
+    "description": {
+      "en": "Post a few words for your contacts to see for 24 hours",
+      "hi": "कुछ शब्द लिखें, जिन्हें आपके संपर्क 24 घंटे तक देख सकें",
+      "ml": "കോൺടാക്റ്റുകൾക്ക് 24 മണിക്കൂർ കാണാൻ കുറച്ച് വാക്കുകൾ ഇടുക"
+    },
+    "steps": [
+      {
+        "screen": "phone_home_screen",
+        "highlight_element": "home_whatsapp_icon",
+        "audio_en": "assets/audio/en/wa_start_step1.mp3",
+        "audio_hi": "assets/audio/hi/wa_start_step1.mp3",
+        "audio_ml": "assets/audio/ml/wa_start_step1.mp3",
+        "hint_text": {
+          "en": "Tap the green WhatsApp icon.",
+          "hi": "हरे व्हाट्सएप आइकॉन पर टैप करें।",
+          "ml": "പച്ച വാട്ട്സ്ആപ്പ് ഐക്കണിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_list_screen",
+        "highlight_element": "tab_updates",
+        "audio_en": "assets/audio/en/wa_status_step1.mp3",
+        "audio_hi": "assets/audio/hi/wa_status_step1.mp3",
+        "audio_ml": "assets/audio/ml/wa_status_step1.mp3",
+        "hint_text": {
+          "en": "Tap Updates at the bottom.",
+          "hi": "नीचे अपडेट पर टैप करें।",
+          "ml": "താഴെ അപ്ഡേറ്റുകൾ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_updates_screen",
+        "highlight_element": "add_status_card",
+        "audio_en": "assets/audio/en/wa_status_step2.mp3",
+        "audio_hi": "assets/audio/hi/wa_status_step2.mp3",
+        "audio_ml": "assets/audio/ml/wa_status_step2.mp3",
+        "hint_text": {
+          "en": "Tap Add status at the top.",
+          "hi": "ऊपर 'स्टेटस जोड़ें' पर टैप करें।",
+          "ml": "മുകളിലെ 'സ്റ്റാറ്റസ് ചേർക്കുക' തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_add_status_sheet",
+        "highlight_element": "status_text_option",
+        "audio_en": "assets/audio/en/wa_status_step3.mp3",
+        "audio_hi": "assets/audio/hi/wa_status_step3.mp3",
+        "audio_ml": "assets/audio/ml/wa_status_step3.mp3",
+        "hint_text": {
+          "en": "Tap Text.",
+          "hi": "टेक्स्ट पर टैप करें।",
+          "ml": "ടെക്സ്റ്റ് എന്നതിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_status_text",
+        "highlight_element": "status_text_input",
+        "audio_en": "assets/audio/en/wa_status_step4.mp3",
+        "audio_hi": "assets/audio/hi/wa_status_step4.mp3",
+        "audio_ml": "assets/audio/ml/wa_status_step4.mp3",
+        "hint_text": {
+          "en": "Type a few words for your status.",
+          "hi": "अपने स्टेटस के लिए कुछ शब्द टाइप करें।",
+          "ml": "സ്റ്റാറ്റസിനായി എന്തെങ്കിലും ടൈപ്പ് ചെയ്യുക."
+        }
+      },
+      {
+        "screen": "whatsapp_status_text",
+        "highlight_element": "status_send_button",
+        "result_screen": "whatsapp_updates_status_posted",
+        "audio_en": "assets/audio/en/wa_status_step5.mp3",
+        "audio_hi": "assets/audio/hi/wa_status_step5.mp3",
+        "audio_ml": "assets/audio/ml/wa_status_step5.mp3",
+        "hint_text": {
+          "en": "Tap Send. Your contacts can see your status for 24 hours.",
+          "hi": "सेंड पर टैप करें। आपके संपर्क इसे 24 घंटे तक देख सकते हैं।",
+          "ml": "സെൻഡ് തൊടുക. കോൺടാക്റ്റുകൾ കാണും."
+        }
+      }
+    ]
+  },
+  {
+    "task_id": "whatsapp_block_number",
+    "app": "whatsapp",
+    "title": {
+      "en": "Block an Unknown Number",
+      "hi": "अनजान नंबर ब्लॉक करें",
+      "ml": "അറിയാത്ത നമ്പർ ബ്ലോക്ക് ചെയ്യുക"
+    },
+    "description": {
+      "en": "Stop scam messages from a number you don't know",
+      "hi": "अनजान नंबर से आने वाले धोखे वाले मैसेज रोकें",
+      "ml": "അറിയാത്ത നമ്പറിൽ നിന്നുള്ള തട്ടിപ്പ് മെസ്സേജുകൾ തടയുക"
+    },
+    "steps": [
+      {
+        "screen": "phone_home_screen",
+        "highlight_element": "home_whatsapp_icon",
+        "audio_en": "assets/audio/en/wa_start_step1.mp3",
+        "audio_hi": "assets/audio/hi/wa_start_step1.mp3",
+        "audio_ml": "assets/audio/ml/wa_start_step1.mp3",
+        "hint_text": {
+          "en": "Tap the green WhatsApp icon.",
+          "hi": "हरे व्हाट्सएप आइकॉन पर टैप करें।",
+          "ml": "പച്ച വാട്ട്സ്ആപ്പ് ഐക്കണിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_list_unknown",
+        "highlight_element": "chat_row_unknown",
+        "audio_en": "assets/audio/en/wa_block_step1.mp3",
+        "audio_hi": "assets/audio/hi/wa_block_step1.mp3",
+        "audio_ml": "assets/audio/ml/wa_block_step1.mp3",
+        "hint_text": {
+          "en": "Tap the chat from the unknown number at the top.",
+          "hi": "ऊपर अनजान नंबर वाली चैट पर टैप करें।",
+          "ml": "മുകളിലെ അറിയാത്ത നമ്പറിന്റെ ചാറ്റ് തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_unknown_chat",
+        "highlight_element": "unknown_block_button",
+        "audio_en": "assets/audio/en/wa_block_step2.mp3",
+        "audio_hi": "assets/audio/hi/wa_block_step2.mp3",
+        "audio_ml": "assets/audio/ml/wa_block_step2.mp3",
+        "hint_text": {
+          "en": "Tap Block. Never reply to such messages or tap their links.",
+          "hi": "ब्लॉक पर टैप करें। ऐसे मैसेज का जवाब न दें, लिंक न दबाएँ।",
+          "ml": "ബ്ലോക്ക് തൊടുക. മറുപടിയോ ലിങ്കോ അരുത്."
+        }
+      },
+      {
+        "screen": "whatsapp_block_dialog",
+        "highlight_element": "dialog_block_button",
+        "result_screen": "whatsapp_unknown_chat_blocked",
+        "audio_en": "assets/audio/en/wa_block_step3.mp3",
+        "audio_hi": "assets/audio/hi/wa_block_step3.mp3",
+        "audio_ml": "assets/audio/ml/wa_block_step3.mp3",
+        "hint_text": {
+          "en": "Tap Block again to confirm. This number can no longer message or call you.",
+          "hi": "पक्का करने के लिए फिर से ब्लॉक पर टैप करें। अब यह नंबर आपको मैसेज या कॉल नहीं कर पाएगा।",
+          "ml": "വീണ്ടും ബ്ലോക്ക് തൊടുക. ഇനി ശല്യമില്ല."
+        }
+      }
+    ]
+  },
+  {
+    "task_id": "whatsapp_forward_message",
+    "app": "whatsapp",
+    "title": {
+      "en": "Forward a Message",
+      "hi": "मैसेज फॉरवर्ड करें",
+      "ml": "മെസ്സേജ് ഫോർവേഡ് ചെയ്യുക"
+    },
+    "description": {
+      "en": "Send a message you received on to someone else",
+      "hi": "मिला हुआ मैसेज किसी और को भेजें",
+      "ml": "കിട്ടിയ മെസ്സേജ് മറ്റൊരാൾക്ക് അയക്കുക"
+    },
+    "steps": [
+      {
+        "screen": "phone_home_screen",
+        "highlight_element": "home_whatsapp_icon",
+        "audio_en": "assets/audio/en/wa_start_step1.mp3",
+        "audio_hi": "assets/audio/hi/wa_start_step1.mp3",
+        "audio_ml": "assets/audio/ml/wa_start_step1.mp3",
+        "hint_text": {
+          "en": "Tap the green WhatsApp icon.",
+          "hi": "हरे व्हाट्सएप आइकॉन पर टैप करें।",
+          "ml": "പച്ച വാട്ട്സ്ആപ്പ് ഐക്കണിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_list_screen",
+        "highlight_element": "chat_row_ramesh",
+        "action": "scroll",
+        "audio_en": "assets/audio/en/wa_start_step2.mp3",
+        "audio_hi": "assets/audio/hi/wa_start_step2.mp3",
+        "audio_ml": "assets/audio/ml/wa_start_step2.mp3",
+        "hint_text": {
+          "en": "Swipe up to find your chat with Ramesh.",
+          "hi": "रमेश की चैट ढूँढने के लिए ऊपर की ओर स्वाइप करें।",
+          "ml": "രമേഷിന്റെ ചാറ്റ് കണ്ടെത്താൻ മുകളിലേക്ക് സ്വൈപ്പ് ചെയ്യുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_list_screen",
+        "highlight_element": "chat_row_ramesh",
+        "audio_en": "assets/audio/en/wa_start_step3.mp3",
+        "audio_hi": "assets/audio/hi/wa_start_step3.mp3",
+        "audio_ml": "assets/audio/ml/wa_start_step3.mp3",
+        "hint_text": {
+          "en": "Tap your chat with Ramesh.",
+          "hi": "रमेश की चैट पर टैप करें।",
+          "ml": "രമേഷിന്റെ ചാറ്റിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_forward",
+        "highlight_element": "chat_messages",
+        "action": "hold",
+        "audio_en": "assets/audio/en/wa_fwd_step1.mp3",
+        "audio_hi": "assets/audio/hi/wa_fwd_step1.mp3",
+        "audio_ml": "assets/audio/ml/wa_fwd_step1.mp3",
+        "hint_text": {
+          "en": "Press and hold any message until it is selected.",
+          "hi": "किसी भी मैसेज को चुने जाने तक दबाकर रखें।",
+          "ml": "ഏതെങ്കിലും മെസ്സേജിൽ അമർത്തിപ്പിടിക്കുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_message_selected",
+        "highlight_element": "forward_arrow",
+        "audio_en": "assets/audio/en/wa_fwd_step2.mp3",
+        "audio_hi": "assets/audio/hi/wa_fwd_step2.mp3",
+        "audio_ml": "assets/audio/ml/wa_fwd_step2.mp3",
+        "hint_text": {
+          "en": "Tap Forward, the arrow at the top.",
+          "hi": "ऊपर फॉरवर्ड (तीर) पर टैप करें।",
+          "ml": "മുകളിലെ ഫോർവേഡ് അമ്പടയാളം തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_forward_list",
+        "highlight_element": "forward_contacts",
+        "audio_en": "assets/audio/en/wa_fwd_step3.mp3",
+        "audio_hi": "assets/audio/hi/wa_fwd_step3.mp3",
+        "audio_ml": "assets/audio/ml/wa_fwd_step3.mp3",
+        "hint_text": {
+          "en": "Tap the contact you want to send it to.",
+          "hi": "जिसे भेजना है, उस संपर्क पर टैप करें।",
+          "ml": "അയക്കേണ്ട ആളുടെ പേര് തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_forward_list",
+        "highlight_element": "forward_send_button",
+        "result_screen": "whatsapp_chat_screen_forwarded",
+        "audio_en": "assets/audio/en/wa_fwd_step4.mp3",
+        "audio_hi": "assets/audio/hi/wa_fwd_step4.mp3",
+        "audio_ml": "assets/audio/ml/wa_fwd_step4.mp3",
+        "hint_text": {
+          "en": "Tap Send. The message is marked Forwarded.",
+          "hi": "सेंड पर टैप करें। मैसेज पर \"फॉरवर्ड किया गया\" लिखा होगा।",
+          "ml": "സെൻഡ് തൊടുക."
+        }
+      }
+    ]
   }
 ]

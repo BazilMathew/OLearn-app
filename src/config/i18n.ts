@@ -45,6 +45,8 @@ export interface TranslationDictionary {
   swipeUp: string;
   showMe: string;
   scrollNudge: string;
+  /** Gentle nudge on a press-and-hold step (a short tap, or a tap elsewhere) */
+  holdNudge: string;
   soundPlaying: string;
   deviceFrame: string;
   fullscreen: string;
@@ -138,6 +140,7 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     swipeUp: 'Swipe up',
     showMe: 'Show me',
     scrollNudge: "Swipe up on the list to find Ramesh's chat.",
+    holdNudge: 'Press a message and keep your finger on it for a moment.',
     soundPlaying: 'Playing instruction...',
     deviceFrame: 'Mobile View',
     fullscreen: 'Fullscreen',
@@ -227,6 +230,7 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     swipeUp: 'ऊपर की ओर स्वाइप करें',
     showMe: 'मुझे दिखाएं',
     scrollNudge: 'रमेश की चैट ढूँढने के लिए सूची पर ऊपर की ओर स्वाइप करें।',
+    holdNudge: 'मैसेज को दबाएँ और थोड़ी देर उंगली रखे रहें।',
     soundPlaying: 'निर्देश सुनाया जा रहा है...',
     deviceFrame: 'फ़ोन व्यू',
     fullscreen: 'फुल स्क्रीन',
@@ -316,6 +320,7 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     swipeUp: 'മുകളിലേക്ക് സ്വൈപ്പ് ചെയ്യുക',
     showMe: 'കാണിച്ചു തരൂ',
     scrollNudge: 'രമേഷിന്റെ ചാറ്റ് കണ്ടെത്താൻ ലിസ്റ്റിൽ മുകളിലേക്ക് സ്വൈപ്പ് ചെയ്യുക.',
+    holdNudge: 'മെസ്സേജിൽ വിരൽ കുറച്ചുനേരം അമർത്തിപ്പിടിക്കുക.',
     soundPlaying: 'നിർദ്ദേശം കേൾപ്പിക്കുന്നു...',
     deviceFrame: 'ഫോൺ കാഴ്ച',
     fullscreen: 'പൂർണ്ണ സ്ക്രീൻ',

@@ -364,7 +364,7 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
           <div className="screen-enter absolute top-0 left-0 right-0 min-h-full z-50 pointer-events-none bg-surface border-b-4 border-accent px-lg py-sm flex items-center gap-md" role="status">
             <Lightbulb className="w-8 h-8 text-accent-deep flex-shrink-0" aria-hidden="true" />
             <div className="text-label font-bold text-ink leading-snug">
-              {isScrollStep ? t.scrollNudge : t.gentleNudge}
+              {isScrollStep ? t.scrollNudge : currentStep.action === 'hold' ? t.holdNudge : t.gentleNudge}
             </div>
           </div>
         )}
@@ -373,12 +373,12 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
       {/* Screen Replica Container: imitates the real apps, so it keeps 100% text at every Text size (ts-fixed).
           It always keeps 40% of the height and at least 284px (the 256px QR viewfinder with room for its
           ring), or 336px on a scroll step (chat list header, a full chat row and the swipe hint); the
-          instruction below takes the rest. Only on the chat search (the one screen with a text field) that floor
+          instruction below takes the rest. Only on the chat search and the text status (the screens with a text field) that floor
           is dropped under 480px tall, i.e. while the phone keyboard is open, so the instruction stays in view. */}
       <div
         ref={replicaRef}
         className={`ts-fixed flex-1 ${isScrollStep ? 'min-h-[max(40%,336px)]' : 'min-h-[max(40%,284px)]'} ${
-          currentStep.screen === 'whatsapp_search_screen' ? '[@media(max-height:480px)]:min-h-0' : ''
+          currentStep.screen === 'whatsapp_search_screen' || currentStep.screen === 'whatsapp_status_text' ? '[@media(max-height:480px)]:min-h-0' : ''
         } relative overflow-y-auto overflow-x-hidden bg-canvas flex flex-col`}
       >
         {task.app === 'whatsapp' ? (

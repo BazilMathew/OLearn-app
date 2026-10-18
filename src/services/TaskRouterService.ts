@@ -78,6 +78,29 @@ const KEYWORDS: Record<string, Array<[string, number]>> = {
     ...w(3, ['address', 'map*', 'place', 'पता बताना', 'नक्शा', 'मैप', 'जगह', 'സ്ഥലം', 'വിലാസം', 'അഡ്രസ്', 'മാപ്പ്']),
     ...w(1, [...SEND, 'share*', 'शेयर', 'ഷെയർ', ...WHATSAPP_APP])
   ],
+  whatsapp_add_status: [
+    // "photo status" names this task, not the photo task: the phrase covers its "photo" word
+    ...w(6, ['photo status*', 'फोटो स्टेटस', 'ഫോട്ടോ സ്റ്റാറ്റസ്']),
+    ...w(5, ['status*', 'story', 'stories', 'स्टेटस', 'स्टेट्स', 'സ്റ്റാറ്റസ്']),
+    ...w(2, ['update*', 'post*', 'अपडेट', 'पोस्ट', 'അപ്ഡേറ്റ്*', 'പോസ്റ്റ്']),
+    ...w(1, WHATSAPP_APP)
+  ],
+  whatsapp_block_number: [
+    // "unknown number" and "scam message" name this task: the phrases cover "number" (a search word) and
+    // "message" (a text word)
+    ...w(6, ['unknown number*', 'अनजान नंबर', 'അറിയാത്ത നമ്പർ', 'അജ്ഞാത നമ്പർ']),
+    ...w(6, ['scam message*', 'spam message*', 'fraud message*', 'फ्रॉड मैसेज', 'स्पैम मैसेज', 'തട്ടിപ്പ് മെസ്സേജ്*']),
+    ...w(5, ['block*', 'ब्लॉक*', 'ब्लाक', 'ബ്ലോക്ക്*']),
+    ...w(4, ['spam', 'scam*', 'fraud*', 'स्पैम', 'फ्रॉड', 'धोखा*', 'ठग*', 'തട്ടിപ്പ്*', 'സ്പാം']),
+    ...w(2, ['stranger*', 'अनजान', 'അറിയാത്ത', 'തടയ*']),
+    ...w(1, WHATSAPP_APP)
+  ],
+  whatsapp_forward_message: [
+    // The phrases cover "message" and "send", words of the text task
+    ...w(6, ['forward message*', 'forward a message*', 'मैसेज फॉरवर्ड*', 'മെസ്സേജ് ഫോർവേഡ്*', 'आगे भेज*']),
+    ...w(5, ['forward*', 'फॉरवर्ड*', 'फारवर्ड*', 'ഫോർവേഡ്*', 'ഫോർവാർഡ്*', 'ഫോർവേർഡ്*']),
+    ...w(1, WHATSAPP_APP)
+  ],
   gpay_check_balance: [
     ...w(4, ['bank balance', 'account balance', 'how much money', 'कितने पैसे', 'कितना पैसा', 'कितने रुपये', 'कितने रुपए', 'पैसे कितने', 'रुपये कितने', 'रुपए कितने', 'എത്ര രൂപ', 'രൂപ എത്ര', 'എത്ര പണം', 'പണം എത്ര', 'എത്ര പൈസ', 'പൈസ എത്ര']),
     ...w(3, ['balance*', 'बैलेंस', 'बैलेन्स', 'बैलन्स', 'बेलेंस', 'शेष', 'बकाया', 'ബാലൻസ്', 'ബാലെൻസ്', 'ബാക്കി']),

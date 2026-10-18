@@ -24,6 +24,10 @@
 // The chat search, document and location tasks also check: no ordinal or (attach sheet) colour wording, new
 // Malayalam instructions in 2 lines, typing completes on the first character, filtering by name and digits,
 // clear and no-match, the keyboard-open screen (360x400), inert picker and live-location taps, and their results.
+// The status, block and forward tasks also check: no colour in their own instructions, typing the status (first
+// character, emptied field, keyboard open, never saved), the scam link and Cancel nudging, the press-and-hold by
+// mouse and by finger (a short tap nudges with the hold wording, a drifting hold does nothing), changing the
+// contact, and their results (taps there ignored).
 // Exit code 1 if any check fails.
 
 import { spawn, execFileSync } from 'node:child_process';
@@ -33,6 +37,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { I18N } from '../src/config/i18n.ts';
 import { REPLICA_STRINGS } from '../src/replicas/replicaStrings.ts';
+import { UNKNOWN_NUMBER } from '../src/config/mockData.ts';
 
 const args = Object.fromEntries(
   process.argv.slice(2).map((a, i, all) => (a.startsWith('--') ? [a.slice(2), all[i + 1]?.startsWith('--') ? true : all[i + 1] ?? true] : null)).filter(Boolean)
@@ -125,7 +130,10 @@ for (const s of TASKS.find((t) => t.task_id === 'gpay_send_contact').steps)
 // Chat search, document and location tasks: the learner chooses freely, so no instruction may use ordinal
 // wording; and on the attach sheet an instruction names the pill, never its colour (Gallery's purple is the
 // only unique one, and it belongs to the photo task)
-const NEW_WA_TASKS = ['whatsapp_search_contact', 'whatsapp_send_document', 'whatsapp_share_location'];
+const NEW_WA_TASKS = ['whatsapp_search_contact', 'whatsapp_send_document', 'whatsapp_share_location', 'whatsapp_add_status', 'whatsapp_block_number', 'whatsapp_forward_message'];
+// Status, block and forward tasks: an instruction of their own leads with the label and names no colour at all
+// (the shared start steps keep their existing text)
+const LABEL_FIRST_TASKS = ['whatsapp_add_status', 'whatsapp_block_number', 'whatsapp_forward_message'];
 const ORDINALS = {
   en: /\b(first|second|third|fourth|last|1st|2nd|3rd|top one)\b/i,
   hi: /(पहल|दूसर|तीसर|चौथ|आखिरी|अंतिम)/,
@@ -144,6 +152,15 @@ for (const id of NEW_WA_TASKS) {
     }
   });
 }
+for (const id of LABEL_FIRST_TASKS) {
+  TASKS.find((t) => t.task_id === id).steps.forEach((s, i) => {
+    const shared = TASKS.some((o) => !LABEL_FIRST_TASKS.includes(o.task_id) && o.steps.some((x) => x.hint_text.en === s.hint_text.en));
+    if (shared) return;
+    for (const l of LANGS) if (COLOURS[l].test(s.hint_text[l])) failures.push(`${id} step ${i + 1} (${l}): instruction names a colour: ${s.hint_text[l]}`);
+  });
+}
+// The block task's number is in the fake range
+if (!/^\+91 90000 000\d\d$/.test(UNKNOWN_NUMBER)) failures.push(`block task: unknown number ${UNKNOWN_NUMBER} is not in the fake range +91 90000 000xx`);
 // Chat search runs in turn: what is typed, the chats that must be listed (in order) and the one opened
 // (not always the top row: any chat may be chosen). Digits find a chat by its number.
 const SEARCHES = [
@@ -153,10 +170,26 @@ const SEARCHES = [
   { q: 'sharma', rows: ['shop', 'doctor'], open: 'doctor' }
 ];
 let searchTurn = 0;
-const chatName = (r, key) => ({ priya: `${r.priya} (${r.daughter})`, ramesh: r.rameshSon, shop: r.shopName, doctor: r.chatListDoctor })[key];
+const chatName = (r, key) => ({ priya: `${r.priya} (${r.daughter})`, ramesh: r.rameshSon, shop: r.shopName, doctor: r.chatListDoctor, family: r.chatListFamily })[key];
 // Document picker: the (invented) file each run chooses, in turn
 const DOC_PICKS = ['Garden_flower.jpg', 'Sunrise_view.jpg', 'Family_photo_01.jpg'];
 let docTurn = 0;
+// Text status: what each run types (the first character completes the typing step)
+const STATUS_TEXTS = ['Good morning, all', 'Happy Sunday', 'At the temple today'];
+let statusTurn = 0;
+// Forward task, one per run in turn: the message held, how (mouse or finger) and the contact it goes to
+const FWD_PICKS = [
+  { msg: 'festival', method: 'mouse', to: 'priya' },
+  { msg: 'greeting', method: 'touch', to: 'doctor' },
+  { msg: 'photo', method: 'mouse', to: 'family' },
+  { msg: 'festival', method: 'touch', to: 'shop' }
+];
+let fwdTurn = 0;
+// Hold timing in the audit: a short tap lifts well before the app's 400ms, a hold well after it; a moved hold
+// drifts sideways further than the app's 14px
+const SHORT_TAP_MS = 100;
+const HOLD_WAIT_MS = 700;
+const HOLD_DRIFT_PX = 30;
 // Amounts typed on the send-money number pad, one per run in turn (9,99,999 is the 6-digit maximum)
 const SEND_AMOUNTS = ['999999', '500', '1250', '75'];
 let amountTurn = 0;
@@ -298,7 +331,8 @@ const PAGE_HELPERS = `
       }
       // Text runs wider than their block (catches inline labels, which have no scrollWidth of their own)
       for (const el of document.body.querySelectorAll('*')) {
-        if (!vis(el) || el.children.length || !el.textContent.trim()) continue;
+        // A text field's value is drawn by the field itself, not laid out as page text
+        if (!vis(el) || el.children.length || !el.textContent.trim() || el.matches('textarea, input')) continue;
         let box = el;
         while (box.parentElement && getComputedStyle(box).display === 'inline') box = box.parentElement;
         const bcs = getComputedStyle(box);
@@ -604,6 +638,53 @@ const PAGE_HELPERS = `
       inView(document.querySelector('[data-search-row]'), 'first result');
       return out;
     },
+    // Text status: the typed text, focus, and which of field and Send has the ring
+    statusState() {
+      const input = document.querySelector('[data-status-input]');
+      if (!input) return null;
+      const el = (id) => document.querySelector('[data-element-id="' + id + '"]');
+      return {
+        value: input.value,
+        focused: document.activeElement === input,
+        fieldRing: !!el('status_text_input')?.classList.contains('highlight-active'),
+        send: !!el('status_send_button'),
+        sendRing: !!el('status_send_button')?.classList.contains('highlight-active')
+      };
+    },
+    // Empties the status field the way the keyboard's delete key would (React sees an input event)
+    clearStatus() {
+      const input = document.querySelector('[data-status-input]');
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(input, '');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    },
+    // Phone keyboard open on the text status: the instruction bar, the field and Send fully on screen
+    statusKeyboardFit() {
+      const out = [];
+      for (const [el, name] of [
+        [document.getElementById('tutorial-hint')?.closest('[aria-live]'), 'instruction bar'],
+        [document.querySelector('[data-status-input]'), 'status field'],
+        [document.querySelector('[data-element-id="status_send_button"]'), 'Send']
+      ]) {
+        if (!el) { out.push(name + ' not found'); continue; }
+        const r = el.getBoundingClientRect(), g = this.region(el);
+        const top = Math.max(0, g.top), bottom = Math.min(innerHeight, g.bottom);
+        if (r.top < top - 1 || r.bottom > bottom + 1) out.push(name + ' not fully visible (' + Math.round(r.top) + '..' + Math.round(r.bottom) + ' of ' + Math.round(top) + '..' + Math.round(bottom) + ')');
+      }
+      return out;
+    },
+    // Does any saved value (local or session storage) contain this text?
+    storedAnywhere(text) {
+      for (const s of [localStorage, sessionStorage])
+        for (let i = 0; i < s.length; i++) if ((s.getItem(s.key(i)) || '').includes(text)) return true;
+      return false;
+    },
+    // Forward task: the held (selected) message, and whether the photo ignores the pointer and cannot be dragged
+    selectedMsg: () => document.querySelector('[data-selected]')?.getAttribute('data-fwd-msg') || null,
+    photoInert() {
+      const el = document.querySelector('[data-fwd-msg="photo"] [draggable="false"]');
+      return !!el && getComputedStyle(el).pointerEvents === 'none';
+    },
+    textOf: (sel) => document.querySelector(sel)?.textContent.trim() ?? null,
     // Attach sheet: number of pills, which pills are purple, and the size of each target pill
     attachPills() {
       const box = document.querySelector('[data-attach-pills]');
@@ -709,6 +790,23 @@ const click = async (x, y) => {
   await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y });
   await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 });
   await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 });
+};
+// Press at a point, wait, and lift: by mouse or by finger (touch emulation), optionally drifting sideways first
+const pressFor = async (x, y, ms, method, drift = 0) => {
+  if (method === 'touch') {
+    await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+    for (let k = 1; k <= 3 && drift; k++) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + (drift * k) / 3, y }] });
+    await sleep(ms);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false });
+  } else {
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y });
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', buttons: 1, clickCount: 1 });
+    for (let k = 1; k <= 3 && drift; k++) await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: x + (drift * k) / 3, y, button: 'left', buttons: 1 });
+    await sleep(ms);
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: x + drift, y, button: 'left', buttons: 0, clickCount: 1 });
+  }
 };
 const shot = async (name) => {
   const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' });
@@ -866,6 +964,8 @@ async function runTutorials(w, h, lang, reduce, scale) {
     const sendShown = sendAmount && '₹' + Number(sendAmount).toLocaleString('en-IN');
     const search = task.task_id === 'whatsapp_search_contact' ? SEARCHES[searchTurn++ % SEARCHES.length] : null;
     const docPick = task.task_id === 'whatsapp_send_document' ? DOC_PICKS[docTurn++ % DOC_PICKS.length] : null;
+    const statusText = task.task_id === 'whatsapp_add_status' ? STATUS_TEXTS[statusTurn++ % STATUS_TEXTS.length] : null;
+    const fwd = task.task_id === 'whatsapp_forward_message' ? FWD_PICKS[fwdTurn++ % FWD_PICKS.length] : null;
 
     for (let i = 0; i < total; i++) {
       const step = task.steps[i];
@@ -991,6 +1091,25 @@ async function runTutorials(w, h, lang, reduce, scale) {
         for (const s of [r.sendLocation, r.shareLiveLocation, r.nearbyPlaces, r.sendCurrentLocation, r.accurateTo])
           check(await A(`textIncludes(${JSON.stringify(s)})`), `${at}: "${s}" missing on the send location screen`);
       }
+
+      // Status, block and forward screens: what is on them
+      const has = async (list, what) => {
+        for (const s of list) check(await A(`textIncludes(${JSON.stringify(s)})`), `${at}: "${s}" missing on ${what}`);
+      };
+      if (step.highlight_element === 'tab_updates') await has([r.tabUpdates], 'the chat list tabs (the Updates tab must be named)');
+      if (step.screen === 'whatsapp_updates_screen') await has([r.tabUpdates, r.statusTitle, r.addStatus, r.priya, r.channels, r.explore], 'the Updates tab');
+      if (step.screen === 'whatsapp_add_status_sheet') await has([r.addStatus, r.statusText, r.statusMusic, r.statusLayout, r.statusVoice, r.recents], 'the Add status sheet');
+      if (step.screen === 'whatsapp_chat_list_unknown') await has([UNKNOWN_NUMBER], 'the chat list');
+      if (step.screen === 'whatsapp_unknown_chat') {
+        check((await A(`textOf('[data-chat-name]')`)) === UNKNOWN_NUMBER, `${at}: the chat header does not show ${UNKNOWN_NUMBER}`);
+        await has([r.scamMsg, 'prize-claim.example/win', r.notAContact, r.safetyTools, r.block, r.add], 'the unknown chat');
+      }
+      if (step.screen === 'whatsapp_block_dialog') await has([r.blockQuestion(UNKNOWN_NUMBER), r.blockBody, r.reportTo, r.reportBody, r.cancel], 'the Block confirmation');
+      if (step.screen === 'whatsapp_chat_forward') {
+        await has([r.chatReceived, r.fwdMsg], 'the forward chat');
+        check(!(await A('selectedMsg()')), `${at}: a message is selected before the hold`);
+      }
+      if (step.screen === 'whatsapp_forward_list') await has([r.forwardTo, r.myStatus, r.frequentlyContacted, r.recentChats], 'the Forward to list');
 
       // Sample data on the Google Pay payment screens
       if (step.screen === 'gpay_amount_keypad_screen' && step.highlight_element === 'amount_keypad') {
@@ -1145,6 +1264,133 @@ async function runTutorials(w, h, lang, reduce, scale) {
         check(tapAt, `${at}: result ${search.open} not found`);
       }
 
+      // A tap on something that is not the step: a gentle nudge, same step
+      const inertTap = async (pt, name) => {
+        await waitFor(async () => !(await A('nudgeShown()')), 3500);
+        if (!check(pt, `${at}: ${name} not found`)) return;
+        await click(pt.cx, pt.cy);
+        check(await waitFor(() => A('nudgeShown()'), 1000), `${at}: tapping ${name} did not nudge`);
+        check(await sameStep(), `${at}: tapping ${name} changed the step`);
+      };
+
+      // Add status sheet: Music is not the step
+      if (step.highlight_element === 'status_text_option') await inertTap(await A(`clickPointForText(${JSON.stringify(r.statusMusic)})`), 'Music');
+
+      // Text status, typing step: a tap on the field focuses it (no nudge, no step), no Send yet; the first
+      // character completes the step
+      if (step.highlight_element === 'status_text_input') {
+        await waitFor(async () => !(await A('nudgeShown()')), 3500);
+        let st = await A('statusState()');
+        if (!check(st, `${at}: status field not found`)) break;
+        check(st.value === '' && st.fieldRing && !st.send, `${at}: before typing: "${st.value}", ring ${st.fieldRing ? 'on' : 'not on'} the field, Send ${st.send ? 'shown' : 'hidden'}`);
+        const fp = await A(`point('[data-status-input]')`);
+        await click(fp.cx, fp.cy);
+        await sleep(150);
+        check((await sameStep()) && !(await A('nudgeShown()')), `${at}: tapping the status field nudged or changed the step`);
+        check((await A('statusState()')).focused, `${at}: the status field is not focused (the phone keyboard would not open)`);
+        playMark = await cdp.eval('window.__plays.length');
+        await cdp.send('Input.insertText', { text: statusText[0] });
+        check(await waitFor(async () => (await A('label()')) === stepText(t, i + 2, total)), `${at}: typing the first character did not complete the step`);
+        st = await A('statusState()');
+        check(st && st.value === statusText[0] && st.send, `${at}: first character not typed or Send not shown ("${st && st.value}")`);
+        check(!(await A('nudgeShown()')), `${at}: typing nudged`);
+        continue;
+      }
+
+      // Text status, Send step: more typing never nudges; with the keyboard open the instruction, the field and
+      // Send stay in view; an emptied field takes the ring back (no Send); the text is never saved
+      if (step.highlight_element === 'status_send_button') {
+        await typeText(statusText.slice(1));
+        let st = await A('statusState()');
+        check(st.value === statusText && st.sendRing && !st.fieldRing, `${at}: typed "${st.value}", ring on ${st.sendRing ? 'Send' : st.fieldRing ? 'the field' : 'nothing'}`);
+        check((await sameStep()) && !(await A('nudgeShown()')), `${at}: typing more nudged or changed the step`);
+        if (w === 360 && h === 690 && scale === 1) {
+          await cdp.send('Emulation.setDeviceMetricsOverride', { width: 360, height: 400, deviceScaleFactor: 1, mobile: true });
+          await sleep(400);
+          for (const s of await A('statusKeyboardFit()')) check(false, `${at}: keyboard open (360x400): ${s}`);
+          if (!reduce) await shot(`${tag}_status_keyboard_360x400`);
+          await setScreen(w, h, reduce);
+          await sleep(400);
+        }
+        await A('clearStatus()');
+        await sleep(150);
+        st = await A('statusState()');
+        check(st.value === '' && !st.send && st.fieldRing, `${at}: emptied: Send ${st.send ? 'still shown' : 'hidden'}, ring ${st.fieldRing ? 'on' : 'not on'} the field`);
+        check((await sameStep()) && !(await A('nudgeShown()')), `${at}: emptying the field nudged or changed the step`);
+        await typeText(statusText);
+        st = await A('statusState()');
+        check(st.value === statusText && st.sendRing, `${at}: retyped "${st.value}"`);
+        check(!(await A(`storedAnywhere(${JSON.stringify(statusText)})`)), `${at}: the typed status was saved in browser storage`);
+        tapAt = await A(`targetPoint('status_send_button')`);
+      }
+
+      // Unknown chat: the scam link is not the step (a gentle nudge, nothing opens)
+      // (bringing the link into view scrolls the chat, so Block is measured again)
+      if (step.highlight_element === 'unknown_block_button') {
+        await inertTap(await A(`point('[data-scam-link]')`), 'the scam link');
+        tapAt = await A(`targetPoint('unknown_block_button')`);
+      }
+      // Block confirmation: Cancel is not the step; the box stays
+      if (step.highlight_element === 'dialog_block_button') {
+        await inertTap(await A(`clickPointForText(${JSON.stringify(r.cancel)})`), 'Cancel');
+        check(await A(`point('[data-block-dialog]')`), `${at}: the Block confirmation closed after Cancel`);
+        tapAt = await A(`targetPoint('dialog_block_button')`);
+      }
+
+      // Forward, press and hold: a short tap nudges (and says to press and hold), a hold that drifts does
+      // nothing, the photo cannot be dragged; a hold past 400ms by mouse or finger selects that message
+      if (step.action === 'hold') {
+        await waitFor(async () => !(await A('nudgeShown()')), 3500);
+        check(await A('photoInert()'), `${at}: the photo in the chat is draggable or takes the pointer`);
+        let p = await A(`point('[data-fwd-msg="${fwd.msg}"]')`);
+        if (!check(p, `${at}: message ${fwd.msg} not found`)) break;
+        await pressFor(p.cx, p.cy, SHORT_TAP_MS, fwd.method);
+        check(await waitFor(() => A('nudgeShown()'), 1000), `${at}: a short ${fwd.method} tap did not nudge`);
+        check(await A(`textIncludes(${JSON.stringify(t.holdNudge)})`), `${at}: the nudge after a short tap does not say to press and hold`);
+        check((await sameStep()) && !(await A('selectedMsg()')), `${at}: a short ${fwd.method} tap changed the step or selected a message`);
+        if (stepShots) await shot(`${tag}_hold_nudge`);
+        await waitFor(async () => !(await A('nudgeShown()')), 3500);
+        await pressFor(p.cx, p.cy, HOLD_WAIT_MS, fwd.method, HOLD_DRIFT_PX);
+        await sleep(150);
+        check((await sameStep()) && !(await A('selectedMsg()')), `${at}: a ${fwd.method} hold that drifted ${HOLD_DRIFT_PX}px changed the step`);
+        check(!(await A('nudgeShown()')), `${at}: a ${fwd.method} hold that drifted ${HOLD_DRIFT_PX}px nudged`);
+        p = await A(`point('[data-fwd-msg="${fwd.msg}"]')`);
+        playMark = await cdp.eval('window.__plays.length');
+        await pressFor(p.cx, p.cy, HOLD_WAIT_MS, fwd.method);
+        check(await waitFor(async () => (await A('label()')) === stepText(t, i + 2, total)), `${at}: a ${HOLD_WAIT_MS}ms ${fwd.method} hold did not complete the step`);
+        check((await A('selectedMsg()')) === fwd.msg, `${at}: held ${fwd.msg}, selected ${await A('selectedMsg()')}`);
+        await sleep(200);
+        check(!(await A('nudgeShown()')), `${at}: the hold nudged`);
+        notes.push(`${at}: held ${fwd.msg} by ${fwd.method}`);
+        continue;
+      }
+      // Selected message: the other actions are not the step
+      if (step.highlight_element === 'forward_arrow') {
+        check((await A(`textOf('[data-selected-count]')`)) === '1', `${at}: selection count is not 1`);
+        check((await A('selectedMsg()')) === fwd.msg, `${at}: the held message is not shown selected`);
+        await inertTap(await A(`point('[data-select-action]')`), 'Reply');
+      }
+      // Forward to: contact rows at least 64px, "My status" is not a contact; the run's contact is chosen
+      if (step.highlight_element === 'forward_contacts') {
+        for (const hgt of await A(`heights('[data-forward-row]')`)) check(hgt >= 64, `${at}: a contact row is ${Math.round(hgt)}px (needs 64px)`);
+        await inertTap(await A(`point('[data-forward-status]')`), 'My status');
+        tapAt = await A(`point('[data-forward-row="${fwd.to}"]')`);
+        check(tapAt, `${at}: contact ${fwd.to} not found`);
+      }
+      // Send: the chosen contact is named; tapping another contact moves the tick quietly, then back
+      if (step.highlight_element === 'forward_send_button') {
+        check((await A(`textOf('[data-forward-chosen]')`)) === chatName(r, fwd.to), `${at}: chosen contact shown as "${await A(`textOf('[data-forward-chosen]')`)}"`);
+        const other = fwd.to === 'priya' ? 'shop' : 'priya';
+        for (const key of [other, fwd.to]) {
+          const op = await A(`point('[data-forward-row="${key}"]')`);
+          if (op) await click(op.cx, op.cy);
+          await sleep(150);
+          check((await A(`textOf('[data-forward-chosen]')`)) === chatName(r, key), `${at}: tapping ${key} did not move the tick`);
+        }
+        check((await sameStep()) && !(await A('nudgeShown()')), `${at}: changing the contact nudged or changed the step`);
+        tapAt = await A(`targetPoint('forward_send_button')`);
+      }
+
       // Document picker: three photo rows, the rest of the screen inert (a gentle nudge); the run's file is chosen
       if (step.highlight_element === 'doc_recent_files') {
         const hs = await A(`heights('[data-doc-file]')`);
@@ -1255,6 +1501,16 @@ async function runTutorials(w, h, lang, reduce, scale) {
               `${at}: tapping a result did not open the chat with ${want}`
             );
             await sleep(reduce ? 100 : 350);
+          } else if (statusText) {
+            check(await waitFor(() => A(`point('[data-status-posted]')`), 1000), `${at}: "My status" not shown after the Send tap`);
+            await sleep(reduce ? 100 : 350);
+            check((await A(`textOf('[data-status-posted]')`))?.includes(statusText), `${at}: "My status" does not show the typed text`);
+            await has([r.myStatus, r.justNow], 'the posted status');
+          } else if (task.task_id === 'whatsapp_block_number') {
+            check(await waitFor(() => A(`point('[data-blocked]')`), 1000), `${at}: the blocked notice is not shown after the Block tap`);
+            await sleep(reduce ? 100 : 350);
+            check((await A(`textOf('[data-blocked]')`)) === r.youBlocked, `${at}: blocked notice reads "${await A(`textOf('[data-blocked]')`)}"`);
+            check(!(await A(`target('unknown_block_button')`)), `${at}: the Block button is still shown after blocking`);
           } else {
             check(await waitFor(() => A('sentBubble()'), 1000), `${at}: no sent bubble after the Send tap`);
             await sleep(reduce ? 100 : 350); // its 250ms fade-in
@@ -1267,6 +1523,18 @@ async function runTutorials(w, h, lang, reduce, scale) {
           check(!(await A(`buttonWithText(${JSON.stringify(t.practiceAgain)})`)), `${at}: "Well done" shown before the result screen`);
           if (task.task_id === 'whatsapp_send_text') check(await A(`textIncludes(${JSON.stringify(r.chatSent)})`), `${at}: sent message text missing`);
           if (docPick) check((await A(`textIncludes(${JSON.stringify(docPick)})`)) && (await A(`textIncludes('JPG • ')`)), `${at}: document bubble does not show ${docPick} with "JPG •"`);
+          if (fwd) {
+            check((await A(`textOf('[data-chat-name]')`)) === chatName(r, fwd.to), `${at}: forwarded to "${await A(`textOf('[data-chat-name]')`)}", expected ${chatName(r, fwd.to)}`);
+            check((await A(`textOf('[data-forwarded]')`)) === r.forwarded, `${at}: the forwarded bubble is not marked "${r.forwarded}"`);
+            check((await cdp.eval(`document.querySelector('[data-forwarded-msg]')?.getAttribute('data-forwarded-msg')`)) === fwd.msg, `${at}: the forwarded bubble does not show the held message ${fwd.msg}`);
+          }
+          // Taps on the result screen are ignored (no nudge)
+          if (statusText || fwd || task.task_id === 'whatsapp_block_number') {
+            const pp = await A('progressPoint()');
+            await click(pp.cx, pp.cy);
+            await sleep(200);
+            check(!(await A('nudgeShown()')), `${at} result: a tap on the result screen nudged`);
+          }
           if (task.task_id === 'whatsapp_share_location')
             check((await A(`point('[data-location-bubble]')`)) && (await A(`textIncludes(${JSON.stringify(r.addrMainRoad)})`)), `${at}: location bubble with map and place missing`);
           for (const s of await A('smallText()')) check(false, `${at} result: text under 18px: ${s}`);
