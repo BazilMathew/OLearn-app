@@ -51,6 +51,11 @@ export interface TranslationDictionary {
   offlineNotice: string;
   save: string;
   resetProgress: string;
+  resetConfirmTitle: string;
+  resetConfirmBody: string;
+  resetConfirmYes: string;
+  resetConfirmNo: string;
+  resetDone: string;
   soundSpeed: string;
   normalSpeed: string;
   slowSpeed: string;
@@ -122,6 +127,11 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     offlineNotice: 'Offline Mode: Voice narration & mock apps work without internet',
     save: 'Save',
     resetProgress: 'Reset Progress',
+    resetConfirmTitle: 'Clear your progress?',
+    resetConfirmBody: 'The ticks on finished tutorials will be removed. Your settings stay the same.',
+    resetConfirmYes: 'Yes, clear',
+    resetConfirmNo: 'No, keep it',
+    resetDone: 'Progress cleared.',
     soundSpeed: 'Narration Speed',
     normalSpeed: 'Normal',
     slowSpeed: 'Slow & Clear',
@@ -191,6 +201,11 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     offlineNotice: 'ऑफ़लाइन मोड: वॉइस और मॉक ऐप बिना इंटरनेट काम करते हैं',
     save: 'सहेजें',
     resetProgress: 'प्रगति रीसेट करें',
+    resetConfirmTitle: 'अपनी प्रगति मिटाएँ?',
+    resetConfirmBody: 'पूरे किए गए ट्यूटोरियल के टिक हट जाएँगे। आपकी सेटिंग्स वैसी ही रहेंगी।',
+    resetConfirmYes: 'हाँ, मिटाएँ',
+    resetConfirmNo: 'नहीं, रहने दें',
+    resetDone: 'प्रगति मिटा दी गई।',
     soundSpeed: 'बोलने की गति',
     normalSpeed: 'सामान्य',
     slowSpeed: 'धीमी और स्पष्ट',
@@ -260,6 +275,11 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     offlineNotice: 'ഓഫ്‌ലൈൻ: ഇന്റർനെറ്റ് ഇല്ലാതെ പ്രവർത്തിക്കുന്നു',
     save: 'സേവ് ചെയ്യുക',
     resetProgress: 'പുരോഗതി റീസെറ്റ് ചെയ്യുക',
+    resetConfirmTitle: 'പുരോഗതി മായ്ക്കണോ?',
+    resetConfirmBody: 'പൂർത്തിയാക്കിയ പാഠങ്ങളിലെ ശരി അടയാളങ്ങൾ നീക്കും. നിങ്ങളുടെ സെറ്റിങ്സ് മാറില്ല.',
+    resetConfirmYes: 'അതെ, മായ്ക്കുക',
+    resetConfirmNo: 'വേണ്ട',
+    resetDone: 'പുരോഗതി മായ്ച്ചു.',
     soundSpeed: 'ശബ്ദ വേഗത',
     normalSpeed: 'സാധാരണ',
     slowSpeed: 'പതുക്കെ & വ്യക്തമായി',

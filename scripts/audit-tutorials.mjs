@@ -10,12 +10,15 @@
 // Options: --url (default http://localhost:3000), --out (required: keep screenshots OUT of the
 // project), --browser (path to msedge.exe / chrome.exe), --quick (one size, motion off),
 // --scales-only (skip the 100% Home and tutorial matrix; run the hint fit sweep and the Text size pass),
-// --audio-only (only the narration clip check; no browser, server or --out needed).
+// --audio-only (only the narration clip check; no browser, server or --out needed),
+// --reset-only (only the Settings reset confirmation pass).
 //
 // Passes: (1) Home and every tutorial step at 100% for every size, language and motion setting;
 // (2) hint fit sweep: every step's instruction at every Text size, language and size (no hint may
 // scroll below 150%; steps that scroll at 150% are listed); (3) Text size pass: 130% and 150% for
-// en/hi/ml at 360x690 and 412x915 on Home, Settings, Ask Me, both task lists and every tutorial step.
+// en/hi/ml at 360x690 and 412x915 on Home, Settings, Ask Me, both task lists and every tutorial step;
+// (4) Reset progress: the confirmation at 360x690 and 412x915, en/hi/ml, Text size 100% and 150%, and that
+// Yes clears progress only (settings kept, task list ticks gone without a reload) while No changes nothing.
 // Exit code 1 if any check fails.
 
 import { spawn, execFileSync } from 'node:child_process';
@@ -475,6 +478,48 @@ const PAGE_HELPERS = `
         below: Math.round(r.bottom - n.parentElement.getBoundingClientRect().bottom)
       };
     },
+    // A sent bubble on the practice screen (result screens only): is it fully inside its visible region
+    sentBubble() {
+      const b = document.querySelector('[data-sent-bubble]');
+      if (!b || !vis(b)) return null;
+      const r = b.getBoundingClientRect(), g = this.region(b);
+      return {
+        inside: r.top >= g.top - 1 && r.bottom <= g.bottom + 1 && r.left >= g.left - 1 && r.right <= g.right + 1,
+        // Taller than the chat area (smallest practice screen): the chat shows its newest end, time and ticks
+        tallEndShown: r.height > g.bottom - g.top && r.bottom <= g.bottom + 1 && r.bottom >= g.top + 40 && r.left >= g.left - 1 && r.right <= g.right + 1
+      };
+    },
+    // Gallery: number of thumbnails, whether one is a video, and the smallest thumbnail side
+    gallery() {
+      const first = document.querySelector('[data-element-id="photo_thumbnail_1"]');
+      const grid = first && first.parentElement;
+      if (!grid) return null;
+      const tiles = [...grid.children];
+      return {
+        count: tiles.length,
+        video: !!grid.querySelector('[data-gallery-video]'),
+        minSide: Math.min(...tiles.map((t) => { const r = t.getBoundingClientRect(); return Math.min(r.width, r.height); }))
+      };
+    },
+    // The reset confirmation: every text inside the panel and the panel inside the screen (after scrolling to it)
+    resetDialog() {
+      const d = document.querySelector('[role="alertdialog"]');
+      if (!d || !vis(d)) return null;
+      const out = [];
+      const dr = d.getBoundingClientRect();
+      if (dr.left < -1 || dr.right > innerWidth + 1) out.push('panel wider than the screen');
+      for (const el of d.querySelectorAll('*')) {
+        if (!vis(el) || el.children.length || !el.textContent.trim()) continue;
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const tr = range.getBoundingClientRect();
+        if (tr.left < dr.left - 1 || tr.right > dr.right + 1 || tr.top < dr.top - 1 || tr.bottom > dr.bottom + 1)
+          out.push('"' + el.textContent.trim().slice(0, 30) + '" sticks out of the panel');
+      }
+      return out;
+    },
+    doneCards: () => document.querySelectorAll('.bg-success-soft.rounded-card').length,
+    savedProfile: () => JSON.parse(localStorage.getItem('olearn_user_profile_v1') || '{}'),
     progressPoint() {
       const r = document.getElementById('tutorial-progress-label').getBoundingClientRect();
       return { cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
@@ -634,7 +679,7 @@ async function checkScreen(tag, name, labels, scale = 1) {
 }
 
 // ---------- Home: tile titles and subtitles fully visible, wrapped by word ----------
-if (!args['scales-only']) await timed('Home at 100%', async () => {
+if (!args['scales-only'] && !args['reset-only']) await timed('Home at 100%', async () => {
   for (const [w, h] of SIZES) {
     for (const lang of LANGS) {
       for (const reduce of MOTIONS) {
@@ -742,6 +787,23 @@ async function runTutorials(w, h, lang, reduce, scale) {
         }
       }
 
+      // Nothing is shown as sent before the final Send tap
+      check(!(await A('sentBubble()')), `${at}: a sent bubble is shown before the Send tap`);
+      if (step.screen === 'whatsapp_chat_screen_typed') {
+        check(await A(`textIncludes(${JSON.stringify(r.chatTyped)})`), `${at}: typed practice message missing from the message box`);
+        check(!(await A(`textIncludes(${JSON.stringify(r.chatSent)})`)), `${at}: the sent message is shown before the Send tap`);
+      }
+      // Gallery: several photos and a video, every thumbnail tappable size
+      if (step.screen === 'whatsapp_gallery_screen') {
+        const gl = await A('gallery()');
+        if (check(gl, `${at}: gallery grid not found`)) {
+          check(gl.count >= 6, `${at}: gallery shows ${gl.count} thumbnails (needs 6)`);
+          check(gl.video, `${at}: gallery has no video thumbnail`);
+          check(gl.minSide >= 64, `${at}: a gallery thumbnail is ${Math.round(gl.minSide)}px (needs 64px)`);
+        }
+        check(await A(`textIncludes(${JSON.stringify(r.galleryRecent)})`), `${at}: gallery photo count line missing`);
+      }
+
       // Sample data on the Google Pay payment screens
       if (task.task_id === 'gpay_send_contact' && step.screen === 'gpay_amount_entry_screen') {
         check(await A(`textIncludes('₹1,000')`), `${at}: ₹1,000 missing`);
@@ -817,7 +879,24 @@ async function runTutorials(w, h, lang, reduce, scale) {
       if (i + 1 < total) {
         check(await waitFor(async () => (await A('label()')) === stepText(t, i + 2, total)), `${at}: tapping the target did not advance`);
       } else {
-        check(await waitFor(() => A(`buttonWithText(${JSON.stringify(t.practiceAgain)})`), 3000), `${at}: completion screen not shown`);
+        // Result screen (sent message, photo or voice note): shown after the tap, for about 2s, before "Well done"
+        if (step.result_screen) {
+          check(await waitFor(() => A('sentBubble()'), 1000), `${at}: no sent bubble after the Send tap`);
+          await sleep(reduce ? 100 : 350); // its 250ms fade-in
+          const sb = await A('sentBubble()');
+          if (sb) {
+            check(sb.inside || sb.tallEndShown, `${at}: sent bubble not fully visible`);
+            if (!sb.inside && sb.tallEndShown) notes.push(`${at}: sent bubble taller than the chat area, its end (time and ticks) shown`);
+          }
+          check(!(await A(`buttonWithText(${JSON.stringify(t.practiceAgain)})`)), `${at}: "Well done" shown before the result screen`);
+          if (task.task_id === 'whatsapp_send_text') check(await A(`textIncludes(${JSON.stringify(r.chatSent)})`), `${at}: sent message text missing`);
+          for (const s of await A('smallText()')) check(false, `${at} result: text under 18px: ${s}`);
+          for (const s of await A('sideways()')) check(false, `${at} result: ${s}`);
+          check(!(await A('loops()')).length, `${at} result: looping animation on the result screen`);
+          check(!(await cdp.eval(`!!document.querySelector('.highlight-active')`)), `${at} result: something is highlighted on the result screen`);
+          if (stepShots) await shot(`${tag}_${task.task_id}_result`);
+        }
+        check(await waitFor(() => A(`buttonWithText(${JSON.stringify(t.practiceAgain)})`), 4000), `${at}: completion screen not shown`);
         await sleep(reduce ? 100 : 400);
         for (const s of await A('sideways()')) check(false, `${where} completion: ${s}`);
         for (const s of [...new Set(await A(`midWordBreaks(document.querySelector('.screen-enter'))`))]) {
@@ -830,12 +909,12 @@ async function runTutorials(w, h, lang, reduce, scale) {
   }
 }
 
-if (!args['scales-only']) await timed('Tutorials at 100% (full matrix)', async () => {
+if (!args['scales-only'] && !args['reset-only']) await timed('Tutorials at 100% (full matrix)', async () => {
   for (const [w, h] of SIZES) for (const lang of LANGS) for (const reduce of MOTIONS) await runTutorials(w, h, lang, reduce, 1);
 });
 
 // ---------- Hint fit sweep: every step's instruction at every Text size ----------
-await timed('Hint fit sweep', async () => {
+if (!args['reset-only']) await timed('Hint fit sweep', async () => {
   for (const [w, h] of SIZES) {
     for (const lang of LANGS) {
       for (const scale of TEXT_SCALES) {
@@ -861,7 +940,7 @@ await timed('Hint fit sweep', async () => {
 });
 
 // ---------- Text size pass: 130% and 150% ----------
-await timed('Text size pass (130% and 150%)', async () => {
+if (!args['reset-only']) await timed('Text size pass (130% and 150%)', async () => {
   for (const scale of SCALE_PASS.scales) {
     for (const [w, h] of SCALE_PASS.sizes) {
       for (const lang of LANGS) {
@@ -931,7 +1010,75 @@ await timed('Text size pass (130% and 150%)', async () => {
   }
 });
 
-for (const id of replicaIds) check(seenIds.has(id), `highlight id ${id} never found on screen`);
+// ---------- Reset progress: the app's own confirmation, and what a reset clears ----------
+await timed('Reset progress dialog', async () => {
+  for (const [w, h] of [[360, 690], [412, 915]]) {
+    for (const lang of LANGS) {
+      for (const scale of [1, 1.5]) {
+        const t = I18N[lang];
+        const tag = `${lang}_${w}x${h}_ts${Math.round(scale * 100)}`;
+        const start = { ...profileFor(lang, true, scale), completedTasks: ['whatsapp_send_text'] };
+        const full = w === 360 && scale === 1; // also follows the ticks on the task list
+        await setScreen(w, h, true);
+        await openApp(start);
+        const tapText = async (text, waitText, what) => {
+          const p = await A(`clickPointForText(${JSON.stringify(text)})`);
+          if (!check(p, `${tag} reset: "${text}" not found (${what})`)) return false;
+          await click(p.cx, p.cy);
+          const ok = await waitFor(() => A(`textIncludes(${JSON.stringify(waitText)})`), 3000);
+          await sleep(300);
+          return check(ok, `${tag} reset: "${waitText}" not shown after tapping "${text}" (${what})`);
+        };
+        const waTitles = TASKS.filter((k) => k.app === 'whatsapp').map((k) => k.title[lang] || k.title.en);
+
+        if (full && (await tapText(t.whatsAppTitle, waTitles[0], 'task list before'))) {
+          check((await A('doneCards()')) === 1, `${tag} reset: the finished task is not ticked before the reset`);
+          await tapText(t.home, t.gpayTitle, 'back to Home');
+        }
+        if (!(await tapText(t.settings, t.textSizePreview, 'open Settings'))) continue;
+        if (!(await tapText(t.resetProgress, t.resetConfirmTitle, 'open the confirmation'))) continue;
+
+        await shot(`${tag}_reset_dialog`);
+        if (await cdp.eval(`(() => { const o = document.querySelector('[role="alertdialog"]').parentElement; return o.scrollHeight > o.clientHeight + 1; })()`))
+          notes.push(`${tag} reset dialog: taller than the screen, scrolls to reach "${t.resetConfirmYes}"`);
+        for (const s of (await A('resetDialog()')) || ['confirmation not found']) check(false, `${tag} reset dialog: ${s}`);
+        for (const s of await A('smallText()')) check(false, `${tag} reset dialog: text under 18px: ${s}`);
+        for (const s of await A('sideways()')) check(false, `${tag} reset dialog: ${s}`);
+        for (const s of [...new Set(await A(`midWordBreaks(document.querySelector('[role="alertdialog"]'))`))]) {
+          if (scale >= 1.5) wordBreaksAt150.add(`${tag} reset dialog: ${s}`);
+          else check(false, `${tag} reset dialog: ${s}`);
+        }
+        check((await cdp.eval('document.activeElement && document.activeElement.textContent.trim()')) === t.resetConfirmNo, `${tag} reset dialog: "No" is not focused`);
+        for (const l of [t.resetConfirmNo, t.resetConfirmYes]) for (const s of await A(`reach(${JSON.stringify(l)})`)) check(false, `${tag} reset dialog: ${s}`);
+
+        // No: closes and changes nothing
+        const no = await A(`buttonWithText(${JSON.stringify(t.resetConfirmNo)})`);
+        if (check(no, `${tag} reset dialog: "No" not found`)) {
+          await click(no.cx, no.cy);
+          check(await waitFor(async () => !(await A('resetDialog()')), 1000), `${tag} reset dialog: "No" did not close it`);
+          check(JSON.stringify(await A('savedProfile()')) === JSON.stringify(start), `${tag} reset dialog: "No" changed the saved profile`);
+        }
+
+        // Yes: progress cleared, every setting kept, confirmation line shown
+        if (!(await tapText(t.resetProgress, t.resetConfirmTitle, 'reopen the confirmation'))) continue;
+        await A(`reach(${JSON.stringify(t.resetConfirmYes)})`); // scrolls it into view, as the learner would
+        const yes = await A(`buttonWithText(${JSON.stringify(t.resetConfirmYes)})`);
+        if (!check(yes, `${tag} reset dialog: "Yes" not found`)) continue;
+        await click(yes.cx, yes.cy);
+        check(await waitFor(async () => !(await A('resetDialog()')), 1000), `${tag} reset dialog: "Yes" did not close it`);
+        check(JSON.stringify(await A('savedProfile()')) === JSON.stringify({ ...start, completedTasks: [] }), `${tag} reset: saved profile after Yes is ${JSON.stringify(await A('savedProfile()'))}`);
+        check(await A(`textIncludes(${JSON.stringify(t.resetDone)})`), `${tag} reset: "${t.resetDone}" not shown`);
+        check((await A('appTs()')) === String(scale), `${tag} reset: Text size changed to ${await A('appTs()')}`);
+
+        if (full && (await tapText(t.home, t.gpayTitle, 'back to Home after the reset')) && (await tapText(t.whatsAppTitle, waTitles[0], 'task list after'))) {
+          check((await A('doneCards()')) === 0, `${tag} reset: task list still shows a tick after the reset (no reload)`);
+        }
+      }
+    }
+  }
+});
+
+if (!args['reset-only']) for (const id of replicaIds) check(seenIds.has(id), `highlight id ${id} never found on screen`);
 
 browser.kill();
 const secs = Math.round((Date.now() - t0) / 1000);

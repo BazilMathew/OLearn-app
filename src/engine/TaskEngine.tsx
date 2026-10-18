@@ -30,6 +30,9 @@ const motionReduced = () =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // Swipe hint: the hand slides up twice, then rests (transform/opacity only, never loops)
+// After the final tap a step's result screen (e.g. the sent message) stays this long before "Well done"
+const RESULT_MS = 2000;
+
 const SWIPE: Keyframe[] = [
   { transform: 'translateY(20px)', opacity: 0.4 },
   { transform: 'translateY(0)', opacity: 1 }
@@ -47,6 +50,9 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
   const [nudgeKey, setNudgeKey] = useState<number>(0);
   const [showMeVisible, setShowMeVisible] = useState<boolean>(false);
+  // The final tap is done and the step's result screen is showing
+  const [showingResult, setShowingResult] = useState<boolean>(false);
+  const resultTimerRef = useRef<ReturnType<typeof setTimeout>>();
   // The hint is taller than its bar (largest text size only): it scrolls, with a visible cue
   const [hintScrolls, setHintScrolls] = useState<boolean>(false);
   const [hintMore, setHintMore] = useState<boolean>(false);
@@ -188,18 +194,28 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
 
   // Handle correct tap on the highlighted element
   const handleCorrectTap = () => {
+    if (showingResult) return;
     AudioService.playCorrectSound();
     setShowNudge(false);
 
     if (currentStepIndex + 1 < totalSteps) {
       setCurrentStepIndex(prev => prev + 1);
+    } else if (currentStep.result_screen) {
+      setShowingResult(true);
+      resultTimerRef.current = setTimeout(() => {
+        setShowingResult(false);
+        setIsCompleted(true);
+      }, RESULT_MS);
     } else {
       setIsCompleted(true);
     }
   };
 
-  // Handle tap on any inert / wrong element
+  useEffect(() => () => clearTimeout(resultTimerRef.current), []);
+
+  // Handle tap on any inert / wrong element (ignored while the result screen shows)
   const handleWrongTap = () => {
+    if (showingResult) return;
     AudioService.playNudgeSound();
     setShowNudge(true);
     setNudgeKey(k => k + 1);
@@ -220,6 +236,8 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
   };
 
   const handlePracticeAgain = () => {
+    clearTimeout(resultTimerRef.current);
+    setShowingResult(false);
     setIsCompleted(false);
     setCurrentStepIndex(0);
     setShowNudge(false);
@@ -285,6 +303,9 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
 
   const stepLabel = t.stepXofY.replace('{n}', String(currentStepIndex + 1)).replace('{total}', String(totalSteps));
   const hint = currentStep.hint_text[language] || currentStep.hint_text.en;
+  // The result screen has nothing to tap, so nothing is highlighted
+  const replicaScreen = showingResult && currentStep.result_screen ? currentStep.result_screen : currentStep.screen;
+  const replicaHighlight = showingResult ? '' : currentStep.highlight_element;
 
   // Drawn over the bottom of the chat list, beside the floating button, so the chats stay clear.
   // Taps pass through the swipe hint; after 10s without scrolling "Show me" takes its place.
@@ -359,8 +380,8 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
       >
         {task.app === 'whatsapp' ? (
           <WhatsAppReplica
-            screen={currentStep.screen}
-            highlightElement={currentStep.highlight_element}
+            screen={replicaScreen}
+            highlightElement={replicaHighlight}
             language={screenLanguage}
             onCorrectTap={handleCorrectTap}
             onWrongTap={handleWrongTap}
@@ -369,8 +390,8 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
           />
         ) : (
           <GPayReplica
-            screen={currentStep.screen}
-            highlightElement={currentStep.highlight_element}
+            screen={replicaScreen}
+            highlightElement={replicaHighlight}
             language={screenLanguage}
             onCorrectTap={handleCorrectTap}
             onWrongTap={handleWrongTap}

@@ -38,7 +38,8 @@ export const StorageService = {
     } catch (e) {
       console.warn('Failed to read profile from localStorage:', e);
     }
-    return DEFAULT_PROFILE;
+    // A copy, so changing the returned profile never changes the defaults
+    return { ...DEFAULT_PROFILE, completedTasks: [] };
   },
 
   saveProfile(profile: AppProfile): void {

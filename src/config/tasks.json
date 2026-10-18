@@ -65,6 +65,7 @@
       {
         "screen": "whatsapp_chat_screen_typed",
         "highlight_element": "send_button",
+        "result_screen": "whatsapp_chat_screen_sent",
         "audio_en": "assets/audio/en/wa_text_step2.mp3",
         "audio_hi": "assets/audio/hi/wa_text_step2.mp3",
         "audio_ml": "assets/audio/ml/wa_text_step2.mp3",
@@ -158,14 +159,15 @@
         "audio_hi": "assets/audio/hi/wa_photo_step3.mp3",
         "audio_ml": "assets/audio/ml/wa_photo_step3.mp3",
         "hint_text": {
-          "en": "Tap on the first photo to choose it.",
-          "hi": "तस्वीर चुनने के लिए पहली फोटो पर टैप करें।",
-          "ml": "ഫോട്ടോ തിരഞ്ഞെടുക്കാൻ ആദ്യത്തെ ഫോട്ടോയിൽ തൊടുക."
+          "en": "Tap the photo you want to send. For practice, tap the flower.",
+          "hi": "जो फोटो भेजनी है, उस पर टैप करें। अभ्यास के लिए फूल वाली फोटो पर टैप करें।",
+          "ml": "അയക്കേണ്ട ഫോട്ടോ തൊടുക. പരിശീലനത്തിന് പൂവിന്റെ ഫോട്ടോ തൊടുക."
         }
       },
       {
         "screen": "whatsapp_photo_preview",
         "highlight_element": "preview_send_button",
+        "result_screen": "whatsapp_chat_screen_photo_sent",
         "audio_en": "assets/audio/en/wa_photo_step4.mp3",
         "audio_hi": "assets/audio/hi/wa_photo_step4.mp3",
         "audio_ml": "assets/audio/ml/wa_photo_step4.mp3",
@@ -737,6 +739,7 @@
       {
         "screen": "whatsapp_voice_recording_screen",
         "highlight_element": "send_voice_note_button",
+        "result_screen": "whatsapp_chat_screen_voice_sent",
         "audio_en": "assets/audio/en/wa_voicenote_step2.mp3",
         "audio_hi": "assets/audio/hi/wa_voicenote_step2.mp3",
         "audio_ml": "assets/audio/ml/wa_voicenote_step2.mp3",

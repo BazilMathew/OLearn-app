@@ -14,6 +14,8 @@ export interface TaskStep {
   audio_hi: string;
   audio_ml: string;
   hint_text: LocalizedString;
+  /** Last step only: practice screen shown for a moment after the final tap (e.g. the sent message). */
+  result_screen?: string;
   [key: string]: any; // Extensible for extra language audio e.g. audio_ta
 }
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 import { SupportedLanguage } from '../types/task';
 import { HighlightTarget } from '../engine/HighlightTarget';
 import { REPLICA_STRINGS, ReplicaStrings } from './replicaStrings';
@@ -34,7 +34,8 @@ import {
   MessageCircle,
   CircleDashed,
   Users,
-  Plus
+  Plus,
+  Play
 } from 'lucide-react';
 
 interface WhatsAppReplicaProps {
@@ -155,6 +156,28 @@ const ChatRow: React.FC<{ name: string; msg: string; time: string; color: string
     </div>
   </div>
 );
+
+// Outgoing message bubble with time and blue ticks; fades in once when it appears.
+// As in the app, the chat scrolls to the newest message so the bubble is in view.
+const SentBubble: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const chat = ref.current?.parentElement;
+    if (chat) chat.scrollTop = chat.scrollHeight;
+  }, []);
+  return (
+    <div ref={ref} data-sent-bubble className="flex justify-end screen-enter">
+      <div className="relative bg-[#D9FDD3] text-ink rounded-[10px] rounded-tr-none px-md pt-sm pb-xs max-w-[85%] shadow-[0_1px_0_0_rgba(11,20,26,0.13)]">
+        <span className="absolute -right-2 top-0 w-0 h-0 border-t-[12px] border-t-[#D9FDD3] border-r-[10px] border-r-transparent" aria-hidden="true" />
+        {children}
+        <div className="text-label font-normal text-ink-muted text-right mt-xs flex items-center justify-end gap-xs">
+          <span>10:16 AM</span>
+          <CheckCheck className="w-5 h-5 text-[#027EB5]" aria-hidden="true" />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
   screen,
@@ -430,47 +453,48 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
     );
   }
 
-  // 4. GALLERY SELECTION SCREEN
+  // 4. GALLERY SELECTION SCREEN: several photos and a video, as in the app. Any could be sent;
+  // the flower is the practice choice. Names are for screen readers only, as thumbnails have none.
   if (screen === 'whatsapp_gallery_screen') {
+    const tile = 'aspect-square rounded-xl flex items-center justify-center text-5xl';
+    const others: [string, string | undefined][] = [
+      ['from-sky-400 to-indigo-700', r.temple],
+      ['from-emerald-400 to-teal-700', r.grandchild],
+      ['from-rose-400 to-pink-700', r.birthday],
+      ['from-amber-200 to-rose-400', undefined]
+    ];
+    const emoji = ['🛕', '👶', '🎂', '🌅'];
+
     return (
       <div className="h-full w-full bg-white text-ink flex flex-col">
         <div className="bg-white flex items-center gap-md px-lg py-md border-b border-[#E9EDEF]">
           <ArrowLeft className="w-7 h-7 text-ink flex-shrink-0" aria-hidden="true" />
-          <div className="text-title text-ink">
-            {r.allPhotos}
+          <div className="min-w-0">
+            <div className="text-title text-ink">{r.allPhotos}</div>
+            <div className="text-label font-normal text-ink-muted">{r.galleryRecent}</div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-lg p-lg">
-          <HighlightTarget elementId="photo_thumbnail_1" {...tp}>
-            <div className="h-40 bg-gradient-to-br from-amber-300 to-orange-500 rounded-2xl p-md flex flex-col items-center justify-center text-center">
-              <span className="text-5xl mb-sm">🌸</span>
-              <span className="text-body font-bold text-ink">{r.flower}</span>
+        <div className="grid grid-cols-3 gap-sm p-lg">
+          <HighlightTarget elementId="photo_thumbnail_1" {...tp} className="rounded-xl">
+            <div aria-label={r.flower} className={`${tile} bg-gradient-to-br from-amber-300 to-orange-500`}>
+              <span aria-hidden="true">🌸</span>
             </div>
           </HighlightTarget>
 
-          <div
-            onClick={onWrongTap}
-            className="h-40 bg-gradient-to-br from-sky-400 to-indigo-700 rounded-2xl p-md flex flex-col items-center justify-center text-center"
-          >
-            <span className="text-5xl mb-sm">🛕</span>
-            <span className="text-body font-bold text-white">{r.temple}</span>
-          </div>
+          {others.map(([colors, label], i) => (
+            <div key={colors} onClick={onWrongTap} aria-label={label} className={`${tile} bg-gradient-to-br ${colors}`}>
+              <span aria-hidden="true">{emoji[i]}</span>
+            </div>
+          ))}
 
-          <div
-            onClick={onWrongTap}
-            className="h-40 bg-gradient-to-br from-emerald-400 to-teal-700 rounded-2xl p-md flex flex-col items-center justify-center text-center"
-          >
-            <span className="text-5xl mb-sm">👶</span>
-            <span className="text-body font-bold text-white">{r.grandchild}</span>
-          </div>
-
-          <div
-            onClick={onWrongTap}
-            className="h-40 bg-gradient-to-br from-rose-400 to-pink-700 rounded-2xl p-md flex flex-col items-center justify-center text-center"
-          >
-            <span className="text-5xl mb-sm">🎂</span>
-            <span className="text-body font-bold text-white">{r.birthday}</span>
+          {/* Video thumbnail: camera icon and length at the bottom */}
+          <div data-gallery-video onClick={onWrongTap} className={`${tile} relative bg-gradient-to-br from-slate-600 to-slate-900`}>
+            <span aria-hidden="true">🎆</span>
+            <div className="absolute left-xs bottom-xs flex items-center gap-xs text-white text-label font-bold">
+              <Video className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+              <span>0:15</span>
+            </div>
           </div>
         </div>
       </div>
@@ -529,20 +553,31 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
           </div>
         </div>
 
-        {/* Typed message preview when in step 2 of sending text */}
-        {screen === 'whatsapp_chat_screen_typed' && (
-          <div className="flex justify-end">
-            <div className="relative bg-[#D9FDD3] text-ink rounded-[10px] rounded-tr-none px-md pt-sm pb-xs max-w-[85%] shadow-[0_1px_0_0_rgba(11,20,26,0.13)]">
-              <span className="absolute -right-2 top-0 w-0 h-0 border-t-[12px] border-t-[#D9FDD3] border-r-[10px] border-r-transparent" aria-hidden="true" />
-              <p className="text-body leading-snug">
-                {r.chatSent}
-              </p>
-              <div className="text-label font-normal text-ink-muted text-right mt-xs flex items-center justify-end gap-xs">
-                <span>10:16 AM</span>
-                <CheckCheck className="w-5 h-5 text-[#027EB5]" aria-hidden="true" />
-              </div>
+        {/* Result screens, shown only after the final Send tap: the sent message, photo or voice note */}
+        {screen === 'whatsapp_chat_screen_sent' && (
+          <SentBubble>
+            <p className="text-body leading-snug">{r.chatSent}</p>
+          </SentBubble>
+        )}
+        {screen === 'whatsapp_chat_screen_photo_sent' && (
+          <SentBubble>
+            <div className="w-[200px] max-w-full h-[150px] rounded-lg bg-gradient-to-br from-amber-300 to-orange-500 flex items-center justify-center text-6xl">
+              <span aria-label={r.flower}>🌸</span>
             </div>
-          </div>
+          </SentBubble>
+        )}
+        {screen === 'whatsapp_chat_screen_voice_sent' && (
+          <SentBubble>
+            <div className="flex items-center gap-sm">
+              <Play className="w-7 h-7 text-ink-muted fill-current flex-shrink-0" aria-hidden="true" />
+              <div className="flex items-center gap-[3px] h-8" aria-hidden="true">
+                {[10, 18, 26, 14, 30, 20, 12, 24, 16, 8].map((h, i) => (
+                  <span key={i} className="w-[3px] rounded-full bg-ink-muted" style={{ height: h }} />
+                ))}
+              </div>
+              <span className="text-label font-normal text-ink-muted">0:04</span>
+            </div>
+          </SentBubble>
         )}
       </div>
 

@@ -31,6 +31,8 @@ export const App: React.FC = () => {
   const [selectedApp, setSelectedApp] = useState<'whatsapp' | 'gpay'>('whatsapp');
   const [activeTask, setActiveTask] = useState<TaskConfig | null>(null);
   const [usePhoneFrame, setUsePhoneFrame] = useState<boolean>(true);
+  // Settings' reset confirmation (here so Android Back can close it first)
+  const [resetConfirmOpen, setResetConfirmOpen] = useState<boolean>(false);
   const [showStartup, setShowStartup] = useState<boolean>(() => {
     try {
       return sessionStorage.getItem(STARTUP_SHOWN_KEY) !== '1';
@@ -76,6 +78,11 @@ export const App: React.FC = () => {
     setScreenState('tutorial');
   };
 
+  // Leaving Settings always closes its reset confirmation
+  useEffect(() => {
+    if (screenState !== 'settings') setResetConfirmOpen(false);
+  }, [screenState]);
+
   const handleTutorialExit = () => {
     reloadProfile();
     setActiveTask(null);
@@ -97,7 +104,8 @@ export const App: React.FC = () => {
       setShowStartup(false);
       return;
     }
-    if (screenState === 'tutorial') handleTutorialExit();
+    if (screenState === 'settings' && resetConfirmOpen) setResetConfirmOpen(false);
+    else if (screenState === 'tutorial') handleTutorialExit();
     else if (screenState === 'task_list' || screenState === 'ask_me' || screenState === 'settings') setScreenState('home');
     else exitApp();
   };
@@ -241,6 +249,12 @@ export const App: React.FC = () => {
                       StorageService.setReplicaLanguage(mode);
                       reloadProfile();
                     }}
+                    onResetProgress={() => {
+                      StorageService.resetProgress();
+                      reloadProfile();
+                    }}
+                    resetConfirmOpen={resetConfirmOpen}
+                    onResetConfirmOpenChange={setResetConfirmOpen}
                     onClose={() => setScreenState('home')}
                   />
                 )}

@@ -50,6 +50,8 @@ export interface ReplicaStrings {
   familyPhoto: string;
   addCaption: string;
   allPhotos: string;
+  /** Line under the gallery title: how many photos and videos are shown */
+  galleryRecent: string;
   flower: string;
   temple: string;
   grandchild: string;
@@ -180,6 +182,7 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     familyPhoto: 'Family Photo 1',
     addCaption: 'Add a caption...',
     allPhotos: 'All Photos (Gallery)',
+    galleryRecent: 'Recent · 5 photos, 1 video',
     flower: 'Flower',
     temple: 'Temple',
     grandchild: 'Grandchild',
@@ -302,6 +305,7 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     familyPhoto: 'परिवार फोटो 1',
     addCaption: 'कैप्शन जोड़ें...',
     allPhotos: 'सभी तस्वीरें (गैलरी)',
+    galleryRecent: 'हाल ही में · 5 फोटो, 1 वीडियो',
     flower: 'फूल',
     temple: 'मंदिर',
     grandchild: 'पोता-पोती',
@@ -424,6 +428,7 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     familyPhoto: 'കുടുംബ ഫോട്ടോ 1',
     addCaption: 'വിവരണം നൽകുക...',
     allPhotos: 'എല്ലാ ഫോട്ടോകളും',
+    galleryRecent: 'അടുത്തിടെ · 5 ഫോട്ടോ, 1 വീഡിയോ',
     flower: 'പൂവ്',
     temple: 'ക്ഷേത്രം',
     grandchild: 'പേരക്കുട്ടി',
