@@ -14,6 +14,7 @@ interface ScreenHeaderProps {
 }
 
 // Back button on its own row so long Hindi/Malayalam titles never get squeezed.
+// At large text sizes the aside wraps below the back button instead of overlapping it.
 export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
   title,
   subtitle,
@@ -24,7 +25,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
   aside
 }) => (
   <header className="space-y-md pb-lg">
-    <div className="flex items-center justify-between gap-md">
+    <div className="flex flex-wrap items-center justify-between gap-md">
       <Button icon={backIcon} label={backLabel} onClick={onBack} />
       {aside}
     </div>

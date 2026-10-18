@@ -53,12 +53,14 @@ export const Button: React.FC<ButtonProps> = ({
         onPointerDown?.(e);
       }}
       style={{ ['--shade' as string]: v.shade, ...style }}
-      className={`pressable shrink-0 min-h-[64px] px-xl py-md rounded-btn border-2 font-bold text-body flex items-center gap-md ${align === 'start' ? 'justify-start text-left' : 'justify-center'} ${
+      className={`pressable shrink-0 min-h-[64px] px-xl py-md rounded-btn border-2 font-bold text-body flex flex-wrap items-center gap-md ${align === 'start' ? 'justify-start text-left' : 'justify-center'} ${
         fullWidth ? 'w-full' : ''
       } ${iconEnd ? 'flex-row-reverse' : ''} ${v.className} ${className}`}
     >
       <Icon className="w-7 h-7 flex-shrink-0" strokeWidth={2.5} aria-hidden="true" />
-      <span className="min-w-0">{label}</span>
+      {/* Wraps below the icon only when its longest word does not fit beside it (large text in Malayalam):
+          sized from its longest word, then grows up to its one-line width so the pair stays centred */}
+      <span className="basis-[min-content] grow max-w-max min-w-[min(100%,min-content)]">{label}</span>
       {rippleNodes}
     </button>
   );

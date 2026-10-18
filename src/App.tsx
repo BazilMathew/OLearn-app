@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useLayoutEffect, lazy, Suspense } from 'react';
 import tasksData from './config/tasks.json';
 import { SupportedLanguage, TaskConfig } from './types/task';
 import { StorageService } from './services/StorageService';
@@ -35,6 +35,13 @@ export const App: React.FC = () => {
     document.documentElement.classList.toggle('reduce-motion', profile.reduceMotion);
   }, [profile.reduceMotion]);
 
+  // Text size: before the first paint, so a reload never flashes at 100% (see index.css).
+  // From 130% up, screens with a fixed header and footer scroll as a whole (text-large).
+  useLayoutEffect(() => {
+    document.documentElement.style.setProperty('--app-ts', String(profile.textScale));
+    document.documentElement.classList.toggle('text-large', profile.textScale >= 1.3);
+  }, [profile.textScale]);
+
   // Sync profile state when storage changes
   const reloadProfile = () => {
     setProfile(StorageService.getProfile());
@@ -63,14 +70,14 @@ export const App: React.FC = () => {
   };
 
   const navItemClass = (active: boolean) =>
-    `pressable flex-1 max-w-[180px] min-h-[64px] flex flex-col items-center justify-center gap-xs px-lg rounded-btn border-2 ${
+    `pressable flex-1 max-w-[180px] min-h-[64px] flex flex-col items-center justify-center gap-xs px-sm rounded-btn border-2 ${
       active ? 'bg-accent-soft border-accent-deep text-ink' : 'bg-surface border-line text-ink-muted active:bg-canvas'
     }`;
 
   return (
     <div className="w-full min-h-[100dvh] flex flex-col items-center justify-center sm:p-lg font-sans">
       {/* Desktop Helper Bar: Switch between Android Frame & Fullscreen (640px and up only) */}
-      <div className="w-full max-w-md hidden sm:flex items-center justify-between py-sm px-lg mb-sm text-label text-slate-300">
+      <div className="ts-fixed w-full max-w-md hidden sm:flex items-center justify-between py-sm px-lg mb-sm text-label text-slate-300">
         <span className="font-semibold tracking-wide">OLearn Senior Trainer</span>
         <button
           onClick={() => setUsePhoneFrame(!usePhoneFrame)}
@@ -90,7 +97,7 @@ export const App: React.FC = () => {
         }`}
       >
         {/* Mock Android Status Bar (desktop frame only; a real phone has its own) */}
-        <div className="w-full bg-slate-900 text-white px-xl py-sm hidden sm:flex items-center justify-between text-label font-bold z-40 select-none">
+        <div className="ts-fixed w-full bg-slate-900 text-white px-xl py-sm hidden sm:flex items-center justify-between text-label font-bold z-40 select-none">
           <span>10:30</span>
           <div className="w-24 h-4 bg-black rounded-full mx-auto" /> {/* Camera Pill Notch */}
           <div className="flex items-center gap-sm">
@@ -161,6 +168,11 @@ export const App: React.FC = () => {
                     StorageService.setReduceMotion(on);
                     reloadProfile();
                   }}
+                  textScale={profile.textScale}
+                  onTextScaleChange={(scale) => {
+                    StorageService.setTextScale(scale);
+                    reloadProfile();
+                  }}
                   replicaLanguage={profile.replicaLanguage}
                   onReplicaLanguageChange={(mode) => {
                     StorageService.setReplicaLanguage(mode);
@@ -173,9 +185,10 @@ export const App: React.FC = () => {
           </Suspense>
         </div>
 
-        {/* Bottom Navigation (Max 2 icons: Home and Settings with explicit text labels) */}
+        {/* Bottom Navigation (Max 2 icons: Home and Settings with explicit text labels).
+            Stays at 100% text (ts-fixed): in Malayalam a bigger "Settings" no longer fits its button. */}
         {screenState !== 'tutorial' && screenState !== 'first_launch' && (
-          <nav className="w-full bg-surface border-t-2 border-line px-lg py-sm flex items-center justify-around gap-lg z-30 select-none">
+          <nav className="ts-fixed w-full bg-surface border-t-2 border-line px-lg py-sm flex items-center justify-around gap-lg z-30 select-none">
             <button
               onClick={() => setScreenState('home')}
               className={navItemClass(screenState === 'home' || screenState === 'task_list')}

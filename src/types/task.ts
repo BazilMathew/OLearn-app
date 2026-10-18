@@ -33,4 +33,9 @@ export interface AppProfile {
   reduceMotion: boolean;
   /** Language of the mock WhatsApp / Google Pay screens: English, or follow the learner's language. */
   replicaLanguage: 'en' | 'follow';
+  /** Text size of OLearn's own screens (not the practice screens): 1, 1.15, 1.3 or 1.5. */
+  textScale: TextScale;
 }
+
+export const TEXT_SCALES = [1, 1.15, 1.3, 1.5] as const;
+export type TextScale = (typeof TEXT_SCALES)[number];

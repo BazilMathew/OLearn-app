@@ -58,6 +58,12 @@ export interface TranslationDictionary {
   practiceScreens: string;
   practiceScreensEnglish: string;
   practiceScreensMine: string;
+  textSize: string;
+  textSizeNormal: string;
+  textSizeLarge: string;
+  textSizeLarger: string;
+  textSizeLargest: string;
+  textSizePreview: string;
   languages: {
     en: string;
     hi: string;
@@ -123,6 +129,12 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     practiceScreens: 'Practice screens',
     practiceScreensEnglish: 'English',
     practiceScreensMine: 'My language',
+    textSize: 'Text size',
+    textSizeNormal: 'Normal',
+    textSizeLarge: 'Large',
+    textSizeLarger: 'Larger',
+    textSizeLargest: 'Largest',
+    textSizePreview: 'This is how your text will look.',
     languages: {
       en: 'English',
       hi: 'हिन्दी',
@@ -186,6 +198,12 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     practiceScreens: 'अभ्यास स्क्रीन',
     practiceScreensEnglish: 'अंग्रेज़ी',
     practiceScreensMine: 'मेरी भाषा',
+    textSize: 'अक्षरों का आकार',
+    textSizeNormal: 'सामान्य',
+    textSizeLarge: 'बड़ा',
+    textSizeLarger: 'और बड़ा',
+    textSizeLargest: 'सबसे बड़ा',
+    textSizePreview: 'आपके अक्षर ऐसे दिखेंगे।',
     languages: {
       en: 'English',
       hi: 'हिन्दी',
@@ -249,6 +267,12 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     practiceScreens: 'പരിശീലന സ്ക്രീനുകൾ',
     practiceScreensEnglish: 'ഇംഗ്ലീഷ്',
     practiceScreensMine: 'എന്റെ ഭാഷ',
+    textSize: 'അക്ഷര വലുപ്പം',
+    textSizeNormal: 'സാധാരണ',
+    textSizeLarge: 'വലുത്',
+    textSizeLarger: 'കൂടുതൽ വലുത്',
+    textSizeLargest: 'ഏറ്റവും വലുത്',
+    textSizePreview: 'നിങ്ങളുടെ അക്ഷരങ്ങൾ ഇങ്ങനെ കാണപ്പെടും.',
     languages: {
       en: 'English',
       hi: 'हिन्दी',

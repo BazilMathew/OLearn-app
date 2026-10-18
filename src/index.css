@@ -10,16 +10,38 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Text size setting: App sets --app-ts on <html> (1, 1.15, 1.3 or 1.5) and the class text-large from 1.3 up.
+   The type tokens read --ts. The practice screens imitate real apps and the tutorial's buttons and
+   step bar are already at their width limit in Malayalam, so both stay at 100% (.ts-fixed). */
+:root {
+  --ts: var(--app-ts, 1);
+}
+.ts-fixed {
+  --ts: 1;
+}
+
 /* Strict Senior-Friendly Typography Standards */
 /* Minimum 20sp for all standard body text, 24-28sp for titles */
 body, button, input, textarea {
-  font-size: 20px;
+  font-size: calc(20px * var(--ts, 1));
+}
+
+/* Tutorial hint that is taller than its bar (only at the largest text size). The native scrollbar is
+   hidden because Android draws it only while scrolling; TaskEngine draws its own thin, always-visible one. */
+.hint-scroll {
+  scrollbar-width: none;
+}
+.hint-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 /* Phone: the app is full-bleed. Desktop (>= 640px): dark page behind the phone frame. */
 body {
   background: #F6F1EA;
   color: #2B2620;
+  /* Last resort: a single word wider than the whole line (long Malayalam words at the largest text size)
+     breaks instead of running off the screen. Words that fit are never split. */
+  overflow-wrap: break-word;
 }
 
 @media (min-width: 640px) {

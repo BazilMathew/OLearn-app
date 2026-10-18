@@ -1,4 +1,4 @@
-import { AppProfile, SupportedLanguage } from '../types/task';
+import { AppProfile, SupportedLanguage, TEXT_SCALES, TextScale } from '../types/task';
 
 const STORAGE_KEY = 'olearn_user_profile_v1';
 
@@ -8,7 +8,8 @@ const DEFAULT_PROFILE: AppProfile = {
   completedTasks: [],
   firstLaunchCompleted: false,
   reduceMotion: false,
-  replicaLanguage: 'en'
+  replicaLanguage: 'en',
+  textScale: 1
 };
 
 export const StorageService = {
@@ -25,7 +26,9 @@ export const StorageService = {
           firstLaunchCompleted: merged.firstLaunchCompleted,
           reduceMotion: merged.reduceMotion === true,
           // Older profiles have no field: practice screens stay in English
-          replicaLanguage: merged.replicaLanguage === 'follow' ? 'follow' : 'en'
+          replicaLanguage: merged.replicaLanguage === 'follow' ? 'follow' : 'en',
+          // Older profiles, or anything that is not one of the four stops: Normal
+          textScale: TEXT_SCALES.includes(merged.textScale) ? merged.textScale : 1
         };
         if (Object.keys(merged).length !== Object.keys(profile).length) {
           this.saveProfile(profile);
@@ -70,6 +73,12 @@ export const StorageService = {
   setReplicaLanguage(mode: 'en' | 'follow'): void {
     const profile = this.getProfile();
     profile.replicaLanguage = mode;
+    this.saveProfile(profile);
+  },
+
+  setTextScale(scale: TextScale): void {
+    const profile = this.getProfile();
+    profile.textScale = scale;
     this.saveProfile(profile);
   },
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { TaskConfig, SupportedLanguage } from '../types/task';
 import { AudioService } from '../services/AudioService';
 import { StorageService } from '../services/StorageService';
@@ -47,6 +47,12 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
   const [nudgeKey, setNudgeKey] = useState<number>(0);
   const [showMeVisible, setShowMeVisible] = useState<boolean>(false);
+  // The hint is taller than its bar (largest text size only): it scrolls, with a visible cue
+  const [hintScrolls, setHintScrolls] = useState<boolean>(false);
+  const [hintMore, setHintMore] = useState<boolean>(false);
+  // Thumb of the hint's own scrollbar, as fractions of the visible height
+  const [hintThumb, setHintThumb] = useState<{ top: number; size: number }>({ top: 0, size: 1 });
+  const hintRef = useRef<HTMLDivElement>(null);
   const replicaRef = useRef<HTMLDivElement>(null);
   const handRef = useRef<HTMLDivElement>(null);
   const scrollDoneRef = useRef<boolean>(false);
@@ -86,6 +92,22 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
       AudioService.stopAudio();
     };
   }, [currentStepIndex, isCompleted, language, task]);
+
+  const measureHint = () => {
+    const el = hintRef.current;
+    if (!el) return;
+    setHintScrolls(el.scrollHeight > el.clientHeight + 1);
+    setHintMore(el.scrollTop + el.clientHeight < el.scrollHeight - 1);
+    setHintThumb({ top: el.scrollTop / el.scrollHeight, size: el.clientHeight / el.scrollHeight });
+  };
+
+  // Each new step's hint starts at its first line
+  useLayoutEffect(() => {
+    if (hintRef.current) hintRef.current.scrollTop = 0;
+    measureHint();
+    window.addEventListener('resize', measureHint);
+    return () => window.removeEventListener('resize', measureHint);
+  }, [currentStepIndex, isCompleted, language]);
 
   // Scroll step: the learner scrolls the list themselves. The step completes once scrolling settles
   // with the target fully visible above the floating button. "Show me" appears after 10s without scrolling.
@@ -205,7 +227,7 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
 
   if (isCompleted) {
     return (
-      <div className="h-full w-full bg-canvas flex flex-col justify-between p-lg select-none screen-enter overflow-y-auto">
+      <div className="h-full w-full bg-canvas flex flex-col justify-between p-lg select-none screen-enter overflow-y-auto [.text-large_&]:px-md">
         <div className="flex-1 flex flex-col items-center justify-center text-center gap-xl py-lg">
           {/* Mitra with a one-time sparkle burst (static sparkles under Reduce motion) */}
           <div className="relative w-[136px] h-[136px] mt-2xl" aria-hidden="true">
@@ -239,9 +261,9 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
             </p>
           </div>
 
-          <div className="bg-success-soft border-2 border-success rounded-card p-lg w-full text-left flex items-start gap-md">
+          <div className="bg-success-soft border-2 border-success rounded-card p-lg w-full text-left flex items-start gap-md [.text-large_&]:flex-wrap [.text-large_&]:p-md">
             <Sparkles className="w-7 h-7 text-success flex-shrink-0 mt-xs" aria-hidden="true" />
-            <div>
+            <div className="min-w-0 [.text-large_&]:basis-full">
               <div className="text-body font-bold text-ink">
                 {task.title[language] || task.title.en}
               </div>
@@ -289,8 +311,9 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
       className="h-full w-full flex flex-col justify-between bg-canvas relative overflow-hidden select-none"
       onClick={handleWrongTap}
     >
-      {/* Tutorial chrome: exit + repeat. The gentle nudge overlays this bar so the screen never shifts. */}
-      <div className="relative bg-surface border-b-2 border-line px-sm py-sm z-30">
+      {/* Tutorial chrome: exit + repeat. The gentle nudge overlays this bar so the screen never shifts.
+          Stays at 100% text (ts-fixed): in Malayalam these labels already fill the bar. */}
+      <div className="ts-fixed relative bg-surface border-b-2 border-line px-sm py-sm z-30 [.text-large_&]:py-xs">
         <div className="grid grid-cols-2 gap-xs">
           <Button
             icon={X}
@@ -299,7 +322,7 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
               e.stopPropagation();
               onExit();
             }}
-            className="!px-sm !py-sm !text-label !gap-xs min-w-0 [overflow-wrap:anywhere] [&>svg]:!w-6 [&>svg]:!h-6"
+            className="!px-sm !py-sm !text-label !gap-xs min-w-0 break-words [&>svg]:!w-6 [&>svg]:!h-6"
           />
           {/* Greyed out (but kept in place) on steps that have no recorded clip yet */}
           <Button
@@ -311,7 +334,7 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
               e.stopPropagation();
               handleReplayAudio();
             }}
-            className={`!px-sm !py-sm !text-label !gap-xs min-w-0 [overflow-wrap:anywhere] [&>svg]:!w-6 [&>svg]:!h-6 ${clipPath ? '' : 'opacity-50 cursor-default'}`}
+            className={`!px-sm !py-sm !text-label !gap-xs min-w-0 break-words [&>svg]:!w-6 [&>svg]:!h-6 ${clipPath ? '' : 'opacity-50 cursor-default'}`}
           />
         </div>
 
@@ -326,8 +349,14 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
         )}
       </div>
 
-      {/* Screen Replica Container */}
-      <div ref={replicaRef} className="flex-1 relative overflow-y-auto overflow-x-hidden bg-canvas flex flex-col">
+      {/* Screen Replica Container: imitates the real apps, so it keeps 100% text at every Text size (ts-fixed).
+          It always keeps 40% of the height and at least 284px (the 256px QR viewfinder with room for its
+          ring), or 336px on a scroll step (chat list header, a full chat row and the swipe hint); the
+          instruction below takes the rest. */}
+      <div
+        ref={replicaRef}
+        className={`ts-fixed flex-1 ${isScrollStep ? 'min-h-[max(40%,336px)]' : 'min-h-[max(40%,284px)]'} relative overflow-y-auto overflow-x-hidden bg-canvas flex flex-col`}
+      >
         {task.app === 'whatsapp' ? (
           <WhatsAppReplica
             screen={currentStep.screen}
@@ -351,9 +380,10 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
         )}
       </div>
 
-      {/* In-language step instruction with progress and the practice badge */}
-      <div className="bg-accent-soft border-t-4 border-accent px-lg pt-sm pb-sm z-20 space-y-sm" aria-live="polite">
-        <div className="flex items-center justify-between gap-sm">
+      {/* In-language step instruction with progress and the practice badge. Only the instruction grows with
+          the Text size setting; if it needs more room than the practice screen leaves, it scrolls. */}
+      <div className="min-h-0 flex flex-col gap-sm bg-accent-soft border-t-4 border-accent px-md pt-sm pb-sm z-20" aria-live="polite">
+        <div className="ts-fixed shrink-0 flex items-center justify-between gap-sm">
           <div className="text-label font-bold text-ink whitespace-nowrap" id="tutorial-progress-label">
             {stepLabel}
           </div>
@@ -363,7 +393,7 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
         </div>
 
         <div
-          className="h-3 w-full bg-surface border border-accent-deep rounded-full overflow-hidden"
+          className="shrink-0 h-3 w-full bg-surface border border-accent-deep rounded-full overflow-hidden"
           role="progressbar"
           aria-labelledby="tutorial-progress-label"
           aria-valuemin={1}
@@ -376,8 +406,39 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
           />
         </div>
 
-        <div className="text-body font-extrabold text-ink leading-snug">
-          {hint}
+        {/* A hint taller than the bar scrolls: its own thin scrollbar (always shown), a solid bottom edge,
+            and a fade while more text is below */}
+        <div className="relative min-h-0 flex flex-col">
+          <div
+            ref={hintRef}
+            id="tutorial-hint"
+            onScroll={measureHint}
+            tabIndex={hintScrolls ? 0 : undefined}
+            className={`hint-scroll min-h-0 overflow-y-auto text-body font-extrabold text-ink leading-snug [.text-large_&]:leading-[1.3] ${
+              hintScrolls ? 'pr-md border-b-2 border-accent-deep' : ''
+            }`}
+          >
+            {hint}
+          </div>
+          {hintMore && (
+            <div
+              data-hint-fade
+              className="absolute left-0 right-md bottom-[2px] h-10 bg-gradient-to-t from-accent-soft to-accent-soft/0 pointer-events-none"
+              aria-hidden="true"
+            />
+          )}
+          {hintScrolls && (
+            <div
+              data-hint-scrollbar
+              className="absolute right-0 top-0 bottom-[2px] w-[6px] rounded-full bg-surface border border-line pointer-events-none overflow-hidden"
+              aria-hidden="true"
+            >
+              <div
+                className="w-full bg-accent-deep rounded-full"
+                style={{ height: `${hintThumb.size * 100}%`, transform: `translateY(${(hintThumb.top / hintThumb.size) * 100}%)` }}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

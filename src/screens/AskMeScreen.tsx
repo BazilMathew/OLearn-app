@@ -173,7 +173,7 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
   const isIdle = voiceState === 'idle' && !isRouting && !clarifyData && !notUnderstood && !transcript && !notice;
 
   return (
-    <div className="h-full w-full bg-canvas text-ink flex flex-col p-lg select-none relative">
+    <div className="h-full w-full bg-canvas text-ink flex flex-col p-lg select-none relative [.text-large_&]:overflow-y-auto">
       {/* Top Bar with Cancel / X */}
       <ScreenHeader
         title={<span className="text-accent-deep">{t.askMe}</span>}
@@ -186,8 +186,8 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
         aside={isIdle ? <Mascot size={72} /> : undefined}
       />
 
-      {/* Main Interaction Zone */}
-      <div className="flex-1 overflow-y-auto flex flex-col -mx-xs px-xs">
+      {/* Main Interaction Zone (at large text sizes the whole screen scrolls instead) */}
+      <div className="flex-1 overflow-y-auto flex flex-col -mx-xs px-xs [.text-large_&]:flex-[1_0_auto] [.text-large_&]:overflow-visible">
         <div className="my-auto flex flex-col items-center space-y-xl text-center py-sm">
           <p className="text-body font-bold text-ink max-w-sm">
             {t.askMeSubtitle}

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { SupportedLanguage } from '../types/task';
+import { SupportedLanguage, TextScale } from '../types/task';
 import { I18N } from '../config/i18n';
 import { StorageService } from '../services/StorageService';
 import { AudioService } from '../services/AudioService';
-import { Globe, Volume2, RotateCcw, Check, Circle, Sparkles, Languages } from 'lucide-react';
+import { Globe, Volume2, RotateCcw, Check, Circle, Sparkles, Languages, ALargeSmall } from 'lucide-react';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -13,6 +13,8 @@ interface SettingsScreenProps {
   onLanguageChange: (lang: SupportedLanguage) => void;
   reduceMotion: boolean;
   onReduceMotionChange: (on: boolean) => void;
+  textScale: TextScale;
+  onTextScaleChange: (scale: TextScale) => void;
   replicaLanguage: 'en' | 'follow';
   onReplicaLanguageChange: (mode: 'en' | 'follow') => void;
   onClose: () => void;
@@ -23,6 +25,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onLanguageChange,
   reduceMotion,
   onReduceMotionChange,
+  textScale,
+  onTextScaleChange,
   replicaLanguage,
   onReplicaLanguageChange,
   onClose
@@ -37,6 +41,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     { code: 'ml', label: 'മലയാളം' }
   ];
 
+  const textSizes: Array<{ scale: TextScale; label: string }> = [
+    { scale: 1, label: t.textSizeNormal },
+    { scale: 1.15, label: t.textSizeLarge },
+    { scale: 1.3, label: t.textSizeLarger },
+    { scale: 1.5, label: t.textSizeLargest }
+  ];
+
   const handleSpeedChange = (newSpeed: number) => {
     setSpeed(newSpeed);
     AudioService.setSpeechRate(newSpeed);
@@ -48,7 +59,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     }
   };
 
-  const sectionTitle = 'flex items-center gap-md text-body font-bold text-ink';
+  // Rows wrap (icon above, switch below) only when the longest word does not fit beside them
+  const sectionTitle = 'flex flex-wrap items-center gap-md text-body font-bold text-ink';
+  const wordWide = 'flex-1 min-w-[min(100%,min-content)]';
 
   return (
     <div className="h-full w-full bg-canvas flex flex-col p-lg select-none overflow-y-auto">
@@ -56,11 +69,41 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       <ScreenHeader title={t.settings} onBack={onClose} backLabel={t.back} />
 
       <div className="space-y-xl">
+        {/* Text size: first, so the choices stay in place while the rest of the screen grows or shrinks.
+            The change applies at once; the sample sentence shows the chosen size. */}
+        <Card className="space-y-lg">
+          <div className={sectionTitle}>
+            <ALargeSmall className="w-7 h-7 text-accent-deep flex-shrink-0" />
+            <span className={wordWide}>{t.textSize}</span>
+          </div>
+
+          <div className="space-y-md">
+            {textSizes.map((size) => {
+              const isSelected = textScale === size.scale;
+              return (
+                <Button
+                  key={size.scale}
+                  icon={isSelected ? Check : Circle}
+                  label={size.label}
+                  selected={isSelected}
+                  fullWidth
+                  align="start"
+                  onClick={() => onTextScaleChange(size.scale)}
+                />
+              );
+            })}
+          </div>
+
+          <p className="bg-canvas rounded-btn border-2 border-line px-lg py-md text-body text-ink" aria-live="polite">
+            {t.textSizePreview}
+          </p>
+        </Card>
+
         {/* Language Selection */}
         <Card className="space-y-lg">
           <div className={sectionTitle}>
-            <Globe className="w-7 h-7 text-[#1A73E8]" />
-            <span>{t.chooseLanguage}</span>
+            <Globe className="w-7 h-7 text-[#1A73E8] flex-shrink-0" />
+            <span className={wordWide}>{t.chooseLanguage}</span>
           </div>
 
           <div className="space-y-md">
@@ -84,8 +127,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         {/* Audio Narration Speed */}
         <Card className="space-y-lg">
           <div className={sectionTitle}>
-            <Volume2 className="w-7 h-7 text-success" />
-            <span>{t.soundSpeed}</span>
+            <Volume2 className="w-7 h-7 text-success flex-shrink-0" />
+            <span className={wordWide}>{t.soundSpeed}</span>
           </div>
 
           <div className="space-y-md">
@@ -115,10 +158,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             role="switch"
             aria-checked={reduceMotion}
             onClick={() => onReduceMotionChange(!reduceMotion)}
-            className="w-full min-h-[72px] px-lg py-md flex items-center gap-md text-left rounded-card active:bg-canvas"
+            className="w-full min-h-[72px] px-lg py-md flex flex-wrap items-center gap-md text-left rounded-card active:bg-canvas"
           >
             <Sparkles className="w-7 h-7 text-accent-deep flex-shrink-0" />
-            <span className="flex-1 text-body font-bold text-ink">{t.reduceMotion}</span>
+            <span className={`${wordWide} text-body font-bold text-ink`}>{t.reduceMotion}</span>
             <span
               className={`relative w-[68px] h-10 rounded-full border-2 flex-shrink-0 transition-colors ${
                 reduceMotion ? 'bg-success border-success' : 'bg-line border-[#CDBFAE]'
@@ -143,10 +186,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             role="switch"
             aria-checked={replicaLanguage === 'follow'}
             onClick={() => onReplicaLanguageChange(replicaLanguage === 'follow' ? 'en' : 'follow')}
-            className="w-full min-h-[72px] px-lg py-md flex items-center gap-md text-left rounded-card active:bg-canvas"
+            className="w-full min-h-[72px] px-lg py-md flex flex-wrap items-center gap-md text-left rounded-card active:bg-canvas"
           >
             <Languages className="w-7 h-7 text-[#1A73E8] flex-shrink-0" />
-            <span className="flex-1 min-w-0">
+            <span className={wordWide}>
               <span className="block text-body font-bold text-ink">{t.practiceScreens}</span>
               <span className="block text-label text-ink-muted">
                 {replicaLanguage === 'follow' ? t.practiceScreensMine : t.practiceScreensEnglish}

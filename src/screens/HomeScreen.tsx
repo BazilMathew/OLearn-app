@@ -20,10 +20,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   return (
     <div className="h-full w-full bg-canvas flex flex-col p-lg select-none overflow-y-auto">
-      {/* App Header with Mitra */}
-      <div className="flex items-center gap-lg pt-sm">
+      {/* App Header with Mitra; at large text sizes the tagline wraps below Mitra rather than past the edge */}
+      <div className="flex flex-wrap items-center gap-lg pt-sm">
         <Mascot size={88} />
-        <div className="min-w-0">
+        <div className="flex-1 min-w-[min(100%,min-content)]">
           <h1 className="text-display text-ink">
             {t.appName}
           </h1>
@@ -85,11 +85,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         className="bg-accent border-accent-deep active:bg-[#E59A2A] flex flex-wrap items-center gap-md"
       >
         {/* Never narrower than its text on one line (unless that is wider than the card), so nothing overlaps */}
-        <div className="flex items-center gap-lg min-w-[min(100%,max-content)] [flex:999_1_auto]">
+        <div className="flex flex-wrap items-center gap-lg min-w-[min(100%,max-content)] [flex:999_1_auto]">
           <div className="w-14 h-14 bg-ink text-accent rounded-btn flex items-center justify-center flex-shrink-0">
             <Mic className="w-8 h-8" strokeWidth={2.5} />
           </div>
-          <div className="min-w-0">
+          {/* Below the mic icon when its longest word does not fit beside it (large text in Malayalam) */}
+          <div className="flex-1 min-w-[min(100%,min-content)]">
             <div className="text-title font-extrabold text-ink break-words">
               {t.askMe}
             </div>

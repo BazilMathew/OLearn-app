@@ -32,7 +32,7 @@ export const TaskListScreen: React.FC<TaskListScreenProps> = ({
   const isWhatsApp = app === 'whatsapp';
 
   return (
-    <div className="h-full w-full bg-canvas flex flex-col p-lg select-none">
+    <div className="h-full w-full bg-canvas flex flex-col p-lg select-none [.text-large_&]:overflow-y-auto [.text-large_&]:px-md">
       {/* App Specific Header */}
       <ScreenHeader
         title={isWhatsApp ? t.whatsAppTitle : t.gpayTitle}
@@ -42,8 +42,9 @@ export const TaskListScreen: React.FC<TaskListScreenProps> = ({
         backLabel={t.back}
       />
 
-      {/* Task List: Vertically stacked full-width buttons, minimum 64dp height */}
-      <div className="flex-1 overflow-y-auto space-y-lg pt-xs pb-lg -mx-xs px-xs">
+      {/* Task List: Vertically stacked full-width buttons, minimum 64dp height.
+          At large text sizes the whole screen scrolls instead, so a tall card always fits. */}
+      <div className="flex-1 overflow-y-auto space-y-lg pt-xs pb-lg -mx-xs px-xs [.text-large_&]:flex-[1_0_auto] [.text-large_&]:overflow-visible">
         {filteredTasks.map((task, index) => {
           const isDone = completedTaskIds.includes(task.task_id);
           const staggered = index < STAGGERED_CARDS;
@@ -56,7 +57,7 @@ export const TaskListScreen: React.FC<TaskListScreenProps> = ({
               <Card
                 onClick={() => onSelectTask(task)}
                 shade={isDone ? '#276B43' : undefined}
-                className={`min-h-[88px] flex items-center gap-md ${
+                className={`min-h-[88px] flex flex-wrap items-center gap-md [.text-large_&]:p-md ${
                   isDone ? 'bg-success-soft border-success active:bg-[#D2EADB]' : 'border-line active:bg-canvas'
                 }`}
               >
@@ -72,17 +73,18 @@ export const TaskListScreen: React.FC<TaskListScreenProps> = ({
                   {isDone ? <CheckCircle className="w-7 h-7" strokeWidth={2.5} /> : index + 1}
                 </div>
 
-                <div className="flex-1 min-w-0">
+                {/* At large text sizes the title gets the card's full width, below the number and play icons */}
+                <div className="flex-1 min-w-0 [.text-large_&]:order-last [.text-large_&]:basis-full">
                   <div className="text-body font-extrabold text-ink">
                     {task.title[language] || task.title.en}
                   </div>
-                  <div className="text-label font-medium text-ink-muted mt-xs line-clamp-1">
+                  <div className="text-label font-medium text-ink-muted mt-xs line-clamp-1 [.text-large_&]:line-clamp-2">
                     {task.description[language] || task.description.en}
                   </div>
                 </div>
 
                 <div
-                  className={`w-12 h-12 rounded-btn flex items-center justify-center flex-shrink-0 ${
+                  className={`w-12 h-12 rounded-btn flex items-center justify-center flex-shrink-0 [.text-large_&]:ml-auto ${
                     isDone ? 'bg-[#C6E3CF] text-success' : 'bg-accent text-ink'
                   }`}
                 >
