@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { SupportedLanguage, TaskConfig } from '../types/task';
 import { I18N, TranslationDictionary } from '../config/i18n';
 import { STTService, STTError, STTState } from '../services/STTService';
@@ -33,6 +34,9 @@ const ERROR_CLIP: Record<STTError, string> = {
 // Longest we wait for the "Listening" clip to finish before opening the mic anyway.
 const MAX_PROMPT_MS = 4000;
 
+const IS_NATIVE = Capacitor.isNativePlatform();
+const TYPED_INPUT_ID = 'askme-typed-input';
+
 interface AskMeScreenProps {
   language: SupportedLanguage;
   tasks: TaskConfig[];
@@ -54,6 +58,8 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
   const [isRouting, setIsRouting] = useState<boolean>(false);
   const [clarifyData, setClarifyData] = useState<RouteResult['clarifyQuestion'] | null>(null);
   const [notUnderstood, setNotUnderstood] = useState<boolean>(false);
+  // Android app: "Try the Google voice box" after "didn't catch that"
+  const [offerVoiceBox, setOfferVoiceBox] = useState<boolean>(false);
 
   const t = I18N[language] || I18N.en;
   const sttRef = useRef<STTService | null>(null);
@@ -86,13 +92,28 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
   const showNotice = (err: STTError) => {
     setNotice(t[ERROR_TEXT[err]] as string);
     AudioService.playClip(clipPath(ERROR_CLIP[err]));
+    setOfferVoiceBox(err === 'no-speech' && stt.canOfferVoiceBox());
+    // Android app: nothing on this phone can listen, so typing is the way on.
+    if (IS_NATIVE && err === 'unavailable') document.getElementById(TYPED_INPUT_ID)?.focus();
   };
+
+  const voiceListener = () => ({
+    onInterim: (text: string) => setTranscript(text),
+    onFinal: (text: string) => {
+      setTranscript(text);
+      processQuery(text);
+    },
+    onError: (err: STTError) => showNotice(err),
+    onStateChange: (state: STTState) => setVoiceState(state)
+  });
 
   const handleToggleMic = () => {
     if (voiceState === 'transcribing') return;
     if (voiceState === 'starting') {
       cancelPendingStart();
       AudioService.stopAudio();
+      // The mic may already be opening (Android asks the phone first): drop that session too.
+      stt.cancel();
       setVoiceState('idle');
       return;
     }
@@ -106,6 +127,7 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
     setNotUnderstood(false);
     setTranscript('');
     setNotice(null);
+    setOfferVoiceBox(false);
 
     const blocker = stt.getBlocker();
     if (blocker) {
@@ -119,19 +141,20 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
       if (startTokenRef.current !== token) return;
       cancelPendingStart();
       AudioService.stopAudio();
-      stt.startListening(language, {
-        onInterim: (text) => setTranscript(text),
-        onFinal: (text) => {
-          setTranscript(text);
-          processQuery(text);
-        },
-        onError: (err) => showNotice(err),
-        onStateChange: (state) => setVoiceState(state)
-      });
+      stt.startListening(language, voiceListener());
     };
     // Wait for the clip (at most MAX_PROMPT_MS); if there is no clip, openMic runs right away.
     startTimerRef.current = setTimeout(openMic, MAX_PROMPT_MS);
     AudioService.playClip(clipPath(LISTENING_CLIP), openMic, openMic);
+  };
+
+  // Android app: the phone's own voice box; it shows and speaks its own prompt, so no Listening clip.
+  const handleTryVoiceBox = () => {
+    setOfferVoiceBox(false);
+    setNotice(null);
+    setTranscript('');
+    setVoiceState('starting');
+    stt.startListening(language, voiceListener(), { voiceBox: true });
   };
 
   const processQuery = async (queryText: string) => {
@@ -164,6 +187,7 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
     if (typedInput.trim()) {
       stopVoice();
       setNotice(null);
+      setOfferVoiceBox(false);
       processQuery(typedInput);
       setTypedInput('');
     }
@@ -229,6 +253,11 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
               <Card className="border-accent-deep text-body font-bold text-ink max-w-sm mx-auto" shade="#8A5207">
                 <div role="alert">{notice}</div>
               </Card>
+            )}
+            {offerVoiceBox && notice && !isListening && voiceState !== 'transcribing' && (
+              <div className="max-w-sm mx-auto">
+                <Button icon={Mic} label={t.voiceTryVoiceBox} variant="primary" fullWidth onClick={handleTryVoiceBox} />
+              </div>
             )}
             {transcript && (
               <Card className="text-body font-semibold text-success max-w-xs mx-auto">
@@ -306,6 +335,7 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
       {/* Typed Input Fallback */}
       <form onSubmit={handleTypedSubmit} className="pt-md space-y-md">
         <TextField
+          id={TYPED_INPUT_ID}
           icon={Keyboard}
           type="text"
           value={typedInput}

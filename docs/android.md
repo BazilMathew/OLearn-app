@@ -20,6 +20,22 @@ versions do not tell the app that clearly, so OLearn can only say it did not cat
 
 If the phone has no speech service at all (some phones sold without Google apps), OLearn says "Voice isn't available here, please type your question".
 
+## Voice check (send us a report from your phone)
+
+1. Open OLearn › **Settings** › **Voice check** (near the bottom; only in the Android app).
+2. Tap **Try it** and say a few words. It stops by itself, or tap **Stop**.
+3. Tap **Copy report** and paste it into WhatsApp. (If copying fails, take a screenshot instead.)
+
+The report stays on the phone screen and in what you paste: OLearn does not save or send it.
+It shows the phone model, Android version, the Google app, the phone's speech service, what voice did step by step,
+and which **route** was used:
+
+- **A** – the in-app recognizer (normal case: OLearn listens itself, "Listening" for up to 15 seconds).
+- **B** – the Google voice box: Android's own voice window opens over OLearn. Used when A does not work on this phone
+  (then the report shows **A→B** and why), or after "Try the Google voice box" in Ask Me. After A has failed once,
+  Ask Me starts with B for 7 days; Voice check always tests A first and starts that week again only if A fails again.
+- **C** – nothing on this phone can listen. OLearn says "Voice isn't available here" and puts the cursor in the typing box.
+
 ## Build the APK
 
 The workflow `.github/workflows/android-debug.yml` ("Android debug APK") runs:

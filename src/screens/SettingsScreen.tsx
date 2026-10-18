@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { SupportedLanguage, TextScale } from '../types/task';
 import { I18N } from '../config/i18n';
 import { AudioService } from '../services/AudioService';
-import { Globe, Volume2, RotateCcw, Check, Circle, Sparkles, Languages, ALargeSmall, X } from 'lucide-react';
+import { Globe, Volume2, RotateCcw, Check, Circle, Sparkles, Languages, ALargeSmall, X, Mic } from 'lucide-react';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -21,6 +21,8 @@ interface SettingsScreenProps {
   /** The reset confirmation is open. Kept by App so Android Back closes it before leaving Settings. */
   resetConfirmOpen: boolean;
   onResetConfirmOpenChange: (open: boolean) => void;
+  /** Android app only: opens Voice check. */
+  onOpenVoiceCheck?: () => void;
   onClose: () => void;
 }
 
@@ -36,6 +38,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onResetProgress,
   resetConfirmOpen,
   onResetConfirmOpenChange,
+  onOpenVoiceCheck,
   onClose
 }) => {
   const [speed, setSpeed] = useState<number>(AudioService.getSpeechRate());
@@ -220,6 +223,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               </span>
             </button>
           </div>
+
+          {/* Voice check (Android app): shows how voice input works on this phone */}
+          {onOpenVoiceCheck && (
+            <Button icon={Mic} label={t.voiceCheck} fullWidth align="start" onClick={onOpenVoiceCheck} />
+          )}
 
           {/* Reset Progress: asks first in the app's own dialog */}
           <div className="space-y-sm">

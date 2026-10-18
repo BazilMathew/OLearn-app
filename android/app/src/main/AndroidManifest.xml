@@ -35,4 +35,18 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Ask Me voice input (Android speech service) -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Android 11+ hides other apps unless listed here (voice input, see src/services/STTService.ts) -->
+    <queries>
+        <!-- In-app recognizer: SpeechRecognizer.isRecognitionAvailable and binding to the speech service -->
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+        <!-- Google voice box: checked before it is opened (VoiceHelperPlugin.canShowVoiceDialog) -->
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
+        </intent>
+        <!-- Language list (getSupportedLanguages) and "Google app" in Voice check -->
+        <package android:name="com.google.android.googlequicksearchbox" />
+    </queries>
 </manifest>

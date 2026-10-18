@@ -16,8 +16,9 @@ const LanguageSelectScreen = lazy(() =>
   import('./screens/LanguageSelectScreen').then((m) => ({ default: m.LanguageSelectScreen }))
 );
 const SettingsScreen = lazy(() => import('./screens/SettingsScreen').then((m) => ({ default: m.SettingsScreen })));
+const VoiceCheckScreen = lazy(() => import('./screens/VoiceCheckScreen').then((m) => ({ default: m.VoiceCheckScreen })));
 
-type ScreenState = 'first_launch' | 'home' | 'task_list' | 'tutorial' | 'ask_me' | 'settings';
+type ScreenState = 'first_launch' | 'home' | 'task_list' | 'tutorial' | 'ask_me' | 'settings' | 'voice_check';
 
 // The startup animation shows once per browser session (in the Android app: once per launch).
 const STARTUP_SHOWN_KEY = 'olearn_startup_shown';
@@ -106,6 +107,7 @@ export const App: React.FC = () => {
     }
     if (screenState === 'settings' && resetConfirmOpen) setResetConfirmOpen(false);
     else if (screenState === 'tutorial') handleTutorialExit();
+    else if (screenState === 'voice_check') setScreenState('settings');
     else if (screenState === 'task_list' || screenState === 'ask_me' || screenState === 'settings') setScreenState('home');
     else exitApp();
   };
@@ -255,8 +257,13 @@ export const App: React.FC = () => {
                     }}
                     resetConfirmOpen={resetConfirmOpen}
                     onResetConfirmOpenChange={setResetConfirmOpen}
+                    onOpenVoiceCheck={IS_NATIVE ? () => setScreenState('voice_check') : undefined}
                     onClose={() => setScreenState('home')}
                   />
+                )}
+
+                {screenState === 'voice_check' && (
+                  <VoiceCheckScreen language={language} onClose={() => setScreenState('settings')} />
                 )}
               </div>
             </Suspense>
@@ -277,7 +284,7 @@ export const App: React.FC = () => {
 
             <button
               onClick={() => setScreenState('settings')}
-              className={navItemClass(screenState === 'settings')}
+              className={navItemClass(screenState === 'settings' || screenState === 'voice_check')}
             >
               <Settings className="w-7 h-7" strokeWidth={2.5} />
               <span className="text-label font-bold">{t.settings}</span>

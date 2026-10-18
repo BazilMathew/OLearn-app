@@ -69,6 +69,23 @@ export interface TranslationDictionary {
   textSizeLarger: string;
   textSizeLargest: string;
   textSizePreview: string;
+  /** Android app, Ask Me: after "didn't catch that" */
+  voiceTryVoiceBox: string;
+  /** Android app: Settings › Voice check */
+  voiceCheck: string;
+  voiceCheckIntro: string;
+  voiceCheckTry: string;
+  voiceCheckStop: string;
+  voiceCheckResult: string;
+  voiceCheckRoute: string;
+  voiceCheckReason: string;
+  voiceCheckHeard: string;
+  voiceCheckPhone: string;
+  voiceCheckEvents: string;
+  voiceCheckNotRun: string;
+  voiceCheckCopy: string;
+  voiceCheckCopied: string;
+  voiceCheckCopyFailed: string;
   languages: {
     en: string;
     hi: string;
@@ -145,6 +162,21 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     textSizeLarger: 'Larger',
     textSizeLargest: 'Largest',
     textSizePreview: 'This is how your text will look.',
+    voiceTryVoiceBox: 'Try the Google voice box',
+    voiceCheck: 'Voice check',
+    voiceCheckIntro: 'Tap "Try it" and say a few words. This shows how voice input works on this phone.',
+    voiceCheckTry: 'Try it',
+    voiceCheckStop: 'Stop',
+    voiceCheckResult: 'Result',
+    voiceCheckRoute: 'Route',
+    voiceCheckReason: 'Why',
+    voiceCheckHeard: 'Heard',
+    voiceCheckPhone: 'This phone',
+    voiceCheckEvents: 'Events',
+    voiceCheckNotRun: 'Not tried yet',
+    voiceCheckCopy: 'Copy report',
+    voiceCheckCopied: 'Report copied. Paste it in WhatsApp.',
+    voiceCheckCopyFailed: 'Could not copy. Please take a screenshot.',
     languages: {
       en: 'English',
       hi: 'हिन्दी',
@@ -219,6 +251,21 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     textSizeLarger: 'और बड़ा',
     textSizeLargest: 'सबसे बड़ा',
     textSizePreview: 'आपके अक्षर ऐसे दिखेंगे।',
+    voiceTryVoiceBox: 'Google वॉइस बॉक्स आज़माएँ',
+    voiceCheck: 'आवाज़ जाँच',
+    voiceCheckIntro: '"आज़माएँ" दबाएँ और कुछ शब्द बोलें। इससे पता चलता है कि इस फ़ोन पर आवाज़ से लिखना कैसे काम करता है।',
+    voiceCheckTry: 'आज़माएँ',
+    voiceCheckStop: 'रोकें',
+    voiceCheckResult: 'नतीजा',
+    voiceCheckRoute: 'तरीका',
+    voiceCheckReason: 'क्यों',
+    voiceCheckHeard: 'सुना गया',
+    voiceCheckPhone: 'यह फ़ोन',
+    voiceCheckEvents: 'घटनाएँ',
+    voiceCheckNotRun: 'अभी आज़माया नहीं',
+    voiceCheckCopy: 'रिपोर्ट कॉपी करें',
+    voiceCheckCopied: 'रिपोर्ट कॉपी हो गई। इसे WhatsApp में पेस्ट करें।',
+    voiceCheckCopyFailed: 'कॉपी नहीं हो सका। कृपया स्क्रीनशॉट लें।',
     languages: {
       en: 'English',
       hi: 'हिन्दी',
@@ -293,6 +340,21 @@ export const I18N: Record<SupportedLanguage, TranslationDictionary> = {
     textSizeLarger: 'കൂടുതൽ വലുത്',
     textSizeLargest: 'ഏറ്റവും വലുത്',
     textSizePreview: 'നിങ്ങളുടെ അക്ഷരങ്ങൾ ഇങ്ങനെ കാണപ്പെടും.',
+    voiceTryVoiceBox: 'Google വോയ്‌സ് ബോക്സ് പരീക്ഷിക്കുക',
+    voiceCheck: 'ശബ്ദ പരിശോധന',
+    voiceCheckIntro: '"പരീക്ഷിക്കുക" തൊട്ട് കുറച്ച് വാക്കുകൾ പറയുക. ഈ ഫോണിൽ ശബ്ദം കൊണ്ട് എഴുതുന്നത് എങ്ങനെ പ്രവർത്തിക്കുന്നു എന്ന് ഇത് കാണിക്കും.',
+    voiceCheckTry: 'പരീക്ഷിക്കുക',
+    voiceCheckStop: 'നിർത്തുക',
+    voiceCheckResult: 'ഫലം',
+    voiceCheckRoute: 'വഴി',
+    voiceCheckReason: 'കാരണം',
+    voiceCheckHeard: 'കേട്ടത്',
+    voiceCheckPhone: 'ഈ ഫോൺ',
+    voiceCheckEvents: 'സംഭവങ്ങൾ',
+    voiceCheckNotRun: 'ഇതുവരെ പരീക്ഷിച്ചിട്ടില്ല',
+    voiceCheckCopy: 'റിപ്പോർട്ട് പകർത്തുക',
+    voiceCheckCopied: 'റിപ്പോർട്ട് പകർത്തി. ഇത് WhatsApp-ൽ ഒട്ടിക്കുക.',
+    voiceCheckCopyFailed: 'പകർത്താനായില്ല. ദയവായി സ്ക്രീൻഷോട്ട് എടുക്കുക.',
     languages: {
       en: 'English',
       hi: 'हिन्दी',
