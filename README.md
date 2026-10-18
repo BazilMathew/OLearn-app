@@ -8,11 +8,12 @@ OLearn is an Android digital literacy training application designed specifically
 - **8 Core Tasks + Extensible 9th Task**:
   - **WhatsApp**: Send text message, Send photo, Make voice call, Make video call.
   - **Google Pay**: Check bank balance, Scan QR code & pay, Send money to saved contact, View transaction history.
+    Send money has the learner type any amount on a number pad, then pick the bank on a "Select payment method" sheet. Scan QR still uses the old amount screen (fixed ₹200 and "Proceed to Pay").
   - **Dummy 9th Task (Extensibility Test)**: Send voice note — added solely via JSON configuration and audio assets with zero code changes.
 - **Trilingual Voice Narration**:
   - English, Hindi, and Malayalam voice narration for all steps.
   - One neural voice per language (edge-tts, generated from `tasks.json` by `scripts/generate-audio.py`; see `docs/audio.md`).
-  - 105 pre-bundled offline MP3 audio clips (35 per language) in `public/assets/audio/`.
+  - 111 pre-bundled offline MP3 audio clips (37 per language) in `public/assets/audio/`.
 - **"Ask Me" Natural Language Task Router**:
   - Large centered microphone with persistent "Tap and speak" label.
   - Natural language intent routing in English, Hindi, and Malayalam.

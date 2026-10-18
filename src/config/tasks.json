@@ -572,23 +572,47 @@
         }
       },
       {
-        "screen": "gpay_amount_entry_screen",
-        "highlight_element": "proceed_to_pay_button",
+        "screen": "gpay_amount_keypad_screen",
+        "highlight_element": "amount_keypad",
         "audio_en": "assets/audio/en/gpay_contact_step4.mp3",
         "audio_hi": "assets/audio/hi/gpay_contact_step4.mp3",
         "audio_ml": "assets/audio/ml/gpay_contact_step4.mp3",
         "hint_text": {
-          "en": "Enter ₹1,000 and tap Proceed to Pay.",
-          "hi": "₹1,000 डालें और 'प्रोसीड टू पे' पर टैप करें।",
-          "ml": "₹1,000 നൽകി 'പണം നൽകുക' തൊടുക."
+          "en": "Type the amount you want to send on the number pad.",
+          "hi": "नंबर पैड पर वह राशि टाइप करें जो आप भेजना चाहते हैं।",
+          "ml": "അയക്കേണ്ട തുക നമ്പർ പാഡിൽ ടൈപ്പ് ചെയ്യുക."
+        }
+      },
+      {
+        "screen": "gpay_amount_keypad_screen",
+        "highlight_element": "amount_next_button",
+        "audio_en": "assets/audio/en/gpay_contact_step5.mp3",
+        "audio_hi": "assets/audio/hi/gpay_contact_step5.mp3",
+        "audio_ml": "assets/audio/ml/gpay_contact_step5.mp3",
+        "hint_text": {
+          "en": "When the amount is right, tap the blue arrow button.",
+          "hi": "राशि सही हो तो नीले तीर वाले बटन पर टैप करें।",
+          "ml": "തുക ശരിയെങ്കിൽ നീല അമ്പ് ബട്ടൺ തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_payment_method_sheet",
+        "highlight_element": "paymethod_pay_button",
+        "audio_en": "assets/audio/en/gpay_contact_step6.mp3",
+        "audio_hi": "assets/audio/hi/gpay_contact_step6.mp3",
+        "audio_ml": "assets/audio/ml/gpay_contact_step6.mp3",
+        "hint_text": {
+          "en": "Your bank is selected. Tap the blue Pay button.",
+          "hi": "आपका बैंक चुना हुआ है। नीले 'पे' बटन पर टैप करें।",
+          "ml": "ബാങ്ക് തിരഞ്ഞെടുത്തു. നീല 'പേ' ബട്ടൺ തൊടുക."
         }
       },
       {
         "screen": "gpay_upi_pin_screen",
         "highlight_element": "pin_keypad_submit",
-        "audio_en": "assets/audio/en/gpay_contact_step5.mp3",
-        "audio_hi": "assets/audio/hi/gpay_contact_step5.mp3",
-        "audio_ml": "assets/audio/ml/gpay_contact_step5.mp3",
+        "audio_en": "assets/audio/en/gpay_contact_step7.mp3",
+        "audio_hi": "assets/audio/hi/gpay_contact_step7.mp3",
+        "audio_ml": "assets/audio/ml/gpay_contact_step7.mp3",
         "hint_text": {
           "en": "Enter your UPI PIN and tap the checkmark button.",
           "hi": "अपना यूपीआई पिन डालें और टिक मार्क बटन पर टैप करें।",
@@ -598,13 +622,13 @@
       {
         "screen": "gpay_payment_success_screen",
         "highlight_element": "success_done_button",
-        "audio_en": "assets/audio/en/gpay_contact_step6.mp3",
-        "audio_hi": "assets/audio/hi/gpay_contact_step6.mp3",
-        "audio_ml": "assets/audio/ml/gpay_contact_step6.mp3",
+        "audio_en": "assets/audio/en/gpay_contact_step8.mp3",
+        "audio_hi": "assets/audio/hi/gpay_contact_step8.mp3",
+        "audio_ml": "assets/audio/ml/gpay_contact_step8.mp3",
         "hint_text": {
-          "en": "₹1,000 was sent to Ramesh successfully! Tap Done to finish.",
-          "hi": "रमेश को ₹1,000 का भुगतान सफल रहा! समाप्त करने के लिए 'डन' दबाएं।",
-          "ml": "രമേഷിന് ₹1,000 വിജയകരമായി അയച്ചു! പൂർത്തിയാക്കാൻ 'ഡൺ' തൊടുക."
+          "en": "The money was sent to Ramesh! Tap Done to finish.",
+          "hi": "पैसे रमेश को भेज दिए गए! समाप्त करने के लिए 'डन' दबाएं।",
+          "ml": "രമേഷിന് പണം അയച്ചു! തീർക്കാൻ 'ഡൺ' തൊടുക."
         }
       }
     ]

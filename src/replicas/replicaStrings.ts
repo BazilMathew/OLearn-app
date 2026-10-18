@@ -96,6 +96,16 @@ export interface ReplicaStrings {
   bankingNameVerified: string;
   payingAmount: string;
   proceedToPay: (amount: string) => string;
+  /** Send-money amount screen and payment-method sheet (contact flow) */
+  payingRamesh: string;
+  bankingName: (name: string) => string;
+  upiId: (id: string) => string;
+  addNote: string;
+  keyNext: string;
+  selectPaymentMethod: string;
+  balanceLabel: string;
+  checkNow: string;
+  payAmount: (amount: string) => string;
   upiPin: string;
   enterUpiPin: string;
   neverSharePin: string;
@@ -223,6 +233,15 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     bankingNameVerified: 'Banking Name Verified',
     payingAmount: 'Paying Amount',
     proceedToPay: (amount) => `Proceed to Pay (${amount})`,
+    payingRamesh: 'Paying Ramesh',
+    bankingName: (name) => `Banking name: ${name}`,
+    upiId: (id) => `UPI ID: ${id}`,
+    addNote: 'Add note',
+    keyNext: 'Next',
+    selectPaymentMethod: 'Select payment method',
+    balanceLabel: 'Balance:',
+    checkNow: 'Check now',
+    payAmount: (amount) => `Pay ${amount}`,
     upiPin: 'UPI PIN',
     enterUpiPin: 'Enter 4-Digit Secret UPI PIN',
     neverSharePin: 'Never share your UPI PIN with anyone',
@@ -346,6 +365,15 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     bankingNameVerified: 'बैंकिंग नाम सत्यापित',
     payingAmount: 'भुगतान राशि',
     proceedToPay: (amount) => `भुगतान करें (${amount})`,
+    payingRamesh: 'रमेश को भुगतान',
+    bankingName: (name) => `बैंकिंग नाम: ${name}`,
+    upiId: (id) => `UPI आईडी: ${id}`,
+    addNote: 'नोट जोड़ें',
+    keyNext: 'आगे',
+    selectPaymentMethod: 'भुगतान का तरीका चुनें',
+    balanceLabel: 'बैलेंस:',
+    checkNow: 'अभी देखें',
+    payAmount: (amount) => `${amount} का भुगतान करें`,
     upiPin: 'यूपीआई पिन',
     enterUpiPin: 'अपना 4-अंकों का गुप्त यूपीआई पिन डालें',
     neverSharePin: 'यूपीआई पिन कभी किसी को न बताएं',
@@ -469,6 +497,15 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     bankingNameVerified: 'ബാങ്കിങ് പേര് സ്ഥിരീകരിച്ചു',
     payingAmount: 'നൽകേണ്ട തുക',
     proceedToPay: (amount) => `പണം നൽകുക (${amount})`,
+    payingRamesh: 'രമേഷിന് പണം നൽകുന്നു',
+    bankingName: (name) => `ബാങ്കിലെ പേര്: ${name}`,
+    upiId: (id) => `UPI ഐഡി: ${id}`,
+    addNote: 'കുറിപ്പ് ചേർക്കുക',
+    keyNext: 'തുടരുക',
+    selectPaymentMethod: 'പണമടയ്ക്കൽ രീതി തിരഞ്ഞെടുക്കുക',
+    balanceLabel: 'ബാലൻസ്:',
+    checkNow: 'ഇപ്പോൾ നോക്കുക',
+    payAmount: (amount) => `${amount} നൽകുക`,
     upiPin: 'യുപിഐ പിൻ',
     enterUpiPin: 'നിങ്ങളുടെ 4 അക്ക യുപിഐ പിൻ നൽകുക',
     neverSharePin: 'യുപിഐ പിൻ ആരുമായും പങ്കിടരുത്',

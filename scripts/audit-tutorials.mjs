@@ -11,7 +11,9 @@
 // project), --browser (path to msedge.exe / chrome.exe), --quick (one size, motion off),
 // --scales-only (skip the 100% Home and tutorial matrix; run the hint fit sweep and the Text size pass),
 // --audio-only (only the narration clip check; no browser, server or --out needed),
-// --reset-only (only the Settings reset confirmation pass).
+// --reset-only (only the Settings reset confirmation pass),
+// --task <task_id> (only that task's tutorial runs, at 100% and in the Text size pass, plus the hint fit
+// sweep; skips Home, the other screens of the Text size pass and the reset pass).
 //
 // Passes: (1) Home and every tutorial step at 100% for every size, language and motion setting;
 // (2) hint fit sweep: every step's instruction at every Text size, language and size (no hint may
@@ -108,6 +110,18 @@ const MARGIN = 12;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const failures = [...audioFailures];
+const TASK_ONLY = typeof args.task === 'string' ? args.task : null;
+if (TASK_ONLY && !TASKS.some((t) => t.task_id === TASK_ONLY)) {
+  console.error(`--task ${TASK_ONLY}: no such task in tasks.json`);
+  process.exit(2);
+}
+const RUN_TASKS = TASK_ONLY ? TASKS.filter((t) => t.task_id === TASK_ONLY) : TASKS;
+// Send money: the learner types any amount, so no instruction may name a fixed one
+for (const s of TASKS.find((t) => t.task_id === 'gpay_send_contact').steps)
+  for (const l of LANGS) if (/₹\s?\d/.test(s.hint_text[l])) failures.push(`gpay_send_contact ${s.highlight_element} (${l}): instruction names a fixed amount: ${s.hint_text[l]}`);
+// Amounts typed on the send-money number pad, one per run in turn (9,99,999 is the 6-digit maximum)
+const SEND_AMOUNTS = ['999999', '500', '1250', '75'];
+let amountTurn = 0;
 const notes = [];
 const screenshots = [];
 let checks = 0;
@@ -478,6 +492,40 @@ const PAGE_HELPERS = `
         below: Math.round(r.bottom - n.parentElement.getBoundingClientRect().bottom)
       };
     },
+    // Send-money number pad: the typed amount, the arrow's state, which of the two has the ring, key sizes,
+    // and how far the practice screen scrolls
+    amountPad() {
+      const d = document.querySelector('[data-amount]');
+      if (!d) return null;
+      const arrow = document.querySelector('[data-element-id="amount_next_button"]');
+      const keys = [...document.querySelectorAll('[data-key]')].map((k) => k.getBoundingClientRect().height);
+      const rep = this.replicaRoot();
+      return {
+        typed: d.getAttribute('data-amount'),
+        shown: d.textContent.trim(),
+        arrowActive: arrow.firstElementChild.getAttribute('aria-disabled') === 'false',
+        arrowRing: arrow.classList.contains('highlight-active'),
+        padRing: document.querySelector('[data-element-id="amount_keypad"]').classList.contains('highlight-active'),
+        keyMin: Math.min(...keys),
+        keyMax: Math.max(...keys),
+        scrolls: Math.round(rep.scrollHeight - rep.clientHeight)
+      };
+    },
+    // Centre of a number pad key, brought into view first if the practice screen scrolls
+    keyPoint(k) {
+      const el = document.querySelector('[data-key="' + k + '"]');
+      el.scrollIntoView({ block: 'nearest' });
+      const r = el.getBoundingClientRect();
+      return { cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
+    },
+    // Centre of a target, brought into view first (the learner scrolls a practice screen that does not fit)
+    targetPoint(id) {
+      const el = document.querySelector('[data-element-id="' + id + '"]');
+      el.scrollIntoView({ block: 'nearest' });
+      const r = el.getBoundingClientRect();
+      return { cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
+    },
+    nudgeShown: () => !!document.querySelector('[role="status"].pointer-events-none'),
     // A sent bubble on the practice screen (result screens only): is it fully inside its visible region
     sentBubble() {
       const b = document.querySelector('[data-sent-bubble]');
@@ -630,7 +678,7 @@ async function scrollOnce(method) {
 }
 
 // ---------- Run ----------
-const replicaIds = new Set(TASKS.flatMap((t) => t.steps.map((s) => s.highlight_element)));
+const replicaIds = new Set(RUN_TASKS.flatMap((t) => t.steps.map((s) => s.highlight_element)));
 const seenIds = new Set();
 const t0 = Date.now();
 const timings = [];
@@ -679,7 +727,7 @@ async function checkScreen(tag, name, labels, scale = 1) {
 }
 
 // ---------- Home: tile titles and subtitles fully visible, wrapped by word ----------
-if (!args['scales-only'] && !args['reset-only']) await timed('Home at 100%', async () => {
+if (!args['scales-only'] && !args['reset-only'] && !TASK_ONLY) await timed('Home at 100%', async () => {
   for (const [w, h] of SIZES) {
     for (const lang of LANGS) {
       for (const reduce of MOTIONS) {
@@ -710,13 +758,16 @@ async function runTutorials(w, h, lang, reduce, scale) {
   const wait = reduce ? 450 : 900; // screen slide + scroll-into-view (smooth when motion is on)
   const stepShots = scale === 1 ? w === 360 && h === 690 && !reduce : w === 360 && scale === 1.5;
 
-  for (const task of TASKS) {
+  for (const task of RUN_TASKS) {
     const where = `${tag} ${task.task_id}`;
     await openApp(profileFor(lang, reduce, scale));
     if (!check(await openTask(task, t, lang), `${where}: could not open the task`)) continue;
     const total = task.steps.length;
     const showMeRun = task.task_id === 'whatsapp_send_text';
     let playMark = 0;
+    // Send money: the amount this run types on the number pad, and how the app must show it
+    const sendAmount = task.task_id === 'gpay_send_contact' ? SEND_AMOUNTS[amountTurn++ % SEND_AMOUNTS.length] : null;
+    const sendShown = sendAmount && '₹' + Number(sendAmount).toLocaleString('en-IN');
 
     for (let i = 0; i < total; i++) {
       const step = task.steps[i];
@@ -805,8 +856,18 @@ async function runTutorials(w, h, lang, reduce, scale) {
       }
 
       // Sample data on the Google Pay payment screens
-      if (task.task_id === 'gpay_send_contact' && step.screen === 'gpay_amount_entry_screen') {
-        check(await A(`textIncludes('₹1,000')`), `${at}: ₹1,000 missing`);
+      if (step.screen === 'gpay_amount_keypad_screen' && step.highlight_element === 'amount_keypad') {
+        for (const s of [r.payingRamesh, r.bankingName(r.ramesh), r.upiId('ramesh@practice'), r.addNote, r.keyNext])
+          check(await A(`textIncludes(${JSON.stringify(s)})`), `${at}: "${s}" missing on the amount screen`);
+      }
+      if (step.screen === 'gpay_payment_method_sheet') {
+        for (const s of [r.selectPaymentMethod, 'State Bank of India', '•••• 4829', r.checkNow, r.payAmount(sendShown)])
+          check(await A(`textIncludes(${JSON.stringify(s)})`), `${at}: "${s}" missing on the payment method sheet`);
+        if (sendAmount === '999999') check(await A(`textIncludes(${JSON.stringify(r.payAmount('₹9,99,999'))})`), `${at}: Pay button does not show ₹9,99,999`);
+      }
+      if (task.task_id === 'gpay_send_contact' && step.screen === 'gpay_payment_success_screen') {
+        check(await A(`textIncludes(${JSON.stringify(sendShown + '.00')})`), `${at}: typed amount ${sendShown}.00 missing on the success screen`);
+        if (sendAmount === '999999') check(await A(`textIncludes('₹9,99,999.00')`), `${at}: success screen does not show ₹9,99,999.00`);
         check(await A(`textIncludes(${JSON.stringify(r.rameshSon)})`), `${at}: Ramesh missing`);
       }
       if (task.task_id === 'gpay_scan_qr' && step.screen === 'gpay_amount_entry_screen') {
@@ -873,6 +934,75 @@ async function runTutorials(w, h, lang, reduce, scale) {
       for (const s of [...new Set(await A('midWordBreaks()'))]) check(false, `${at}: ${s}`);
       if (stepShots) await shot(`${tag}_${task.task_id}_step${i + 1}`);
       if (step.highlight_element === 'chat_row_ramesh' && !reduce) await shot(`${tag}_${task.task_id}_tap_chat`);
+
+      // Send money: the learner types on the number pad. Keys never nudge; only the first real digit
+      // completes the "type" step, and only the blue arrow (once an amount is typed) completes the next.
+      if (step.highlight_element === 'amount_keypad' || step.highlight_element === 'amount_next_button') {
+        const press = async (k) => {
+          const kp = await A(`keyPoint(${JSON.stringify(k)})`);
+          await click(kp.cx, kp.cy);
+          await sleep(80);
+        };
+        const pad = () => A('amountPad()');
+        const sameStep = async () => (await A('label()')) === stepText(t, i + 1, total);
+        const ringOn = (p) => (p.arrowRing ? 'arrow' : p.padRing ? 'keypad' : 'nothing');
+        // Wait out an earlier nudge so a new one can be seen
+        await waitFor(async () => !(await A('nudgeShown()')), 3500);
+        let p = await pad();
+        if (!check(p, `${at}: number pad not found`)) break;
+        check(p.keyMin >= 52 - 0.5 && p.keyMax <= 64 + 0.5, `${at}: number pad keys are ${Math.round(p.keyMin)}-${Math.round(p.keyMax)}px tall (need 52-64px)`);
+        if (step.highlight_element === 'amount_keypad') {
+          if (p.scrolls > 1) {
+            // Fits with no scrolling in English and Hindi at 100%; Malayalam and larger text may scroll
+            if (scale === 1 && lang !== 'ml') check(false, `${at}: amount screen scrolls by ${p.scrolls}px at 100%`);
+            else notes.push(`${at}: amount screen scrolls by ${p.scrolls}px (keys ${Math.round(p.keyMin)}px)`);
+          }
+          check(p.typed === '' && !p.arrowActive && !p.arrowRing && p.padRing, `${at}: before typing: amount "${p.typed}", arrow ${p.arrowActive ? 'active' : 'inactive'}, ring on ${ringOn(p)}`);
+          await press('0');
+          await press('back');
+          p = await pad();
+          check(p.typed === '' && (await sameStep()), `${at}: 0 or backspace on an empty amount changed something (amount "${p.typed}")`);
+          check(!(await A('nudgeShown()')), `${at}: 0 or backspace on an empty amount nudged`);
+          playMark = await cdp.eval('window.__plays.length');
+          await press(sendAmount[0]);
+          check(await waitFor(async () => (await A('label()')) === stepText(t, i + 2, total)), `${at}: typing the first digit did not complete the step`);
+          check((await pad()).typed === sendAmount[0], `${at}: first digit not typed`);
+          check(!(await A('nudgeShown()')), `${at}: typing a digit nudged`);
+          continue;
+        }
+        // Arrow step: keep typing (no nudge, no new step), then the edge cases
+        check(p.typed === sendAmount[0] && p.arrowActive && p.arrowRing && !p.padRing, `${at}: after the first digit: amount "${p.typed}", arrow ${p.arrowActive ? 'active' : 'inactive'}, ring on ${ringOn(p)}`);
+        for (const d of sendAmount.slice(1)) await press(d);
+        p = await pad();
+        check(p.typed === sendAmount && p.shown === sendShown, `${at}: typed ${sendAmount}, screen shows "${p.shown}" (expected ${sendShown})`);
+        if (sendAmount === '999999') check(p.shown === '₹9,99,999', `${at}: 999999 shown as "${p.shown}", expected ₹9,99,999`);
+        check((await sameStep()) && !(await A('nudgeShown()')), `${at}: typing more digits nudged or changed the step`);
+        if (sendAmount.length === 6) {
+          await press('1');
+          check((await pad()).typed === sendAmount, `${at}: a 7th digit was accepted`);
+        }
+        await press('back');
+        check((await pad()).typed === sendAmount.slice(0, -1), `${at}: backspace did not remove the last digit`);
+        for (let k = 1; k < sendAmount.length; k++) await press('back');
+        p = await pad();
+        check(p.typed === '' && !p.arrowActive && !p.arrowRing && p.padRing, `${at}: emptied: amount "${p.typed}", arrow ${p.arrowActive ? 'active' : 'inactive'}, ring on ${ringOn(p)}`);
+        let ap = await A(`targetPoint('amount_next_button')`);
+        await click(ap.cx, ap.cy);
+        check(await waitFor(() => A('nudgeShown()'), 1000), `${at}: tapping the grey arrow did not nudge`);
+        check(await sameStep(), `${at}: tapping the grey arrow changed the step`);
+        await waitFor(async () => !(await A('nudgeShown()')), 3500);
+        for (const d of sendAmount) await press(d);
+        p = await pad();
+        check(p.typed === sendAmount && p.arrowActive && p.arrowRing, `${at}: retyped: amount "${p.typed}", arrow ${p.arrowActive ? 'active' : 'inactive'}`);
+        await press('next');
+        check(await waitFor(() => A('nudgeShown()'), 1000), `${at}: the keyboard's Next key did not nudge`);
+        check(await sameStep(), `${at}: the keyboard's Next key changed the step`);
+        playMark = await cdp.eval('window.__plays.length');
+        ap = await A(`targetPoint('amount_next_button')`);
+        await click(ap.cx, ap.cy);
+        check(await waitFor(async () => (await A('label()')) === stepText(t, i + 2, total)), `${at}: tapping the blue arrow did not advance`);
+        continue;
+      }
 
       playMark = await cdp.eval('window.__plays.length');
       await click(info.cx, info.cy);
@@ -961,47 +1091,51 @@ if (!args['reset-only']) await timed('Text size pass (130% and 150%)', async () 
           return check(ok, `${tag}: "${waitText}" not shown after tapping "${text}"`);
         };
 
-        await fresh();
-        check((await A('appTs()')) === String(scale), `${tag}: Text size applied as ${await A('appTs()')}`);
-        await shot(`${tag}_home`);
-        await checkScreen(tag, 'Home', [t.whatsAppTitle, t.gpayTitle, t.askStart, t.home, t.settings], scale);
+        // --task: only the tutorial runs below
+        if (!TASK_ONLY) {
+          await fresh();
+          check((await A('appTs()')) === String(scale), `${tag}: Text size applied as ${await A('appTs()')}`);
+          await shot(`${tag}_home`);
+          await checkScreen(tag, 'Home', [t.whatsAppTitle, t.gpayTitle, t.askStart, t.home, t.settings], scale);
 
-        await fresh();
-        if (await go(t.askMe, t.askMeSubtitle)) {
-          await shot(`${tag}_askme`);
-          await checkScreen(tag, 'Ask Me', [t.cancel, t.tapAndSpeak, t.send], scale);
-        }
+          await fresh();
+          if (await go(t.askMe, t.askMeSubtitle)) {
+            await shot(`${tag}_askme`);
+            await checkScreen(tag, 'Ask Me', [t.cancel, t.tapAndSpeak, t.send], scale);
+          }
 
-        await fresh();
-        if (await go(t.settings, t.textSizePreview)) {
-          await shot(`${tag}_settings`);
-          await checkScreen(tag, 'Settings', [
-            t.back, t.textSizeNormal, t.textSizeLarge, t.textSizeLarger, t.textSizeLargest,
-            'English', 'हिन्दी', 'മലയാളം', t.slowSpeed, t.normalSpeed, t.reduceMotion, t.practiceScreens,
-            t.resetProgress, t.continueBtn
-          ], scale);
-          // The setting itself: tapping Largest applies at once, is saved, and survives a reload
-          if (scale === 1.3 && w === 360) {
-            const p = await A(`clickPointForText(${JSON.stringify(t.textSizeLargest)})`);
-            if (check(p, `${tag} Settings: "${t.textSizeLargest}" not found`)) {
-              await click(p.cx, p.cy);
-              check(await waitFor(async () => (await A('appTs()')) === '1.5', 1000), `${tag} Settings: tapping Largest did not apply 150%`);
-              check((await A('savedScale()')) === 1.5, `${tag} Settings: Largest not saved`);
-              await cdp.send('Page.reload', { ignoreCache: false });
-              await waitFor(() => cdp.eval(`document.readyState === 'complete' && !!document.querySelector('.text-title')`), 8000);
-              check((await A('appTs()')) === '1.5', `${tag}: Text size not kept after a reload (${await A('appTs()')})`);
+          await fresh();
+          if (await go(t.settings, t.textSizePreview)) {
+            await shot(`${tag}_settings`);
+            await checkScreen(tag, 'Settings', [
+              t.back, t.textSizeNormal, t.textSizeLarge, t.textSizeLarger, t.textSizeLargest,
+              'English', 'हिन्दी', 'മലയാളം', t.slowSpeed, t.normalSpeed, t.reduceMotion, t.practiceScreens,
+              t.resetProgress, t.continueBtn
+            ], scale);
+            // The setting itself: tapping Largest applies at once, is saved, and survives a reload
+            if (scale === 1.3 && w === 360) {
+              const p = await A(`clickPointForText(${JSON.stringify(t.textSizeLargest)})`);
+              if (check(p, `${tag} Settings: "${t.textSizeLargest}" not found`)) {
+                await click(p.cx, p.cy);
+                check(await waitFor(async () => (await A('appTs()')) === '1.5', 1000), `${tag} Settings: tapping Largest did not apply 150%`);
+                check((await A('savedScale()')) === 1.5, `${tag} Settings: Largest not saved`);
+                await cdp.send('Page.reload', { ignoreCache: false });
+                await waitFor(() => cdp.eval(`document.readyState === 'complete' && !!document.querySelector('.text-title')`), 8000);
+                check((await A('appTs()')) === '1.5', `${tag}: Text size not kept after a reload (${await A('appTs()')})`);
+              }
             }
           }
-        }
 
-        for (const app of ['whatsapp', 'gpay']) {
-          await fresh();
-          const titles = TASKS.filter((k) => k.app === app).map((k) => k.title[lang] || k.title.en);
-          if (await go(app === 'whatsapp' ? t.whatsAppTitle : t.gpayTitle, titles[0])) {
-            await sleep(300); // task cards fade up
-            await shot(`${tag}_${app}_list`);
-            await checkScreen(tag, `${app} task list`, [t.back, ...titles], scale);
+          for (const app of ['whatsapp', 'gpay']) {
+            await fresh();
+            const titles = TASKS.filter((k) => k.app === app).map((k) => k.title[lang] || k.title.en);
+            if (await go(app === 'whatsapp' ? t.whatsAppTitle : t.gpayTitle, titles[0])) {
+              await sleep(300); // task cards fade up
+              await shot(`${tag}_${app}_list`);
+              await checkScreen(tag, `${app} task list`, [t.back, ...titles], scale);
+            }
           }
+
         }
 
         await runTutorials(w, h, lang, true, scale);
@@ -1011,7 +1145,7 @@ if (!args['reset-only']) await timed('Text size pass (130% and 150%)', async () 
 });
 
 // ---------- Reset progress: the app's own confirmation, and what a reset clears ----------
-await timed('Reset progress dialog', async () => {
+if (!TASK_ONLY) await timed('Reset progress dialog', async () => {
   for (const [w, h] of [[360, 690], [412, 915]]) {
     for (const lang of LANGS) {
       for (const scale of [1, 1.5]) {

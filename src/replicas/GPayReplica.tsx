@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SupportedLanguage } from '../types/task';
 import { HighlightTarget } from '../engine/HighlightTarget';
 import { MOCK_TRANSACTIONS, MOCK_BANK_BALANCE, MockTransaction } from '../config/mockData';
@@ -30,6 +30,8 @@ import {
   Droplet,
   Pill,
   History,
+  ArrowRight,
+  CircleDot,
   Image as ImageIcon
 } from 'lucide-react';
 
@@ -40,7 +42,7 @@ interface GPayReplicaProps {
   onCorrectTap: () => void;
   onWrongTap: () => void;
   nudgeKey?: number;
-  /** Running task, used only to pick the practice payment amount. */
+  /** Running task, used only to pick the practice payee. */
   taskId?: string;
 }
 
@@ -80,9 +82,14 @@ const GP_THEME = {
 
 const SOFT_SHADOW = 'shadow-[0_1px_3px_rgba(0,0,0,0.15)]';
 
-// Practice payment amount (rupees) per task, matching its narration; other flows use the default
-const PAYMENT_AMOUNTS: Record<string, number> = { gpay_send_contact: 1000 };
+// Practice payment amount (rupees) when nothing was typed (the Scan QR flow); the send-money flow uses
+// the amount the learner types on the number pad
 const DEFAULT_PAYMENT_AMOUNT = 200;
+// Number pad on the send-money amount screen: at most 6 digits (₹9,99,999)
+const MAX_AMOUNT_DIGITS = 6;
+const KEYPAD_ROWS = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9'], ['back', '0', 'next']];
+// Fictional UPI ID of the practice contact (not a real bank handle)
+const CONTACT_UPI_ID = 'ramesh@practice';
 
 // Who the practice payment goes to, per task; other flows pay the shop.
 // The shop shows a "Banking Name Verified" line; a contact shows their phone number instead.
@@ -188,8 +195,11 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
 }) => {
   const tp = { activeHighlightId: highlightElement, onCorrectTap, onWrongTap, nudgeKey };
   const r: ReplicaStrings = REPLICA_STRINGS[language] || REPLICA_STRINGS.en;
-  // Indian digit grouping, e.g. ₹1,000 and ₹1,000.00
-  const amountValue = (taskId && PAYMENT_AMOUNTS[taskId]) || DEFAULT_PAYMENT_AMOUNT;
+  // Digits typed on the amount screen's number pad. Kept only while the practice runs (the replica
+  // unmounts on the completion screen and on Exit); nothing is stored.
+  const [typed, setTyped] = useState('');
+  // Indian digit grouping, e.g. ₹1,000, ₹9,99,999 and ₹1,000.00
+  const amountValue = typed ? Number(typed) : DEFAULT_PAYMENT_AMOUNT;
   const amount = '₹' + amountValue.toLocaleString('en-IN');
   const amountExact = '₹' + amountValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const payee = (taskId && PAYEES[taskId]) || SHOP_PAYEE;
@@ -264,7 +274,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
     );
   }
 
-  // 2. AMOUNT ENTRY SCREEN
+  // 2. AMOUNT ENTRY SCREEN (Scan QR flow; fixed amount and Proceed to Pay)
   if (screen === 'gpay_amount_entry_screen') {
     return (
       <div className="h-full w-full bg-[var(--gp-surface)] text-[color:var(--gp-ink)] flex flex-col justify-between" style={GP_THEME}>
@@ -307,6 +317,131 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
             </div>
           </HighlightTarget>
         </div>
+      </div>
+    );
+  }
+
+  // 2a. SEND-MONEY AMOUNT SCREEN WITH THE NUMBER PAD, and 2b. its "Select payment method" sheet over it, dimmed
+  if (screen === 'gpay_amount_keypad_screen' || screen === 'gpay_payment_method_sheet') {
+    const sheet = screen === 'gpay_payment_method_sheet';
+    // The arrow is the target only once an amount is typed; until then the ring stays on the keypad
+    const keypadTp = {
+      ...tp,
+      activeHighlightId: sheet ? '' : highlightElement === 'amount_next_button' && !typed ? 'amount_keypad' : highlightElement
+    };
+    // Keys type silently on both amount steps (never a nudge); the first digit completes the "type" step.
+    // No leading zero, at most 6 digits. Next is not the step's button: it nudges, only the arrow advances.
+    const pressKey = (key: string) => (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (key === 'next') return onWrongTap();
+      let next = typed;
+      if (key === 'back') next = typed.slice(0, -1);
+      else if (!(key === '0' && !typed) && typed.length < MAX_AMOUNT_DIGITS) next = typed + key;
+      setTyped(next);
+      if (highlightElement === 'amount_keypad' && next) onCorrectTap();
+    };
+
+    // overflow-hidden: the tall keypad's pulsing ring may not stretch the practice screen into scrolling
+    return (
+      <div className="relative min-h-full shrink-0 w-full overflow-hidden bg-[var(--gp-surface)] text-[color:var(--gp-ink)] flex flex-col" style={GP_THEME}>
+        {/* Close (inert), avatar, who is paid: name, banking name and UPI ID */}
+        <div className="flex items-start gap-sm pl-xs pr-lg pt-xs">
+          <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
+            <X className="w-7 h-7" aria-hidden="true" />
+          </div>
+          <LetterAvatar letter={r.rameshInitial} />
+          <div className="min-w-0 flex-1">
+            <div className="text-body font-normal leading-tight break-words">{r.payingRamesh}</div>
+            <div className="text-label font-normal text-[color:var(--gp-ink-muted)] flex items-center gap-xs">
+              <ShieldCheck className="w-5 h-5 text-[color:var(--gp-success)] flex-shrink-0" aria-hidden="true" />
+              <span className="min-w-0 break-words">{r.bankingName(r.ramesh)}</span>
+            </div>
+            <div className="text-label font-normal text-[color:var(--gp-ink-muted)] break-words">{r.upiId(CONTACT_UPI_ID)}</div>
+          </div>
+        </div>
+
+        {/* The amount fills as digits are typed (a grey 0 while empty) */}
+        <div className="text-[48px] leading-[56px] font-normal tracking-tight text-center px-lg pt-xs" data-amount={typed}>
+          ₹{typed ? Number(typed).toLocaleString('en-IN') : <span className="text-[color:var(--gp-ink-muted)]">0</span>}
+        </div>
+
+        {/* Add note (inert) under the amount; the blue arrow at the right, grey and inactive until a digit is typed */}
+        <div className="flex items-center gap-md px-lg pt-xs">
+          <div className="w-16 flex-shrink-0" aria-hidden="true" />
+          <div className="flex-1 min-w-0 flex justify-center">
+            <div className="bg-[var(--gp-surface-alt)] px-lg py-xs rounded-full text-label font-normal text-center break-words">{r.addNote}</div>
+          </div>
+          <HighlightTarget elementId="amount_next_button" {...keypadTp} className="rounded-[var(--gp-r-tile)] flex-shrink-0">
+            <div
+              aria-disabled={!typed}
+              className={`w-16 h-16 rounded-[var(--gp-r-tile)] flex items-center justify-center ${
+                typed ? 'bg-[var(--gp-brand-blue)] text-white' : 'bg-[var(--gp-surface-alt)] text-[color:var(--gp-ink-muted)]'
+              }`}
+            >
+              <ArrowRight className="w-8 h-8 stroke-[2.5]" />
+            </div>
+          </HighlightTarget>
+        </div>
+
+        {/* Number pad at the bottom: rows share the room left, 52 to 64px each; below 52px the practice screen
+            scrolls instead (16px at the sides keeps the pointer badge on screen) */}
+        <div className="flex-1 flex flex-col justify-end px-lg pt-lg pb-lg">
+          <HighlightTarget elementId="amount_keypad" {...keypadTp} className="flex-1 max-h-[276px] flex flex-col rounded-[var(--gp-r-tile)]">
+            {/* Taps between keys do nothing (no nudge, no step) */}
+            <div onClick={(e) => e.stopPropagation()} className="flex-1 flex flex-col gap-1 p-xs bg-[var(--gp-surface-alt)] rounded-[var(--gp-r-tile)]">
+              {KEYPAD_ROWS.map((row) => (
+                <div key={row.join()} className="flex-1 min-h-[52px] max-h-[64px] flex gap-1">
+                  {row.map((key) => (
+                    <div
+                      key={key}
+                      data-key={key}
+                      onClick={pressKey(key)}
+                      className={`flex-1 min-w-0 flex items-center justify-center rounded-xl cursor-pointer ${
+                        key === 'next'
+                          ? 'bg-[var(--gp-brand-blue-soft)] text-[color:var(--gp-brand-blue-ink)] text-label font-bold text-center'
+                          : 'text-title font-normal'
+                      }`}
+                    >
+                      {key === 'back' ? <Delete className="w-8 h-8" aria-hidden="true" /> : key === 'next' ? r.keyNext : key}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </HighlightTarget>
+        </div>
+
+        {/* 2b. Payment method sheet: the mock bank, a balance link (inert) and the blue Pay button */}
+        {sheet && (
+          <div className="absolute inset-0 bg-black/50 flex flex-col justify-end">
+            <div className="screen-enter bg-[var(--gp-surface)] rounded-t-[28px] px-lg pt-sm pb-md space-y-md">
+              <div className="w-10 h-1 bg-[var(--gp-border)] rounded-full mx-auto" aria-hidden="true" />
+              <div className="text-[24px] leading-[30px] font-bold break-words">{r.selectPaymentMethod}</div>
+              <div className="min-h-[64px] flex items-center gap-md">
+                <div className="w-12 h-12 bg-[var(--gp-brand-blue-soft)] rounded-full flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-7 h-7 text-[color:var(--gp-brand-blue-ink)]" aria-hidden="true" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-body font-normal leading-tight break-words">{MOCK_BANK_BALANCE.bankName}</div>
+                  <div className="text-label font-normal text-[color:var(--gp-ink-muted)]">•••• 4829</div>
+                  <div className="text-label font-normal text-[color:var(--gp-ink-muted)] break-words">
+                    {r.balanceLabel} <span className="font-bold text-[color:var(--gp-brand-blue-deep)]">{r.checkNow}</span>
+                  </div>
+                </div>
+                <CircleDot className="w-7 h-7 text-[color:var(--gp-brand-blue-deep)] flex-shrink-0" aria-hidden="true" />
+              </div>
+              <HighlightTarget elementId="paymethod_pay_button" {...tp} className="w-full rounded-full">
+                <div className="w-full min-h-[64px] bg-[var(--gp-brand-blue)] text-white text-body font-bold rounded-full flex items-center justify-center px-lg text-center">
+                  {r.payAmount(amount)}
+                </div>
+              </HighlightTarget>
+              <div className="flex items-center justify-center gap-sm text-label font-bold text-[color:var(--gp-ink-muted)]" aria-hidden="true">
+                <Landmark className="w-5 h-5 flex-shrink-0" />
+                <span>UPI</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
