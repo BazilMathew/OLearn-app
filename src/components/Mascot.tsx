@@ -16,10 +16,12 @@ export const Mascot: React.FC<MascotProps> = ({ size = 96, className = '' }) => 
 
 export const MitraSvg: React.FC = () => (
   <svg viewBox="0 0 120 120" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-    {/* sprout */}
-    <path d="M60 30 C60 22 60 16 61 10" stroke="#3F7A3A" strokeWidth="4" strokeLinecap="round" fill="none" />
-    <path d="M61 14 C66 4 80 4 84 8 C80 17 68 19 61 14 Z" fill="#5E9E4A" stroke="#3F7A3A" strokeWidth="2.5" strokeLinejoin="round" />
-    <path d="M59 18 C54 10 42 10 38 14 C43 22 53 23 59 18 Z" fill="#7DB65F" stroke="#3F7A3A" strokeWidth="2.5" strokeLinejoin="round" />
+    {/* sprout (sways once on the startup screen) */}
+    <g className="mitra-sprout">
+      <path d="M60 30 C60 22 60 16 61 10" stroke="#3F7A3A" strokeWidth="4" strokeLinecap="round" fill="none" />
+      <path d="M61 14 C66 4 80 4 84 8 C80 17 68 19 61 14 Z" fill="#5E9E4A" stroke="#3F7A3A" strokeWidth="2.5" strokeLinejoin="round" />
+      <path d="M59 18 C54 10 42 10 38 14 C43 22 53 23 59 18 Z" fill="#7DB65F" stroke="#3F7A3A" strokeWidth="2.5" strokeLinejoin="round" />
+    </g>
     {/* solid ground shadow */}
     <ellipse cx="60" cy="110" rx="34" ry="5" fill="#E4D9CB" />
     {/* body */}

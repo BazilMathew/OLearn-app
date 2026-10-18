@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useLayoutEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from 'react';
+import { Capacitor } from '@capacitor/core';
 import tasksData from './config/tasks.json';
 import { SupportedLanguage, TaskConfig } from './types/task';
 import { StorageService } from './services/StorageService';
 import { I18N } from './config/i18n';
 import { Home, Settings, Smartphone, Maximize2, Wifi, Battery, Signal } from 'lucide-react';
+import { StartupScreen } from './screens/StartupScreen';
 
 // Screens load on demand so the first download stays small on low-end phones.
 const HomeScreen = lazy(() => import('./screens/HomeScreen').then((m) => ({ default: m.HomeScreen })));
@@ -17,6 +19,10 @@ const SettingsScreen = lazy(() => import('./screens/SettingsScreen').then((m) =>
 
 type ScreenState = 'first_launch' | 'home' | 'task_list' | 'tutorial' | 'ask_me' | 'settings';
 
+// The startup animation shows once per browser session (in the Android app: once per launch).
+const STARTUP_SHOWN_KEY = 'olearn_startup_shown';
+const IS_NATIVE = Capacitor.isNativePlatform();
+
 export const App: React.FC = () => {
   const [profile, setProfile] = useState(StorageService.getProfile());
   const [screenState, setScreenState] = useState<ScreenState>(() => {
@@ -25,6 +31,13 @@ export const App: React.FC = () => {
   const [selectedApp, setSelectedApp] = useState<'whatsapp' | 'gpay'>('whatsapp');
   const [activeTask, setActiveTask] = useState<TaskConfig | null>(null);
   const [usePhoneFrame, setUsePhoneFrame] = useState<boolean>(true);
+  const [showStartup, setShowStartup] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem(STARTUP_SHOWN_KEY) !== '1';
+    } catch {
+      return true;
+    }
+  });
 
   const tasks = tasksData as TaskConfig[];
   const language = profile.language;
@@ -69,6 +82,53 @@ export const App: React.FC = () => {
     setScreenState('task_list');
   };
 
+  // Marked as shown as soon as it appears, so a reload in the same session goes straight in.
+  useEffect(() => {
+    if (!showStartup) return;
+    try {
+      sessionStorage.setItem(STARTUP_SHOWN_KEY, '1');
+    } catch {}
+  }, []);
+
+  // Android back button: back to the previous screen; leaves the app only from Home (or the first language choice).
+  const handleBackRef = useRef<(exitApp: () => void) => void>(() => {});
+  handleBackRef.current = (exitApp) => {
+    if (showStartup) {
+      setShowStartup(false);
+      return;
+    }
+    if (screenState === 'tutorial') handleTutorialExit();
+    else if (screenState === 'task_list' || screenState === 'ask_me' || screenState === 'settings') setScreenState('home');
+    else exitApp();
+  };
+  useEffect(() => {
+    if (!IS_NATIVE) return;
+    let removed = false;
+    let remove: (() => void) | null = null;
+    import('@capacitor/app')
+      .then(({ App: NativeApp }) =>
+        NativeApp.addListener('backButton', () => handleBackRef.current(() => NativeApp.exitApp()))
+      )
+      .then((handle) => {
+        if (removed) handle.remove();
+        else remove = () => handle.remove();
+      })
+      .catch(() => {});
+    return () => {
+      removed = true;
+      remove?.();
+    };
+  }, []);
+
+  // Android app: the screen stays on during a tutorial only.
+  useEffect(() => {
+    if (!IS_NATIVE) return;
+    const tutorialOpen = screenState === 'tutorial';
+    import('@capacitor-community/keep-awake')
+      .then(({ KeepAwake }) => (tutorialOpen ? KeepAwake.keepAwake() : KeepAwake.allowSleep()))
+      .catch(() => {});
+  }, [screenState]);
+
   const navItemClass = (active: boolean) =>
     `pressable flex-1 max-w-[180px] min-h-[64px] flex flex-col items-center justify-center gap-xs px-sm rounded-btn border-2 ${
       active ? 'bg-accent-soft border-accent-deep text-ink' : 'bg-surface border-line text-ink-muted active:bg-canvas'
@@ -109,85 +169,89 @@ export const App: React.FC = () => {
 
         {/* Dynamic App Content Screen */}
         <div className="flex-1 overflow-hidden relative bg-canvas text-ink">
-          <Suspense fallback={<div className="h-full w-full bg-canvas" />}>
-            <div key={screenState} className="screen-enter h-full w-full">
-              {screenState === 'first_launch' && (
-                <LanguageSelectScreen
-                  currentLanguage={language}
-                  onSelectLanguage={handleLanguageSelect}
-                  isFirstLaunch={true}
-                />
-              )}
+          {showStartup ? (
+            <StartupScreen reduceMotion={profile.reduceMotion} onDone={() => setShowStartup(false)} />
+          ) : (
+            <Suspense fallback={<div className="h-full w-full bg-canvas" />}>
+              <div key={screenState} className="screen-enter h-full w-full">
+                {screenState === 'first_launch' && (
+                  <LanguageSelectScreen
+                    currentLanguage={language}
+                    onSelectLanguage={handleLanguageSelect}
+                    isFirstLaunch={true}
+                  />
+                )}
 
-              {screenState === 'home' && (
-                <HomeScreen
-                  language={language}
-                  onSelectApp={handleOpenAppTasks}
-                  onOpenAskMe={() => setScreenState('ask_me')}
-                />
-              )}
+                {screenState === 'home' && (
+                  <HomeScreen
+                    language={language}
+                    onSelectApp={handleOpenAppTasks}
+                    onOpenAskMe={() => setScreenState('ask_me')}
+                  />
+                )}
 
-              {screenState === 'task_list' && (
-                <TaskListScreen
-                  app={selectedApp}
-                  tasks={tasks}
-                  completedTaskIds={profile.completedTasks}
-                  language={language}
-                  onSelectTask={handleSelectTask}
-                  onBack={() => setScreenState('home')}
-                />
-              )}
+                {screenState === 'task_list' && (
+                  <TaskListScreen
+                    app={selectedApp}
+                    tasks={tasks}
+                    completedTaskIds={profile.completedTasks}
+                    language={language}
+                    onSelectTask={handleSelectTask}
+                    onBack={() => setScreenState('home')}
+                  />
+                )}
 
-              {screenState === 'tutorial' && activeTask && (
-                <TaskEngine
-                  task={activeTask}
-                  language={language}
-                  replicaLanguage={profile.replicaLanguage}
-                  onExit={handleTutorialExit}
-                />
-              )}
+                {screenState === 'tutorial' && activeTask && (
+                  <TaskEngine
+                    task={activeTask}
+                    language={language}
+                    replicaLanguage={profile.replicaLanguage}
+                    onExit={handleTutorialExit}
+                  />
+                )}
 
-              {screenState === 'ask_me' && (
-                <AskMeScreen
-                  language={language}
-                  tasks={tasks}
-                  onSelectTask={handleSelectTask}
-                  onClose={() => setScreenState('home')}
-                />
-              )}
+                {screenState === 'ask_me' && (
+                  <AskMeScreen
+                    language={language}
+                    tasks={tasks}
+                    onSelectTask={handleSelectTask}
+                    onClose={() => setScreenState('home')}
+                  />
+                )}
 
-              {screenState === 'settings' && (
-                <SettingsScreen
-                  language={language}
-                  onLanguageChange={(newLang) => {
-                    StorageService.setLanguage(newLang);
-                    reloadProfile();
-                  }}
-                  reduceMotion={profile.reduceMotion}
-                  onReduceMotionChange={(on) => {
-                    StorageService.setReduceMotion(on);
-                    reloadProfile();
-                  }}
-                  textScale={profile.textScale}
-                  onTextScaleChange={(scale) => {
-                    StorageService.setTextScale(scale);
-                    reloadProfile();
-                  }}
-                  replicaLanguage={profile.replicaLanguage}
-                  onReplicaLanguageChange={(mode) => {
-                    StorageService.setReplicaLanguage(mode);
-                    reloadProfile();
-                  }}
-                  onClose={() => setScreenState('home')}
-                />
-              )}
-            </div>
-          </Suspense>
+                {screenState === 'settings' && (
+                  <SettingsScreen
+                    language={language}
+                    onLanguageChange={(newLang) => {
+                      StorageService.setLanguage(newLang);
+                      reloadProfile();
+                    }}
+                    reduceMotion={profile.reduceMotion}
+                    onReduceMotionChange={(on) => {
+                      StorageService.setReduceMotion(on);
+                      reloadProfile();
+                    }}
+                    textScale={profile.textScale}
+                    onTextScaleChange={(scale) => {
+                      StorageService.setTextScale(scale);
+                      reloadProfile();
+                    }}
+                    replicaLanguage={profile.replicaLanguage}
+                    onReplicaLanguageChange={(mode) => {
+                      StorageService.setReplicaLanguage(mode);
+                      reloadProfile();
+                    }}
+                    onClose={() => setScreenState('home')}
+                  />
+                )}
+              </div>
+            </Suspense>
+          )}
         </div>
 
         {/* Bottom Navigation (Max 2 icons: Home and Settings with explicit text labels).
             Stays at 100% text (ts-fixed): in Malayalam a bigger "Settings" no longer fits its button. */}
-        {screenState !== 'tutorial' && screenState !== 'first_launch' && (
+        {!showStartup && screenState !== 'tutorial' && screenState !== 'first_launch' && (
           <nav className="ts-fixed w-full bg-surface border-t-2 border-line px-lg py-sm flex items-center justify-around gap-lg z-30 select-none">
             <button
               onClick={() => setScreenState('home')}

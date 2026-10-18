@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- OLearn canvas, the same cream as the web app (#F6F1EA) -->
+    <color name="olearn_canvas">#F6F1EA</color>
+</resources>

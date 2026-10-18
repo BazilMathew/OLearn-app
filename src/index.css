@@ -201,6 +201,60 @@ body {
   animation: spin-slow 1.5s linear infinite;
 }
 
+/* ---------- Startup screen: once per session, 2.5s in all, nothing loops ----------
+   0-400ms pop in, 450-850ms one bounce, 900-1500ms the sprout waves, 1300ms one blink,
+   1200-1600ms the name fades in, 2300-2500ms everything fades out. */
+@keyframes startup-pop {
+  0% { opacity: 0; transform: scale(0.6); }
+  70% { opacity: 1; transform: scale(1.06); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes startup-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes startup-wave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(8deg); }
+  75% { transform: rotate(-8deg); }
+}
+@keyframes startup-blink {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.1); }
+}
+@keyframes startup-name {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes startup-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes startup-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+.startup {
+  animation: startup-fade-out 200ms ease-in 2300ms forwards;
+}
+.startup-pop {
+  animation: startup-pop 400ms ease-out both;
+}
+.startup-bounce {
+  animation: startup-bounce 400ms ease-in-out 450ms;
+}
+.startup .mitra-sprout {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: startup-wave 300ms ease-in-out 900ms 2;
+}
+.startup .mitra-eye {
+  animation: startup-blink 200ms ease-in-out 1300ms;
+}
+.startup-name {
+  animation: startup-name 400ms ease-out 1200ms both;
+}
+
 /* ---------- Reduce motion: in-app setting OR system preference ---------- */
 html.reduce-motion *,
 html.reduce-motion *::before,
@@ -214,6 +268,11 @@ html.reduce-motion .highlight-active::before {
   display: none;
 }
 
+/* Startup screen without motion: a still Mitra and name, one short fade in (opacity only) */
+html.reduce-motion .startup {
+  animation: startup-fade-in 300ms ease-out both !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -224,5 +283,9 @@ html.reduce-motion .highlight-active::before {
 
   .highlight-active::before {
     display: none;
+  }
+
+  .startup {
+    animation: startup-fade-in 300ms ease-out both !important;
   }
 }

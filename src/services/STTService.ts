@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core';
+import type { SpeechRecognitionPlugin } from '@capacitor-community/speech-recognition';
 import { SupportedLanguage } from '../types/task';
 import { apiPost } from './apiClient';
 
@@ -27,15 +29,73 @@ const FALLBACK_ERRORS = ['language-not-supported', 'service-not-allowed'];
 
 const LANG_CODES: Record<SupportedLanguage, string> = { en: 'en-IN', hi: 'hi-IN', ml: 'ml-IN' };
 
+// ---------- Android app: the phone's own speech service (Capacitor plugin) ----------
+// The Android WebView has no working Web Speech recognition, and /api/stt is not reachable
+// from the app, so the app uses Android's SpeechRecognizer instead. The web never loads this.
+const IS_NATIVE = Capacitor.isNativePlatform();
+
+// If Android has not answered this long after listening stopped, give up ("didn't hear you").
+const NATIVE_GIVE_UP_MS = 8000;
+// Many phones never answer the supported-languages question; then we just try.
+const LANGUAGE_LIST_WAIT_MS = 1500;
+
+let nativePlugin: Promise<SpeechRecognitionPlugin> | null = null;
+let nativeAvailable: boolean | null = null; // null = not known yet
+let nativeLanguages: Promise<string[] | null> | null = null;
+
+const loadNativePlugin = () =>
+  (nativePlugin ??= import('@capacitor-community/speech-recognition').then((m) => m.SpeechRecognition));
+
+/** Started once, in the background, so getBlocker() can say "unavailable" before the Listening clip. */
+function checkNativeSupport(): void {
+  loadNativePlugin()
+    .then(async (plugin) => {
+      nativeAvailable = (await plugin.available()).available;
+      nativeLanguages ??= Promise.race([
+        plugin
+          .getSupportedLanguages()
+          .then((r) => (Array.isArray(r.languages) && r.languages.length ? r.languages.map(String) : null))
+          .catch(() => null),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), LANGUAGE_LIST_WAIT_MS))
+      ]);
+    })
+    .catch(() => {
+      nativeAvailable = false;
+    });
+}
+
+/** False only when the phone listed its languages and this one is missing; an unknown list means "try". */
+async function nativeSupportsLanguage(code: string): Promise<boolean> {
+  const list = nativeLanguages ? await nativeLanguages : null;
+  if (!list) return true;
+  const base = code.split('-')[0].toLowerCase();
+  return list.some((l) => l.replace('_', '-').toLowerCase().split('-')[0] === base);
+}
+
+/** Plugin rejection messages (see the plugin's getErrorText) mapped to the same states as the web. */
+function nativeError(err: unknown): STTError {
+  const message = String((err as { message?: unknown })?.message ?? err).toLowerCase();
+  if (message.includes('permission')) return 'not-allowed';
+  if (message.includes('network')) return 'offline';
+  if (message.includes('not available')) return 'unavailable';
+  return 'no-speech';
+}
+
 export class STTService {
   private recognition: any = null;
   private mediaRecorder: MediaRecorder | null = null;
   private stream: MediaStream | null = null;
   private stopTimer: ReturnType<typeof setTimeout> | null = null;
+  private giveUpTimer: ReturnType<typeof setTimeout> | null = null;
   private listener: STTListener | null = null;
   private active = false;
+  private nativeSession = 0;
 
   constructor() {
+    if (IS_NATIVE) {
+      if (nativeAvailable === null) checkNativeSupport();
+      return;
+    }
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
       this.recognition = new SpeechRecognition();
@@ -48,6 +108,7 @@ export class STTService {
   public getBlocker(): STTError | null {
     if (!window.isSecureContext) return 'insecure';
     if (navigator.onLine === false) return 'offline';
+    if (IS_NATIVE) return nativeAvailable === false ? 'unavailable' : null;
     if (!this.recognition && !this.canRecord()) return 'unavailable';
     return null;
   }
@@ -67,7 +128,9 @@ export class STTService {
       return;
     }
 
-    if (this.recognition) {
+    if (IS_NATIVE) {
+      this.startNative(language);
+    } else if (this.recognition) {
       this.startRecognition(language);
     } else {
       this.startRecording(language);
@@ -77,7 +140,9 @@ export class STTService {
   /** Stops listening; whatever was heard is still delivered through onFinal. */
   public stopListening(): void {
     if (!this.active) return;
-    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+    if (IS_NATIVE) {
+      this.stopNative();
+    } else if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
       try { this.mediaRecorder.stop(); } catch (e) {}
     } else if (this.recognition) {
       try { this.recognition.stop(); } catch (e) {}
@@ -89,6 +154,11 @@ export class STTService {
     this.listener = null;
     this.active = false;
     this.clearStopTimer();
+    if (IS_NATIVE) {
+      // A late result from this session is ignored (see startNative).
+      this.nativeSession++;
+      loadNativePlugin().then((plugin) => plugin.stop()).catch(() => {});
+    }
     if (this.recognition) {
       this.recognition.onresult = this.recognition.onerror = this.recognition.onend = null;
       try { this.recognition.abort(); } catch (e) {}
@@ -157,6 +227,61 @@ export class STTService {
       if (this.canRecord()) this.startRecording(language);
       else this.finish('no-speech');
     }
+  }
+
+  /** Android app: listen with the phone's speech service. Text arrives once, when listening ends. */
+  private async startNative(language: SupportedLanguage): Promise<void> {
+    const session = ++this.nativeSession;
+    const isCurrent = () => this.active && this.nativeSession === session;
+    const code = LANG_CODES[language];
+
+    try {
+      const plugin = await loadNativePlugin();
+      if (!(await plugin.available()).available) {
+        nativeAvailable = false;
+        if (isCurrent()) this.finish('unavailable');
+        return;
+      }
+
+      // Android shows its own permission dialog the first time (and after "Deny", but not after "Don't ask again").
+      let permission = (await plugin.checkPermissions()).speechRecognition;
+      if (permission !== 'granted') permission = (await plugin.requestPermissions()).speechRecognition;
+      if (!isCurrent()) return;
+      if (permission !== 'granted') {
+        this.finish('not-allowed');
+        return;
+      }
+
+      if (!(await nativeSupportsLanguage(code))) {
+        if (isCurrent()) this.finish('unavailable');
+        return;
+      }
+      if (!isCurrent()) return;
+
+      // partialResults stays off: with it on, the plugin drops errors and never reports silence.
+      const listening = plugin.start({ language: code, maxResults: 1, popup: false, partialResults: false });
+      this.listener?.onStateChange('listening');
+      this.stopTimer = setTimeout(() => this.stopListening(), MAX_RECORDING_MS);
+
+      const result = await listening;
+      if (!isCurrent()) return;
+      const text = (result.matches?.[0] ?? '').trim();
+      if (text) this.finish(null, text);
+      else this.finish('no-speech');
+    } catch (err) {
+      if (isCurrent()) this.finish(nativeError(err));
+    }
+  }
+
+  private stopNative(): void {
+    this.clearStopTimer();
+    // The plugin's stop() never resolves; Android then delivers the result to the pending start().
+    loadNativePlugin().then((plugin) => plugin.stop()).catch(() => {});
+    const session = this.nativeSession;
+    this.giveUpTimer = setTimeout(() => {
+      this.giveUpTimer = null;
+      if (this.active && this.nativeSession === session) this.finish('no-speech');
+    }, NATIVE_GIVE_UP_MS);
   }
 
   private canRecord(): boolean {
@@ -247,6 +372,8 @@ export class STTService {
   private clearStopTimer(): void {
     if (this.stopTimer) clearTimeout(this.stopTimer);
     this.stopTimer = null;
+    if (this.giveUpTimer) clearTimeout(this.giveUpTimer);
+    this.giveUpTimer = null;
   }
 
   private async sendToWhisper(audio: Blob, mimeType: string, language: SupportedLanguage): Promise<string | null> {

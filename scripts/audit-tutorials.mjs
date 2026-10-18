@@ -162,6 +162,7 @@ class Cdp {
 // ---------- In-page helpers (installed before the app loads) ----------
 const PAGE_HELPERS = `
 (() => {
+  try { sessionStorage.setItem('olearn_startup_shown', '1'); } catch (e) {} // skip the startup screen
   window.__plays = [];
   const play = HTMLMediaElement.prototype.play;
   HTMLMediaElement.prototype.play = function () { window.__plays.push(this.src); return play.call(this); };

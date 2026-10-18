@@ -11,6 +11,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor-community/keep-awake": "7.1.0",
+    "@capacitor-community/speech-recognition": "7.0.1",
+    "@capacitor/android": "7.6.9",
+    "@capacitor/app": "7.1.2",
+    "@capacitor/core": "7.6.9",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "cors": "^2.8.6",
@@ -26,6 +31,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@capacitor/cli": "7.6.9",
     "@types/canvas-confetti": "^1.9.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
