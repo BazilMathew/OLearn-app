@@ -774,5 +774,262 @@
         }
       }
     ]
+  },
+  {
+    "task_id": "whatsapp_search_contact",
+    "app": "whatsapp",
+    "title": {
+      "en": "Find a Contact with Search",
+      "hi": "सर्च से संपर्क ढूँढें",
+      "ml": "സെർച്ച് ചെയ്ത് ആളെ കണ്ടെത്തുക"
+    },
+    "description": {
+      "en": "Type a name or number instead of scrolling the list",
+      "hi": "सूची स्क्रॉल करने के बजाय नाम या नंबर टाइप करें",
+      "ml": "ലിസ്റ്റ് സ്ക്രോൾ ചെയ്യാതെ പേരോ നമ്പറോ ടൈപ്പ് ചെയ്യുക"
+    },
+    "steps": [
+      {
+        "screen": "phone_home_screen",
+        "highlight_element": "home_whatsapp_icon",
+        "audio_en": "assets/audio/en/wa_start_step1.mp3",
+        "audio_hi": "assets/audio/hi/wa_start_step1.mp3",
+        "audio_ml": "assets/audio/ml/wa_start_step1.mp3",
+        "hint_text": {
+          "en": "Tap the green WhatsApp icon.",
+          "hi": "हरे व्हाट्सएप आइकॉन पर टैप करें।",
+          "ml": "പച്ച വാട്ട്സ്ആപ്പ് ഐക്കണിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_list_screen",
+        "highlight_element": "chat_search_bar",
+        "audio_en": "assets/audio/en/wa_search_step1.mp3",
+        "audio_hi": "assets/audio/hi/wa_search_step1.mp3",
+        "audio_ml": "assets/audio/ml/wa_search_step1.mp3",
+        "hint_text": {
+          "en": "Tap the Search bar at the top.",
+          "hi": "ऊपर सर्च बार पर टैप करें।",
+          "ml": "മുകളിലെ സെർച്ച് ബാറിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_search_screen",
+        "highlight_element": "search_input",
+        "audio_en": "assets/audio/en/wa_search_step2.mp3",
+        "audio_hi": "assets/audio/hi/wa_search_step2.mp3",
+        "audio_ml": "assets/audio/ml/wa_search_step2.mp3",
+        "hint_text": {
+          "en": "Type any name or phone number.",
+          "hi": "कोई भी नाम या फ़ोन नंबर टाइप करें।",
+          "ml": "ഏതെങ്കിലും പേരോ നമ്പറോ ടൈപ്പ് ചെയ്യുക."
+        }
+      },
+      {
+        "screen": "whatsapp_search_screen",
+        "highlight_element": "search_results",
+        "result_screen": "whatsapp_search_chat_opened",
+        "audio_en": "assets/audio/en/wa_search_step3.mp3",
+        "audio_hi": "assets/audio/hi/wa_search_step3.mp3",
+        "audio_ml": "assets/audio/ml/wa_search_step3.mp3",
+        "hint_text": {
+          "en": "Tap the chat you want in the list.",
+          "hi": "सूची में अपनी पसंद की चैट पर टैप करें।",
+          "ml": "ലിസ്റ്റിൽ വേണ്ട ചാറ്റിൽ തൊടുക."
+        }
+      }
+    ]
+  },
+  {
+    "task_id": "whatsapp_send_document",
+    "app": "whatsapp",
+    "title": {
+      "en": "Send a Photo as a Document",
+      "hi": "फोटो को डॉक्यूमेंट की तरह भेजें",
+      "ml": "ഫോട്ടോ ഡോക്യുമെന്റായി അയക്കുക"
+    },
+    "description": {
+      "en": "Send a photo in full quality, as a document",
+      "hi": "फोटो पूरी क्वालिटी में, डॉक्यूमेंट बनाकर भेजें",
+      "ml": "ഫോട്ടോ മുഴുവൻ ഗുണമേന്മയോടെ ഡോക്യുമെന്റായി അയക്കുക"
+    },
+    "steps": [
+      {
+        "screen": "phone_home_screen",
+        "highlight_element": "home_whatsapp_icon",
+        "audio_en": "assets/audio/en/wa_start_step1.mp3",
+        "audio_hi": "assets/audio/hi/wa_start_step1.mp3",
+        "audio_ml": "assets/audio/ml/wa_start_step1.mp3",
+        "hint_text": {
+          "en": "Tap the green WhatsApp icon.",
+          "hi": "हरे व्हाट्सएप आइकॉन पर टैप करें।",
+          "ml": "പച്ച വാട്ട്സ്ആപ്പ് ഐക്കണിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_list_screen",
+        "highlight_element": "chat_row_ramesh",
+        "action": "scroll",
+        "audio_en": "assets/audio/en/wa_start_step2.mp3",
+        "audio_hi": "assets/audio/hi/wa_start_step2.mp3",
+        "audio_ml": "assets/audio/ml/wa_start_step2.mp3",
+        "hint_text": {
+          "en": "Swipe up to find your chat with Ramesh.",
+          "hi": "रमेश की चैट ढूँढने के लिए ऊपर की ओर स्वाइप करें।",
+          "ml": "രമേഷിന്റെ ചാറ്റ് കണ്ടെത്താൻ മുകളിലേക്ക് സ്വൈപ്പ് ചെയ്യുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_list_screen",
+        "highlight_element": "chat_row_ramesh",
+        "audio_en": "assets/audio/en/wa_start_step3.mp3",
+        "audio_hi": "assets/audio/hi/wa_start_step3.mp3",
+        "audio_ml": "assets/audio/ml/wa_start_step3.mp3",
+        "hint_text": {
+          "en": "Tap your chat with Ramesh.",
+          "hi": "रमेश की चैट पर टैप करें।",
+          "ml": "രമേഷിന്റെ ചാറ്റിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_screen",
+        "highlight_element": "attachment_icon",
+        "audio_en": "assets/audio/en/wa_photo_step1.mp3",
+        "audio_hi": "assets/audio/hi/wa_photo_step1.mp3",
+        "audio_ml": "assets/audio/ml/wa_photo_step1.mp3",
+        "hint_text": {
+          "en": "Tap the paperclip attachment icon at the bottom.",
+          "hi": "नीचे दिए गए पिन (अटैचमेंट) आइकॉन पर टैप करें।",
+          "ml": "താഴെയുള്ള പേപ്പർക്ലിപ്പ് (അറ്റാച്ച്മെന്റ്) ചിഹ്നത്തിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_attachment_sheet",
+        "highlight_element": "document_icon",
+        "audio_en": "assets/audio/en/wa_doc_step1.mp3",
+        "audio_hi": "assets/audio/hi/wa_doc_step1.mp3",
+        "audio_ml": "assets/audio/ml/wa_doc_step1.mp3",
+        "hint_text": {
+          "en": "Tap Document.",
+          "hi": "डॉक्यूमेंट पर टैप करें।",
+          "ml": "ഡോക്യുമെന്റ് എന്നതിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_document_picker",
+        "highlight_element": "doc_recent_files",
+        "audio_en": "assets/audio/en/wa_doc_step2.mp3",
+        "audio_hi": "assets/audio/hi/wa_doc_step2.mp3",
+        "audio_ml": "assets/audio/ml/wa_doc_step2.mp3",
+        "hint_text": {
+          "en": "Tap the photo you want to send.",
+          "hi": "जो फोटो भेजनी है, उस पर टैप करें।",
+          "ml": "അയക്കേണ്ട ഫോട്ടോയിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_document_preview",
+        "highlight_element": "doc_send_button",
+        "result_screen": "whatsapp_chat_screen_document_sent",
+        "audio_en": "assets/audio/en/wa_doc_step3.mp3",
+        "audio_hi": "assets/audio/hi/wa_doc_step3.mp3",
+        "audio_ml": "assets/audio/ml/wa_doc_step3.mp3",
+        "hint_text": {
+          "en": "Tap Send, the green button. As a document, the photo keeps its full quality.",
+          "hi": "सेंड बटन (हरा) पर टैप करें। डॉक्यूमेंट में फोटो की क्वालिटी पूरी रहती है।",
+          "ml": "സെൻഡ് തൊടുക. ഫോട്ടോ ഗുണമേന്മ കുറയില്ല."
+        }
+      }
+    ]
+  },
+  {
+    "task_id": "whatsapp_share_location",
+    "app": "whatsapp",
+    "title": {
+      "en": "Share Your Location",
+      "hi": "अपनी लोकेशन भेजें",
+      "ml": "നിങ്ങളുടെ ലൊക്കേഷൻ അയക്കുക"
+    },
+    "description": {
+      "en": "Send Ramesh the place where you are right now",
+      "hi": "रमेश को भेजें कि आप अभी कहाँ हैं",
+      "ml": "ഇപ്പോൾ എവിടെയാണെന്ന് രമേഷിന് അയക്കുക"
+    },
+    "steps": [
+      {
+        "screen": "phone_home_screen",
+        "highlight_element": "home_whatsapp_icon",
+        "audio_en": "assets/audio/en/wa_start_step1.mp3",
+        "audio_hi": "assets/audio/hi/wa_start_step1.mp3",
+        "audio_ml": "assets/audio/ml/wa_start_step1.mp3",
+        "hint_text": {
+          "en": "Tap the green WhatsApp icon.",
+          "hi": "हरे व्हाट्सएप आइकॉन पर टैप करें।",
+          "ml": "പച്ച വാട്ട്സ്ആപ്പ് ഐക്കണിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_list_screen",
+        "highlight_element": "chat_row_ramesh",
+        "action": "scroll",
+        "audio_en": "assets/audio/en/wa_start_step2.mp3",
+        "audio_hi": "assets/audio/hi/wa_start_step2.mp3",
+        "audio_ml": "assets/audio/ml/wa_start_step2.mp3",
+        "hint_text": {
+          "en": "Swipe up to find your chat with Ramesh.",
+          "hi": "रमेश की चैट ढूँढने के लिए ऊपर की ओर स्वाइप करें।",
+          "ml": "രമേഷിന്റെ ചാറ്റ് കണ്ടെത്താൻ മുകളിലേക്ക് സ്വൈപ്പ് ചെയ്യുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_list_screen",
+        "highlight_element": "chat_row_ramesh",
+        "audio_en": "assets/audio/en/wa_start_step3.mp3",
+        "audio_hi": "assets/audio/hi/wa_start_step3.mp3",
+        "audio_ml": "assets/audio/ml/wa_start_step3.mp3",
+        "hint_text": {
+          "en": "Tap your chat with Ramesh.",
+          "hi": "रमेश की चैट पर टैप करें।",
+          "ml": "രമേഷിന്റെ ചാറ്റിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_screen",
+        "highlight_element": "attachment_icon",
+        "audio_en": "assets/audio/en/wa_photo_step1.mp3",
+        "audio_hi": "assets/audio/hi/wa_photo_step1.mp3",
+        "audio_ml": "assets/audio/ml/wa_photo_step1.mp3",
+        "hint_text": {
+          "en": "Tap the paperclip attachment icon at the bottom.",
+          "hi": "नीचे दिए गए पिन (अटैचमेंट) आइकॉन पर टैप करें।",
+          "ml": "താഴെയുള്ള പേപ്പർക്ലിപ്പ് (അറ്റാച്ച്മെന്റ്) ചിഹ്നത്തിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_attachment_sheet",
+        "highlight_element": "location_icon",
+        "audio_en": "assets/audio/en/wa_loc_step1.mp3",
+        "audio_hi": "assets/audio/hi/wa_loc_step1.mp3",
+        "audio_ml": "assets/audio/ml/wa_loc_step1.mp3",
+        "hint_text": {
+          "en": "Tap Location.",
+          "hi": "लोकेशन पर टैप करें।",
+          "ml": "ലൊക്കേഷൻ എന്നതിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "whatsapp_send_location",
+        "highlight_element": "send_current_location",
+        "result_screen": "whatsapp_chat_screen_location_sent",
+        "audio_en": "assets/audio/en/wa_loc_step2.mp3",
+        "audio_hi": "assets/audio/hi/wa_loc_step2.mp3",
+        "audio_ml": "assets/audio/ml/wa_loc_step2.mp3",
+        "hint_text": {
+          "en": "Tap Send your current location.",
+          "hi": "'अपनी मौजूदा लोकेशन भेजें' पर टैप करें।",
+          "ml": "'നിലവിലെ ലൊക്കേഷൻ അയക്കുക' തൊടുക."
+        }
+      }
+    ]
   }
 ]

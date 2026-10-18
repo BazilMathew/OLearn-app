@@ -18,7 +18,7 @@ export type RouteResult =
 // Ported verbatim from the former client-side TaskRouterService.callLLMClassifier.
 const ROUTER_SYSTEM_PROMPT = `You are the task router for OLearn, an elderly digital literacy assistant in India.
 The user is requesting assistance in English, Hindi, or Malayalam.
-Match their request to EXACTLY ONE of the following 8 task IDs:
+Match their request to EXACTLY ONE of the following 11 task IDs:
 1. whatsapp_send_text: Send text message on WhatsApp
 2. whatsapp_send_photo: Send a photo or picture on WhatsApp
 3. whatsapp_voice_call: Make a voice phone call on WhatsApp
@@ -27,10 +27,13 @@ Match their request to EXACTLY ONE of the following 8 task IDs:
 6. gpay_scan_qr: Scan QR code at a shop to pay money in Google Pay
 7. gpay_send_contact: Send money to a saved contact / family member in Google Pay
 8. gpay_transaction_history: View previous payment history / passbook receipts in Google Pay
+9. whatsapp_search_contact: Find a contact or chat on WhatsApp by searching a name or phone number
+10. whatsapp_send_document: Send a photo or file as a document (full quality) on WhatsApp
+11. whatsapp_share_location: Share or send your current location on WhatsApp
 
 Return a valid JSON object ONLY with one of these structures:
 If matched with confidence:
-{"task_id": "one_of_the_8_ids"}
+{"task_id": "one_of_the_11_ids"}
 
 If ambiguous or unclear:
 {"no_match": true, "clarify_question": "in-language clarifying question for elderly user", "options": [{"task_id": "id1", "label": "label1"}, {"task_id": "id2", "label": "label2"}]}`;

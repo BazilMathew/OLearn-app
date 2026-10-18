@@ -1,7 +1,8 @@
-import React, { useLayoutEffect, useRef } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { SupportedLanguage } from '../types/task';
 import { HighlightTarget } from '../engine/HighlightTarget';
 import { REPLICA_STRINGS, ReplicaStrings } from './replicaStrings';
+import { MOCK_CHAT_PHONES } from '../config/mockData';
 import {
   Phone,
   Video,
@@ -35,7 +36,17 @@ import {
   CircleDashed,
   Users,
   Plus,
-  Play
+  Play,
+  MapPin,
+  User,
+  ListChecks,
+  CalendarDays,
+  ImagePlus,
+  Menu,
+  Folder,
+  RefreshCw,
+  Radio,
+  FileImage
 } from 'lucide-react';
 
 interface WhatsAppReplicaProps {
@@ -179,6 +190,85 @@ const SentBubble: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   );
 };
 
+// The sample chats of the chat list, top to bottom (Ramesh last). The chat search looks through the same chats.
+type SampleChat = { key: string; name: string; msg: string; time: string; color: string; group?: boolean };
+const sampleChats = (r: ReplicaStrings): SampleChat[] => [
+  { key: 'priya', name: `${r.priya} (${r.daughter})`, msg: r.chatListPriyaMsg, time: '11:58 AM', color: '#8430CE' },
+  { key: 'family', name: r.chatListFamily, msg: r.chatListFamilyMsg, time: '11:40 AM', color: '#54656F', group: true },
+  { key: 'shop', name: r.shopName, msg: r.chatListShopMsg, time: '11:32 AM', color: '#A35200' },
+  { key: 'doctor', name: r.chatListDoctor, msg: r.chatListDoctorMsg, time: '11:20 AM', color: '#3B5BA9' },
+  { key: 'temple', name: r.chatListTemple, msg: r.chatListTempleMsg, time: '11:05 AM', color: '#54656F', group: true },
+  { key: 'neighbours', name: r.chatListNeighbours, msg: r.chatListNeighboursMsg, time: '10:52 AM', color: '#54656F', group: true },
+  { key: 'walking', name: r.chatListWalking, msg: r.chatListWalkingMsg, time: '10:40 AM', color: '#54656F', group: true },
+  { key: 'pharmacy', name: r.chatListPharmacy, msg: r.chatListPharmacyMsg, time: '10:30 AM', color: '#00796B' },
+  { key: 'ramesh', name: r.rameshSon, msg: r.chatReceived, time: '10:15 AM', color: '#128C7E' }
+];
+
+// Chat search: a query with digits finds chats by phone number, anything else by name (in the shown
+// language or in English). The query lives only in the replica's state: never stored, logged or sent.
+const searchChats = (query: string, r: ReplicaStrings): SampleChat[] => {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  const en = sampleChats(REPLICA_STRINGS.en);
+  const digits = q.replace(/\D/g, '');
+  return sampleChats(r).filter((chat, i) => {
+    if (digits) {
+      const phone = MOCK_CHAT_PHONES[chat.key];
+      return !!phone && phone.replace(/\D/g, '').includes(digits);
+    }
+    return chat.name.toLowerCase().includes(q) || en[i].name.toLowerCase().includes(q);
+  });
+};
+
+// Practice photos in the document picker's Recent files (invented names); any of them can be sent
+const DOC_FILES = [
+  { name: 'Family_photo_01.jpg', size: '2.1 MB', time: '10:12 AM', colors: 'from-sky-300 to-indigo-500', emoji: '👪' },
+  { name: 'Garden_flower.jpg', size: '3.4 MB', time: '9:48 AM', colors: 'from-amber-300 to-orange-500', emoji: '🌼' },
+  { name: 'Sunrise_view.jpg', size: '2.6 MB', time: '9:05 AM', colors: 'from-rose-300 to-amber-400', emoji: '🌅' }
+];
+
+// Inert filter chip (chat search and document picker)
+const Chip: React.FC<{ label: string; onTap: () => void }> = ({ label, onTap }) => (
+  <div onClick={onTap} className="py-xs">
+    <div className="min-h-[48px] px-lg rounded-full border border-[#D1D7DB] bg-white flex items-center text-label font-normal text-ink-muted">
+      {label}
+    </div>
+  </div>
+);
+
+// Simple neutral map drawing: no labels, no place names, no provider logo. Green dots are places, the blue dot is you.
+const MapArt: React.FC = () => (
+  <svg viewBox="0 0 360 160" preserveAspectRatio="xMidYMid slice" className="w-full h-full block" aria-hidden="true">
+    <rect width="360" height="160" fill="#F1EFEC" />
+    <path d="M0 0 L46 0 L30 160 L0 160 Z" fill="#D4EFDB" />
+    <g fill="none" stroke="#D6D2CC" strokeWidth="3" strokeLinecap="round">
+      <path d="M0 52 C80 46 140 70 210 58 S320 40 360 48" />
+      <path d="M150 0 C160 50 140 100 168 160" />
+      <path d="M250 0 C240 60 270 110 260 160" />
+      <path d="M40 120 C120 110 220 130 360 116" />
+    </g>
+    <path d="M0 96 C70 84 120 112 190 92 S300 70 360 62" fill="none" stroke="#9FD3F0" strokeWidth="5" strokeLinecap="round" />
+    <g fill="#1DAA61">
+      {[[72, 40], [118, 64], [196, 30], [228, 76], [96, 128], [300, 98], [326, 30], [270, 136], [140, 104], [60, 84], [212, 118], [176, 72]].map(
+        ([x, y]) => <circle key={`${x}-${y}`} cx={x} cy={y} r="6" />
+      )}
+    </g>
+    <circle cx="186" cy="88" r="18" fill="#1A73E8" opacity="0.15" />
+    <circle cx="186" cy="88" r="8" fill="#1A73E8" stroke="#FFFFFF" strokeWidth="3" />
+  </svg>
+);
+
+// One pill of the attach sheet: a rounded icon pill with its name below. The name never wraps; when names
+// are too wide for four in a row (Malayalam) the row wraps instead.
+const AttachPill: React.FC<{ icon: React.ElementType; color: string; label: string }> = ({ icon: Icon, color, label }) => (
+  <div className="flex flex-col items-center gap-xs py-xs px-xs">
+    <div className="w-[72px] h-10 rounded-full border border-[#D1D7DB] bg-white flex items-center justify-center">
+      <Icon className="w-6 h-6" style={{ color }} aria-hidden="true" />
+    </div>
+    <span className="text-label font-normal text-ink text-center leading-tight whitespace-nowrap">{label}</span>
+  </div>
+);
+
 export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
   screen,
   highlightElement,
@@ -191,6 +281,15 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
   const r = REPLICA_STRINGS[language] || REPLICA_STRINGS.en;
   const contactName = r.rameshSon;
   const tp = { activeHighlightId: highlightElement, onCorrectTap, onWrongTap, nudgeKey };
+  // Kept only while the practice runs (the replica unmounts on the completion screen and on Exit); nothing
+  // is stored: the chat search text, the chat opened from the results and the file chosen in the picker.
+  const [query, setQuery] = useState('');
+  const [openedChat, setOpenedChat] = useState<string | null>(null);
+  const [fileIndex, setFileIndex] = useState(0);
+  const docFile = DOC_FILES[fileIndex];
+  // Header title of the document picker and send location screens. Malayalam words (അടുത്തിടെ, ലൊക്കേഷൻ)
+  // are wider than the room between the header icons at 26px, so they use the 20px bold size.
+  const headerTitle = language === 'ml' ? 'text-body font-bold' : 'text-title';
 
   // 0a. PHONE HOME SCREEN (every tutorial starts here)
   if (screen === 'phone_home_screen') {
@@ -199,16 +298,8 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
 
   // 0b. CHAT LIST: the learner scrolls it to find Ramesh's chat, then taps it
   if (screen === 'whatsapp_chat_list_screen') {
-    const chats = [
-      { name: `${r.priya} (${r.daughter})`, msg: r.chatListPriyaMsg, time: '11:58 AM', color: '#8430CE' },
-      { name: r.chatListFamily, msg: r.chatListFamilyMsg, time: '11:40 AM', color: '#54656F', group: true },
-      { name: r.shopName, msg: r.chatListShopMsg, time: '11:32 AM', color: '#A35200' },
-      { name: r.chatListDoctor, msg: r.chatListDoctorMsg, time: '11:20 AM', color: '#3B5BA9' },
-      { name: r.chatListTemple, msg: r.chatListTempleMsg, time: '11:05 AM', color: '#54656F', group: true },
-      { name: r.chatListNeighbours, msg: r.chatListNeighboursMsg, time: '10:52 AM', color: '#54656F', group: true },
-      { name: r.chatListWalking, msg: r.chatListWalkingMsg, time: '10:40 AM', color: '#54656F', group: true },
-      { name: r.chatListPharmacy, msg: r.chatListPharmacyMsg, time: '10:30 AM', color: '#00796B' }
-    ];
+    // Every sample chat but Ramesh's, which is the target row below
+    const chats = sampleChats(r).filter((c) => c.key !== 'ramesh');
     const chips = [r.chipAll, r.chipUnread, r.chipFavorites, r.chipGroups];
     const tabs: [React.ElementType, string][] = [
       [MessageSquareText, r.tabChats],
@@ -247,10 +338,13 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
             className="absolute inset-0 overflow-y-auto overflow-x-hidden overscroll-contain pb-[96px] outline-none"
             style={{ touchAction: 'pan-y' }}
           >
-            <div onClick={onWrongTap} className="mx-lg mt-xs min-h-[64px] rounded-full bg-[#F6F5F3] flex items-center gap-md px-lg">
-              <Search className="w-7 h-7 text-ink-muted flex-shrink-0" aria-hidden="true" />
-              <span className="text-body text-ink-muted">{r.search}</span>
-            </div>
+            {/* Search bar: opens the chat search (12px from the top keeps its ring clear of the header) */}
+            <HighlightTarget elementId="chat_search_bar" {...tp} className="mx-lg mt-md rounded-full">
+              <div className="min-h-[64px] rounded-full bg-[#F6F5F3] flex items-center gap-md px-lg">
+                <Search className="w-7 h-7 text-ink-muted flex-shrink-0" aria-hidden="true" />
+                <span className="text-body text-ink-muted">{r.search}</span>
+              </div>
+            </HighlightTarget>
 
             <div className="flex flex-wrap gap-x-sm px-lg pt-xs">
               {chips.map((chip, i) => (
@@ -273,8 +367,8 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
 
             <div className="pt-xs">
               {chats.map((chat) => (
-                <div key={chat.name} onClick={onWrongTap} className="mx-lg">
-                  <ChatRow {...chat} />
+                <div key={chat.key} onClick={onWrongTap} className="mx-lg">
+                  <ChatRow name={chat.name} msg={chat.msg} time={chat.time} color={chat.color} group={chat.group} />
                 </div>
               ))}
               <HighlightTarget elementId="chat_row_ramesh" {...tp} autoScroll={!scrollHint} className="mx-lg">
@@ -501,7 +595,266 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
     );
   }
 
+  // 6. CHAT SEARCH: a real text field, so the phone's own keyboard opens. Typing filters the sample chats by
+  // name or phone number; the first character completes the "type" step and any chat in the results can be
+  // opened. When the keyboard shrinks the screen (under 480px tall), the chips and the section title are hidden
+  // and the gaps and result rows tighten (rows stay 64px), so the field and a result stay in view.
+  if (screen === 'whatsapp_search_screen') {
+    const results = searchChats(query, r);
+    const typed = query.trim() !== '';
+    // The ring is on the results while there are any; with none (or an empty box) it goes back to the field
+    const searchTp = {
+      ...tp,
+      activeHighlightId: highlightElement === 'search_results' && !results.length ? 'search_input' : highlightElement
+    };
+    const chips = typed ? [r.chipLinks, r.chipPhotos, r.chipDocuments, r.chipStickers] : [r.chipUnread, r.chipPhotos, r.chipVideos, r.chipLinks];
+    const onType = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setQuery(e.target.value);
+      if (highlightElement === 'search_input' && e.target.value) onCorrectTap();
+    };
+
+    return (
+      <div className="h-full w-full bg-white text-ink flex flex-col">
+        <div className="px-lg pt-md [@media(max-height:480px)]:pt-xs">
+          <HighlightTarget elementId="search_input" {...searchTp} className="rounded-full">
+            {/* Taps on the field only focus it: never a nudge, never a step */}
+            <div onClick={(e) => e.stopPropagation()} className="min-h-[64px] rounded-full bg-[#F6F5F3] flex items-center pl-xs">
+              <div onClick={onWrongTap} className="w-12 h-12 flex items-center justify-center flex-shrink-0">
+                <ArrowLeft className="w-7 h-7 text-ink" aria-hidden="true" />
+              </div>
+              <input
+                data-search-input
+                type="text"
+                inputMode="text"
+                enterKeyHint="search"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                autoFocus
+                aria-label={r.search}
+                placeholder={r.search}
+                value={query}
+                onChange={onType}
+                className={`flex-1 min-w-0 min-h-[48px] bg-transparent outline-none select-text text-body text-ink placeholder:text-ink-muted ${query ? '' : 'pr-lg'}`}
+              />
+              {query && (
+                // Keeps the keyboard open (focus stays in the field)
+                <button
+                  type="button"
+                  aria-label={r.clearSearch}
+                  onPointerDown={(e) => e.preventDefault()}
+                  onClick={() => setQuery('')}
+                  className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0"
+                >
+                  <X className="w-7 h-7 text-ink-muted" aria-hidden="true" />
+                </button>
+              )}
+            </div>
+          </HighlightTarget>
+        </div>
+
+        {/* Filter chips (inert): they change once something is typed */}
+        <div className="flex flex-wrap gap-x-sm px-lg pt-xs [@media(max-height:480px)]:hidden">
+          {chips.map((chip) => (
+            <Chip key={chip} label={chip} onTap={onWrongTap} />
+          ))}
+        </div>
+
+        <div className="flex-1 min-h-0 flex flex-col px-lg pt-xs pb-md [@media(max-height:480px)]:pt-0 [@media(max-height:480px)]:pb-xs">
+          {typed && results.length > 0 && (
+            <HighlightTarget elementId="search_results" {...searchTp} className="flex-1 min-h-0 flex flex-col">
+              {/* Any chat in the list opens; taps between rows do nothing */}
+              <div data-search-results onClick={(e) => e.stopPropagation()} className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+                <div className="text-label font-bold text-ink-muted px-sm pt-xs [@media(max-height:480px)]:hidden">{r.tabChats}</div>
+                {results.map((chat) => (
+                  <div
+                    key={chat.key}
+                    data-search-row={chat.key}
+                    onClick={() => {
+                      setOpenedChat(chat.key);
+                      if (highlightElement === 'search_results') onCorrectTap();
+                    }}
+                    className="cursor-pointer [@media(max-height:480px)]:[&>div]:min-h-[64px] [@media(max-height:480px)]:[&>div]:py-xs"
+                  >
+                    <ChatRow name={chat.name} msg={chat.msg} time={chat.time} color={chat.color} group={chat.group} />
+                  </div>
+                ))}
+              </div>
+            </HighlightTarget>
+          )}
+          {/* Nothing matches: a gentle line and how to go on (the ring is back on the field) */}
+          {typed && !results.length && (
+            <div data-search-empty className="px-sm pt-sm">
+              <div className="text-body font-semibold text-ink">{r.noResults}</div>
+              <div className="text-label font-normal text-ink-muted mt-xs">{r.noResultsHelp}</div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // 7. DOCUMENT PICKER ("Recent"): every file under Recent files is a photo and any of them can be sent,
+  // so the ring is on the whole list. The menu, search, chips and "Browse files in other apps" are inert.
+  if (screen === 'whatsapp_document_picker') {
+    return (
+      <div className="min-h-full shrink-0 w-full bg-white text-ink flex flex-col">
+        <div onClick={onWrongTap} className="flex items-center gap-xs px-xs">
+          <div className="w-14 h-14 flex items-center justify-center flex-shrink-0">
+            <Menu className="w-7 h-7 text-ink" aria-hidden="true" />
+          </div>
+          <div className={`flex-1 min-w-0 text-ink ${headerTitle}`}>{r.recent}</div>
+          <div className="w-14 h-14 flex items-center justify-center flex-shrink-0">
+            <Search className="w-7 h-7 text-ink" aria-hidden="true" />
+          </div>
+          <div className="w-12 h-14 flex items-center justify-center flex-shrink-0">
+            <MoreVertical className="w-7 h-7 text-ink" aria-hidden="true" />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-x-sm px-lg">
+          {[r.chipImages, r.chipAudio, r.chipVideos, r.chipDocuments].map((chip) => (
+            <Chip key={chip} label={chip} onTap={onWrongTap} />
+          ))}
+        </div>
+
+        <div onClick={onWrongTap} className="min-h-[64px] flex items-center gap-md px-lg">
+          <Folder className="w-7 h-7 text-ink-muted flex-shrink-0" aria-hidden="true" />
+          <span className="text-body text-ink min-w-0">{r.browseOtherApps}</span>
+        </div>
+
+        <div className="text-label font-bold text-ink px-lg pt-xs">{r.recentFiles}</div>
+        <HighlightTarget elementId="doc_recent_files" {...tp} className="mx-lg mt-md mb-lg">
+          <div data-doc-files onClick={(e) => e.stopPropagation()}>
+            {DOC_FILES.map((file, i) => (
+              <div
+                key={file.name}
+                data-doc-file={file.name}
+                onClick={() => {
+                  setFileIndex(i);
+                  if (highlightElement === 'doc_recent_files') onCorrectTap();
+                }}
+                className="min-h-[64px] flex items-center gap-md px-xs py-xs cursor-pointer"
+              >
+                <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${file.colors} flex items-center justify-center text-2xl flex-shrink-0`} aria-hidden="true">
+                  {file.emoji}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-body text-ink truncate">{file.name}</div>
+                  <div className="text-label font-normal text-ink-muted">{`${file.time}, ${file.size}, ${r.jpgImage}`}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </HighlightTarget>
+      </div>
+    );
+  }
+
+  // 8. DOCUMENT PREVIEW (dark): the chosen file's name and picture, a caption box, who it goes to and Send
+  if (screen === 'whatsapp_document_preview') {
+    return (
+      <div className="h-full w-full bg-[#0B141A] text-white flex flex-col">
+        <div className="flex items-center gap-xs pl-xs pr-lg">
+          <div onClick={onWrongTap} className="w-16 h-16 flex items-center justify-center flex-shrink-0">
+            <ArrowLeft className="w-7 h-7 text-white" aria-hidden="true" />
+          </div>
+          <div className="flex-1 min-w-0 text-body font-bold truncate">{docFile.name}</div>
+        </div>
+
+        <div className="flex-1 min-h-0 flex items-center justify-center px-lg py-sm">
+          <div className={`w-full max-w-[300px] h-full max-h-[300px] min-h-[120px] rounded-card bg-gradient-to-br ${docFile.colors} flex items-center justify-center text-7xl`} aria-hidden="true">
+            {docFile.emoji}
+          </div>
+        </div>
+
+        <div onClick={onWrongTap} className="mx-lg bg-[#1F2C34] text-white/80 px-lg min-h-[64px] flex items-center rounded-full text-body">
+          {r.addCaption}
+        </div>
+
+        <div className="flex items-center justify-between gap-md px-lg pt-md pb-lg">
+          <div onClick={onWrongTap} className="min-w-0 min-h-[48px] bg-[#1F2C34] rounded-full px-lg flex items-center text-label font-normal text-white">
+            <span className="truncate">{contactName}</span>
+          </div>
+          <HighlightTarget elementId="doc_send_button" {...tp} className="rounded-full flex-shrink-0">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: WA_ACCENT }}>
+              <Send className="w-8 h-8 text-white ml-0.5" />
+            </div>
+          </HighlightTarget>
+        </div>
+      </div>
+    );
+  }
+
+  // 9. SEND LOCATION: a neutral map, "Share live location" (inert: a tap gets the gentle nudge), then
+  // "Send your current location" (the target) and a few invented nearby places (inert) that scroll.
+  if (screen === 'whatsapp_send_location') {
+    const places: [string, string][] = [
+      [r.placeBusStop, r.addrMainRoad],
+      [r.placePostOffice, r.addrStation],
+      [r.temple, r.addrTemple]
+    ];
+    return (
+      <div className="min-h-full shrink-0 w-full bg-white text-ink flex flex-col">
+        <div onClick={onWrongTap} className="flex items-center gap-xs pl-xs pr-xs">
+          <div className="w-14 h-16 flex items-center justify-center flex-shrink-0">
+            <ArrowLeft className="w-7 h-7 text-ink" aria-hidden="true" />
+          </div>
+          <div className={`flex-1 min-w-0 text-ink ${headerTitle}`}>{r.sendLocation}</div>
+          <div className="w-12 h-16 flex items-center justify-center flex-shrink-0">
+            <Search className="w-7 h-7 text-ink" aria-hidden="true" />
+          </div>
+          <div className="w-12 h-16 flex items-center justify-center flex-shrink-0">
+            <RefreshCw className="w-7 h-7 text-ink" aria-hidden="true" />
+          </div>
+        </div>
+
+        <div onClick={onWrongTap} data-location-map className="h-[132px] flex-shrink-0 overflow-hidden">
+          <MapArt />
+        </div>
+
+        <div onClick={onWrongTap} data-live-location className="min-h-[72px] flex items-center gap-md px-lg border-b border-[#E9EDEF]">
+          <div className="w-12 h-12 rounded-full bg-[#1F2C34] flex items-center justify-center flex-shrink-0">
+            <Radio className="w-6 h-6 text-white" aria-hidden="true" />
+          </div>
+          <span className="text-body text-ink min-w-0">{r.shareLiveLocation}</span>
+        </div>
+
+        <div className="text-label font-bold text-ink-muted px-lg pt-sm">{r.nearbyPlaces}</div>
+        <HighlightTarget elementId="send_current_location" {...tp} className="mx-lg mt-xs mb-md">
+          <div className="min-h-[72px] flex items-center gap-md px-xs">
+            <div className="w-12 h-12 rounded-full border-2 flex items-center justify-center flex-shrink-0" style={{ borderColor: WA_ACCENT }}>
+              <span className="w-5 h-5 rounded-full" style={{ background: WA_ACCENT }} />
+            </div>
+            <div className="min-w-0">
+              <div className="text-body text-ink leading-tight">{r.sendCurrentLocation}</div>
+              <div className="text-label font-normal text-ink-muted">{r.accurateTo}</div>
+            </div>
+          </div>
+        </HighlightTarget>
+
+        <div>
+          {places.map(([name, addr]) => (
+            <div key={name} onClick={onWrongTap} className="min-h-[72px] flex items-center gap-md px-lg py-xs">
+              <div className="w-12 h-12 rounded-full bg-[#F0F2F5] flex items-center justify-center flex-shrink-0">
+                <MapPin className="w-6 h-6 text-ink" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-body text-ink leading-tight">{name}</div>
+                <div className="text-label font-normal text-ink-muted">{addr}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   // 5. STANDARD CHAT SCREEN / ATTACHMENT SHEET / DIALOGS
+  // The chat opened from the search results (search task's result screen); otherwise Ramesh's chat
+  const opened = screen === 'whatsapp_search_chat_opened' ? sampleChats(r).find((c) => c.key === openedChat) : undefined;
+  const chatName = opened ? opened.name : contactName;
   return (
     <div className="h-full w-full flex flex-col justify-between bg-wa-bg relative">
       {/* WhatsApp Header (light): back, avatar, name and status, then video and voice call.
@@ -509,12 +862,17 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
       <div className="bg-white text-ink pl-xs pr-lg py-md flex items-center justify-between z-10">
         <div className="flex items-center gap-xs min-w-0 flex-1">
           <ArrowLeft className="w-7 h-7 text-ink flex-shrink-0" aria-hidden="true" />
-          <div className="w-9 h-9 bg-wa-green text-white rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0">
-            {r.rameshInitial}
+          <div
+            className="w-9 h-9 text-white rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0"
+            style={{ background: opened ? opened.color : '#128C7E' }}
+          >
+            {opened?.group ? <Users className="w-5 h-5" aria-hidden="true" /> : opened ? opened.name.charAt(0) : r.rameshInitial}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-body font-semibold leading-tight break-words">{contactName}</div>
-            <div className="text-label text-ink-muted font-normal whitespace-nowrap">{r.online}</div>
+            <div data-chat-name className="text-body font-semibold leading-tight break-words">{chatName}</div>
+            {(!opened || opened.key === 'ramesh') && (
+              <div className="text-label text-ink-muted font-normal whitespace-nowrap">{r.online}</div>
+            )}
           </div>
         </div>
 
@@ -547,9 +905,9 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
           <div className="relative bg-white text-ink rounded-[10px] rounded-tl-none px-md pt-sm pb-xs max-w-[85%] shadow-[0_1px_0_0_rgba(11,20,26,0.13)]">
             <span className="absolute -left-2 top-0 w-0 h-0 border-t-[12px] border-t-white border-l-[10px] border-l-transparent" aria-hidden="true" />
             <p className="text-body leading-snug">
-              {r.chatReceived}
+              {opened ? opened.msg : r.chatReceived}
             </p>
-            <div className="text-label font-normal text-ink-muted text-right mt-xs">10:15 AM</div>
+            <div className="text-label font-normal text-ink-muted text-right mt-xs">{opened ? opened.time : '10:15 AM'}</div>
           </div>
         </div>
 
@@ -576,6 +934,32 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
                 ))}
               </div>
               <span className="text-label font-normal text-ink-muted">0:04</span>
+            </div>
+          </SentBubble>
+        )}
+        {/* The photo sent as a document: file icon, name, type and size */}
+        {screen === 'whatsapp_chat_screen_document_sent' && (
+          <SentBubble>
+            <div data-doc-bubble className="flex items-center gap-sm bg-[#C8EFC0] rounded-lg px-sm py-sm min-w-0">
+              <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center flex-shrink-0">
+                <FileImage className="w-6 h-6 text-[#1A73E8]" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-label font-bold text-ink truncate">{docFile.name}</div>
+                <div className="text-label font-normal text-ink-muted">{`JPG • ${docFile.size}`}</div>
+              </div>
+            </div>
+          </SentBubble>
+        )}
+        {/* The current location: a small map picture and the place */}
+        {screen === 'whatsapp_chat_screen_location_sent' && (
+          <SentBubble>
+            <div data-location-bubble className="w-[220px] max-w-full">
+              <div className="h-[80px] rounded-lg overflow-hidden">
+                <MapArt />
+              </div>
+              <div className="text-body font-semibold leading-tight mt-xs">{r.myLocation}</div>
+              <div className="text-label font-normal text-ink-muted">{r.addrMainRoad}</div>
             </div>
           </SentBubble>
         )}
@@ -715,39 +1099,47 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
         </div>
       )}
 
-      {/* Attachment sheet, under the message bar as in the app. One option per row so long labels
-          (e.g. Malayalam ഡോക്യുമെന്റ്) never break mid-word. */}
+      {/* Attachment sheet, under the message bar as in the app: two rows of four pills, then recent photos.
+          Gallery, Location and Document are targets (each only in its own task); the rest are inert.
+          Gallery is the only purple pill ("Tap the purple Gallery icon"). */}
       {screen === 'whatsapp_attachment_sheet' && (
         <div className="bg-white rounded-t-[28px] px-lg pt-sm pb-md z-30 screen-enter shadow-[0_-1px_0_0_#E9EDEF]">
           <div className="w-10 h-1 bg-[#C4C9CC] rounded-full mx-auto mb-sm" aria-hidden="true" />
-          <div className="text-body font-bold text-ink mb-xs text-center">
-            {r.shareContent}
-          </div>
-          <div>
-            <HighlightTarget elementId="gallery_icon" {...tp}>
-              <div className="min-h-[72px] flex items-center gap-lg px-md py-sm">
-                <div className="w-14 h-10 rounded-full border border-[#D1D7DB] bg-white flex items-center justify-center flex-shrink-0">
-                  <Images className="w-6 h-6 text-[#A63FC4]" />
+          <div data-attach-pills className="flex flex-wrap justify-center">
+            {(
+              [
+                ['gallery_icon', Images, '#A63FC4', r.gallery],
+                ['location_icon', MapPin, WA_ACCENT, r.location],
+                [null, User, '#027EB5', r.contact],
+                ['document_icon', FileText, '#1A73E8', r.document],
+                [null, ListChecks, '#B35C00', r.poll],
+                [null, IndianRupee, WA_ACCENT, r.payment],
+                [null, CalendarDays, '#D93025', r.event],
+                [null, ImagePlus, '#1A73E8', r.aiImages]
+              ] as [string | null, React.ElementType, string, string][]
+            ).map(([id, icon, color, label]) =>
+              id ? (
+                <HighlightTarget key={label} elementId={id} {...tp} className="flex-none min-w-[25%]">
+                  <AttachPill icon={icon} color={color} label={label} />
+                </HighlightTarget>
+              ) : (
+                <div key={label} onClick={onWrongTap} className="flex-none min-w-[25%]">
+                  <AttachPill icon={icon} color={color} label={label} />
                 </div>
-                <span className="text-body font-semibold text-ink">
-                  {r.gallery}
-                </span>
-              </div>
-            </HighlightTarget>
+              )
+            )}
+          </div>
 
-            <div onClick={onWrongTap} className="min-h-[72px] flex items-center gap-lg px-md py-sm">
-              <div className="w-14 h-10 rounded-full border border-[#D1D7DB] bg-white flex items-center justify-center flex-shrink-0">
-                <FileText className="w-6 h-6 text-[#1A73E8]" />
-              </div>
-              <span className="text-body font-semibold text-ink">{r.document}</span>
+          {/* Recent photos strip (inert): the camera, then three photos */}
+          <div onClick={onWrongTap} className="grid grid-cols-4 gap-xs mt-sm" aria-hidden="true">
+            <div className="h-16 rounded-lg bg-[#F0F2F5] flex items-center justify-center">
+              <Camera className="w-7 h-7" style={{ color: WA_ACCENT }} />
             </div>
-
-            <div onClick={onWrongTap} className="min-h-[72px] flex items-center gap-lg px-md py-sm">
-              <div className="w-14 h-10 rounded-full border border-[#D1D7DB] bg-white flex items-center justify-center flex-shrink-0">
-                <Camera className="w-6 h-6" style={{ color: WA_ACCENT }} />
+            {[['from-amber-300 to-orange-500', '🌸'], ['from-sky-400 to-indigo-700', '🛕'], ['from-emerald-400 to-teal-700', '👶']].map(([colors, emoji]) => (
+              <div key={emoji} className={`h-16 rounded-lg bg-gradient-to-br ${colors} flex items-center justify-center text-3xl`}>
+                {emoji}
               </div>
-              <span className="text-body font-semibold text-ink">{r.camera}</span>
-            </div>
+            ))}
           </div>
         </div>
       )}

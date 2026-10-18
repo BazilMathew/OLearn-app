@@ -29,6 +29,21 @@ const CASES: Record<string, Record<SupportedLanguage, string[]>> = {
     hi: ['वॉइस मैसेज भेजना है', 'बोलकर संदेश भेजना', 'आवाज संदेश भेजो', 'रिकॉर्ड करके भेजना'],
     ml: ['വോയ്സ് മെസ്സേജ് അയക്കണം', 'ശബ്ദ സന്ദേശം അയക്കാൻ', 'വോയ്സ് നോട്ട് അയക്കുന്നത് എങ്ങനെ', 'റെക്കോർഡ് ചെയ്ത് അയക്കണം']
   },
+  whatsapp_search_contact: {
+    en: ['search contact', 'find a person on whatsapp', 'how to search for a chat', 'find a contact by name'],
+    hi: ['संपर्क खोजना है', 'किसी का नंबर ढूंढना है', 'व्हाट्सएप पर नाम सर्च करना'],
+    ml: ['കോൺടാക്റ്റ് തിരയണം', 'ഒരാളെ കണ്ടെത്താൻ', 'പേര് സെർച്ച് ചെയ്യുന്നത് എങ്ങനെ']
+  },
+  whatsapp_send_document: {
+    en: ['send a photo as a document', 'photo as document', 'send a file on whatsapp', 'send a PDF', 'share a document'],
+    hi: ['फोटो को डॉक्यूमेंट की तरह भेजना', 'फ़ाइल भेजनी है', 'डॉक्यूमेंट कैसे भेजें'],
+    ml: ['ഫോട്ടോ ഡോക്യുമെന്റായി അയക്കണം', 'ഫയൽ അയക്കുന്നത് എങ്ങനെ', 'പിഡിഎഫ് അയക്കാൻ']
+  },
+  whatsapp_share_location: {
+    en: ['share location', 'send my location', 'send my location to my son', 'how to tell where I am', 'send address on whatsapp'],
+    hi: ['लोकेशन भेजनी है', 'मैं कहाँ हूँ यह भेजना', 'अपनी लोकेशन शेयर करें'],
+    ml: ['ലൊക്കേഷൻ അയക്കണം', 'ഞാൻ എവിടെയാണെന്ന് അയക്കാൻ', 'സ്ഥലം ഷെയർ ചെയ്യുന്നത് എങ്ങനെ']
+  },
   gpay_check_balance: {
     en: ['check balance', 'check my bank balance', 'how much money do I have', 'show account balance in google pay'],
     hi: ['बैलेंस चेक करना है', 'मेरे खाते में कितने पैसे हैं', 'बैंक बैलेंस देखना', 'गूगल पे में बैलेंस'],
@@ -58,6 +73,10 @@ const EXTRA: Array<[SupportedLanguage, string, string]> = [
   ['en', 'pay money', 'clarify:gpay_scan_qr|gpay_send_contact'],
   ['hi', 'पैसे देने हैं', 'clarify:gpay_scan_qr|gpay_send_contact'],
   ['ml', 'പണം കൊടുക്കണം', 'clarify:gpay_scan_qr|gpay_send_contact'],
+  // A plain photo request stays with the photo task (not captured by the document task)
+  ['en', 'send a photo to Ramesh', 'whatsapp_send_photo'],
+  ['hi', 'बेटे को फोटो भेजो', 'whatsapp_send_photo'],
+  ['ml', 'മകന് ഫോട്ടോ അയക്കണം', 'whatsapp_send_photo'],
   ['en', 'whatsapp', 'none'],
   ['ml', 'ജിപേ', 'none'],
   ['hi', 'नमस्ते', 'none'],

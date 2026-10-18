@@ -34,6 +34,16 @@ export const MOCK_CONTACTS: MockContact[] = [
   }
 ];
 
+// Phone numbers of the sample WhatsApp chats, for the chat search (typing digits finds a chat by number).
+// The shop and pharmacy use an obviously fake range.
+export const MOCK_CHAT_PHONES: Record<string, string> = {
+  ramesh: MOCK_CONTACTS[0].phone,
+  priya: MOCK_CONTACTS[1].phone,
+  doctor: MOCK_CONTACTS[2].phone,
+  shop: '+91 90000 00001',
+  pharmacy: '+91 90000 00002'
+};
+
 export interface MockTransaction {
   id: string;
   merchant: { en: string; hi: string; ml: string };

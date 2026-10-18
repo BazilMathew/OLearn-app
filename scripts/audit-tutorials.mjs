@@ -21,6 +21,9 @@
 // en/hi/ml at 360x690 and 412x915 on Home, Settings, Ask Me, both task lists and every tutorial step;
 // (4) Reset progress: the confirmation at 360x690 and 412x915, en/hi/ml, Text size 100% and 150%, and that
 // Yes clears progress only (settings kept, task list ticks gone without a reload) while No changes nothing.
+// The chat search, document and location tasks also check: no ordinal or (attach sheet) colour wording, new
+// Malayalam instructions in 2 lines, typing completes on the first character, filtering by name and digits,
+// clear and no-match, the keyboard-open screen (360x400), inert picker and live-location taps, and their results.
 // Exit code 1 if any check fails.
 
 import { spawn, execFileSync } from 'node:child_process';
@@ -119,6 +122,41 @@ const RUN_TASKS = TASK_ONLY ? TASKS.filter((t) => t.task_id === TASK_ONLY) : TAS
 // Send money: the learner types any amount, so no instruction may name a fixed one
 for (const s of TASKS.find((t) => t.task_id === 'gpay_send_contact').steps)
   for (const l of LANGS) if (/₹\s?\d/.test(s.hint_text[l])) failures.push(`gpay_send_contact ${s.highlight_element} (${l}): instruction names a fixed amount: ${s.hint_text[l]}`);
+// Chat search, document and location tasks: the learner chooses freely, so no instruction may use ordinal
+// wording; and on the attach sheet an instruction names the pill, never its colour (Gallery's purple is the
+// only unique one, and it belongs to the photo task)
+const NEW_WA_TASKS = ['whatsapp_search_contact', 'whatsapp_send_document', 'whatsapp_share_location'];
+const ORDINALS = {
+  en: /\b(first|second|third|fourth|last|1st|2nd|3rd|top one)\b/i,
+  hi: /(पहल|दूसर|तीसर|चौथ|आखिरी|अंतिम)/,
+  ml: /(ആദ്യ|രണ്ടാമ|മൂന്നാമ|നാലാമ|അവസാന)/
+};
+const COLOURS = {
+  en: /\b(green|blue|red|orange|yellow|pink|purple)\b/i,
+  hi: /(हरे|हरा|हरी|नील|लाल|नारंगी|पील|गुलाबी|बैंगनी)/,
+  ml: /(പച്ച|നീല|ചുവപ്പ|ഓറഞ്ച|മഞ്ഞ|പിങ്ക|പർപ്പിൾ)/
+};
+for (const id of NEW_WA_TASKS) {
+  TASKS.find((t) => t.task_id === id).steps.forEach((s, i) => {
+    for (const l of LANGS) {
+      if (ORDINALS[l].test(s.hint_text[l])) failures.push(`${id} step ${i + 1} (${l}): ordinal wording in the instruction: ${s.hint_text[l]}`);
+      if (s.screen === 'whatsapp_attachment_sheet' && COLOURS[l].test(s.hint_text[l])) failures.push(`${id} step ${i + 1} (${l}): attach sheet instruction names a colour: ${s.hint_text[l]}`);
+    }
+  });
+}
+// Chat search runs in turn: what is typed, the chats that must be listed (in order) and the one opened
+// (not always the top row: any chat may be chosen). Digits find a chat by its number.
+const SEARCHES = [
+  { q: 'pri', rows: ['priya'], open: 'priya' },
+  { q: '98765', rows: ['priya', 'ramesh'], open: 'ramesh' },
+  { q: '00001', rows: ['shop'], open: 'shop' },
+  { q: 'sharma', rows: ['shop', 'doctor'], open: 'doctor' }
+];
+let searchTurn = 0;
+const chatName = (r, key) => ({ priya: `${r.priya} (${r.daughter})`, ramesh: r.rameshSon, shop: r.shopName, doctor: r.chatListDoctor })[key];
+// Document picker: the (invented) file each run chooses, in turn
+const DOC_PICKS = ['Garden_flower.jpg', 'Sunrise_view.jpg', 'Family_photo_01.jpg'];
+let docTurn = 0;
 // Amounts typed on the send-money number pad, one per run in turn (9,99,999 is the 6-digit maximum)
 const SEND_AMOUNTS = ['999999', '500', '1250', '75'];
 let amountTurn = 0;
@@ -526,6 +564,64 @@ const PAGE_HELPERS = `
       return { cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
     },
     nudgeShown: () => !!document.querySelector('[role="status"].pointer-events-none'),
+    // Chat search: the typed text, the listed chats (keys), which of field and list has the ring, the empty line
+    searchState() {
+      const input = document.querySelector('[data-search-input]');
+      if (!input) return null;
+      const ring = (id) => !!document.querySelector('[data-element-id="' + id + '"]')?.classList.contains('highlight-active');
+      return {
+        value: input.value,
+        rows: [...document.querySelectorAll('[data-search-row]')].map((r) => r.getAttribute('data-search-row')),
+        fieldRing: ring('search_input'),
+        listRing: ring('search_results'),
+        empty: !!document.querySelector('[data-search-empty]'),
+        focused: document.activeElement === input
+      };
+    },
+    // Centre and height of the first element matching a selector, brought into view first
+    point(sel) {
+      const el = document.querySelector(sel);
+      if (!el) return null;
+      el.scrollIntoView({ block: 'nearest' });
+      const r = el.getBoundingClientRect();
+      return { cx: r.left + r.width / 2, cy: r.top + r.height / 2, h: r.height };
+    },
+    heights: (sel) => [...document.querySelectorAll(sel)].map((e) => e.getBoundingClientRect().height),
+    // Phone keyboard open (short screen): the instruction bar, the search field and the first result are
+    // fully on screen and the topmost element at their centre
+    keyboardFit() {
+      const out = [];
+      const inView = (el, name) => {
+        if (!el) return out.push(name + ' not found');
+        const r = el.getBoundingClientRect(), g = this.region(el);
+        const top = Math.max(0, g.top), bottom = Math.min(innerHeight, g.bottom);
+        if (r.top < top - 1 || r.bottom > bottom + 1) out.push(name + ' not fully visible (' + Math.round(r.top) + '..' + Math.round(r.bottom) + ' of ' + Math.round(top) + '..' + Math.round(bottom) + ')');
+        const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        if (!hit || !el.contains(hit)) out.push(name + ' covered at its centre');
+      };
+      inView(document.getElementById('tutorial-hint')?.closest('[aria-live]'), 'instruction bar');
+      inView(document.querySelector('[data-search-input]'), 'search field');
+      inView(document.querySelector('[data-search-row]'), 'first result');
+      return out;
+    },
+    // Attach sheet: number of pills, which pills are purple, and the size of each target pill
+    attachPills() {
+      const box = document.querySelector('[data-attach-pills]');
+      if (!box) return null;
+      const pills = [...box.children];
+      return {
+        count: pills.length,
+        purple: pills.filter((p) => getComputedStyle(p.querySelector('svg')).color === 'rgb(166, 63, 196)').map((p) => p.getAttribute('data-element-id') || p.textContent.trim()),
+        targets: pills.filter((p) => p.hasAttribute('data-element-id')).map((p) => {
+          const r = p.getBoundingClientRect();
+          return { id: p.getAttribute('data-element-id'), w: r.width, h: r.height };
+        })
+      };
+    },
+    hintLines() {
+      const el = document.getElementById('tutorial-hint');
+      return Math.round(el.scrollHeight / parseFloat(getComputedStyle(el).lineHeight));
+    },
     // A sent bubble on the practice screen (result screens only): is it fully inside its visible region
     sentBubble() {
       const b = document.querySelector('[data-sent-bubble]');
@@ -768,6 +864,8 @@ async function runTutorials(w, h, lang, reduce, scale) {
     // Send money: the amount this run types on the number pad, and how the app must show it
     const sendAmount = task.task_id === 'gpay_send_contact' ? SEND_AMOUNTS[amountTurn++ % SEND_AMOUNTS.length] : null;
     const sendShown = sendAmount && '₹' + Number(sendAmount).toLocaleString('en-IN');
+    const search = task.task_id === 'whatsapp_search_contact' ? SEARCHES[searchTurn++ % SEARCHES.length] : null;
+    const docPick = task.task_id === 'whatsapp_send_document' ? DOC_PICKS[docTurn++ % DOC_PICKS.length] : null;
 
     for (let i = 0; i < total; i++) {
       const step = task.steps[i];
@@ -855,6 +953,45 @@ async function runTutorials(w, h, lang, reduce, scale) {
         check(await A(`textIncludes(${JSON.stringify(r.galleryRecent)})`), `${at}: gallery photo count line missing`);
       }
 
+      // New WhatsApp tasks: a new Malayalam instruction takes at most 2 lines at 360px (100% text). Steps shared
+      // with the older tasks (start steps, paperclip) keep their existing text and are not checked here.
+      const sharedHint = TASKS.some((o) => !NEW_WA_TASKS.includes(o.task_id) && o.steps.some((s) => s.hint_text.en === step.hint_text.en));
+      if (NEW_WA_TASKS.includes(task.task_id) && !sharedHint && w === 360 && scale === 1) {
+        const lines = await A('hintLines()');
+        if (lang === 'ml') check(lines <= 2, `${at}: Malayalam instruction takes ${lines} lines at 360px (max 2)`);
+        else if (lines > 2) notes.push(`${at}: instruction takes ${lines} lines at ${w}x${h}`);
+      }
+      // Attach sheet: eight pills, Gallery the only purple one, the target pills at least 64px
+      if (step.screen === 'whatsapp_attachment_sheet') {
+        const ap = await A('attachPills()');
+        if (check(ap, `${at}: attach sheet pills not found`)) {
+          check(ap.count === 8, `${at}: attach sheet shows ${ap.count} pills (needs 8)`);
+          check(ap.purple.length === 1 && ap.purple[0] === 'gallery_icon', `${at}: purple pills: ${ap.purple.join(', ') || 'none'} (only Gallery may be purple)`);
+          for (const p of ap.targets) check(Math.min(p.w, p.h) >= 64, `${at}: ${p.id} is ${Math.round(p.w)}x${Math.round(p.h)} (needs 64px)`);
+        }
+        for (const s of [r.gallery, r.location, r.contact, r.document, r.poll, r.payment, r.event, r.aiImages])
+          check(await A(`textIncludes(${JSON.stringify(s)})`), `${at}: "${s}" missing on the attach sheet`);
+      }
+      if (step.highlight_element === 'search_input') {
+        for (const s of [r.chipUnread, r.chipPhotos, r.chipVideos, r.chipLinks])
+          check(await A(`textIncludes(${JSON.stringify(s)})`), `${at}: chip "${s}" missing before typing`);
+      }
+      // Chat search: no chat is open before a result is tapped
+      if (search) check(!(await A(`point('[data-chat-name]')`)), `${at}: a chat is shown before a result is tapped`);
+      if (step.screen === 'whatsapp_document_picker') {
+        for (const s of [r.recent, r.chipImages, r.chipAudio, r.chipVideos, r.chipDocuments, r.browseOtherApps, r.recentFiles])
+          check(await A(`textIncludes(${JSON.stringify(s)})`), `${at}: "${s}" missing on the document picker`);
+      }
+      // Document preview: the file chosen in the picker, and who it goes to
+      if (step.screen === 'whatsapp_document_preview') {
+        check(await A(`textIncludes(${JSON.stringify(docPick)})`), `${at}: chosen file ${docPick} not shown on the preview`);
+        for (const s of [r.rameshSon, r.addCaption]) check(await A(`textIncludes(${JSON.stringify(s)})`), `${at}: "${s}" missing on the preview`);
+      }
+      if (step.screen === 'whatsapp_send_location') {
+        for (const s of [r.sendLocation, r.shareLiveLocation, r.nearbyPlaces, r.sendCurrentLocation, r.accurateTo])
+          check(await A(`textIncludes(${JSON.stringify(s)})`), `${at}: "${s}" missing on the send location screen`);
+      }
+
       // Sample data on the Google Pay payment screens
       if (step.screen === 'gpay_amount_keypad_screen' && step.highlight_element === 'amount_keypad') {
         for (const s of [r.payingRamesh, r.bankingName(r.ramesh), r.upiId('ramesh@practice'), r.addNote, r.keyNext])
@@ -935,6 +1072,104 @@ async function runTutorials(w, h, lang, reduce, scale) {
       if (stepShots) await shot(`${tag}_${task.task_id}_step${i + 1}`);
       if (step.highlight_element === 'chat_row_ramesh' && !reduce) await shot(`${tag}_${task.task_id}_tap_chat`);
 
+      const sameStep = async () => (await A('label()')) === stepText(t, i + 1, total);
+      const typeText = async (text) => {
+        await cdp.send('Input.insertText', { text });
+        await sleep(150);
+      };
+      const tapClear = async () => {
+        const cp = await A(`point(${JSON.stringify(`button[aria-label="${r.clearSearch}"]`)})`);
+        if (check(cp, `${at}: clear button not found`)) await click(cp.cx, cp.cy);
+        await sleep(150);
+      };
+      // Where the step's final tap goes when it is not the target's centre (a chosen row of a ringed list)
+      let tapAt = null;
+
+      // Chat search, typing step: a tap on the field focuses it (no nudge, no step); the first character completes the step
+      if (step.highlight_element === 'search_input') {
+        await waitFor(async () => !(await A('nudgeShown()')), 3500);
+        let st = await A('searchState()');
+        if (!check(st, `${at}: search field not found`)) break;
+        check(st.value === '' && st.fieldRing && !st.listRing && !st.rows.length, `${at}: before typing: "${st.value}", ${st.rows.length} result(s), ring on ${st.fieldRing ? 'field' : 'not the field'}`);
+        const fp = await A(`point('[data-search-input]')`);
+        await click(fp.cx, fp.cy);
+        await sleep(150);
+        check((await sameStep()) && !(await A('nudgeShown()')), `${at}: tapping the search field nudged or changed the step`);
+        check((await A('searchState()')).focused, `${at}: the search field is not focused (the phone keyboard would not open)`);
+        playMark = await cdp.eval('window.__plays.length');
+        await cdp.send('Input.insertText', { text: search.q[0] });
+        check(await waitFor(async () => (await A('label()')) === stepText(t, i + 2, total)), `${at}: typing the first character did not complete the step`);
+        st = await A('searchState()');
+        check(st && st.value === search.q[0], `${at}: first character not typed ("${st && st.value}")`);
+        check(!(await A('nudgeShown()')), `${at}: typing nudged`);
+        continue;
+      }
+
+      // Chat search, results step: more typing filters by name or digits; clear and a no-match never dead-end;
+      // with the keyboard open the instruction, the field and a result stay in view; any result opens
+      if (step.highlight_element === 'search_results') {
+        for (const s of [r.chipLinks, r.chipPhotos, r.chipDocuments, r.chipStickers])
+          check(await A(`textIncludes(${JSON.stringify(s)})`), `${at}: chip "${s}" missing after typing`);
+        await typeText(search.q.slice(1));
+        let st = await A('searchState()');
+        check(st.value === search.q && st.rows.join() === search.rows.join(), `${at}: typed "${st.value}", listed [${st.rows}] (expected [${search.rows}])`);
+        check(st.listRing && !st.fieldRing, `${at}: with results the ring is not on the list`);
+        check((await sameStep()) && !(await A('nudgeShown()')), `${at}: typing more nudged or changed the step`);
+        for (const hgt of await A(`heights('[data-search-row]')`)) check(hgt >= 64, `${at}: a result row is ${Math.round(hgt)}px (needs 64px)`);
+        if (w === 360 && h === 690 && scale === 1) {
+          // The Android WebView shrinks when the keyboard opens: emulate it with a 360x400 screen
+          await cdp.send('Emulation.setDeviceMetricsOverride', { width: 360, height: 400, deviceScaleFactor: 1, mobile: true });
+          await sleep(400);
+          for (const s of await A('keyboardFit()')) check(false, `${at}: keyboard open (360x400): ${s}`);
+          if (!reduce) await shot(`${tag}_search_keyboard_360x400`);
+          await setScreen(w, h, reduce);
+          await sleep(400);
+        }
+        await tapClear();
+        st = await A('searchState()');
+        check(st.value === '' && !st.rows.length && st.fieldRing && !st.listRing && !st.empty, `${at}: after clearing: "${st.value}", ${st.rows.length} result(s), ring on ${st.fieldRing ? 'field' : 'not the field'}`);
+        check(st.focused, `${at}: clearing took the focus from the field (the keyboard would close)`);
+        check((await sameStep()) && !(await A('nudgeShown()')), `${at}: clearing nudged or changed the step`);
+        await typeText('zzq');
+        st = await A('searchState()');
+        check(st.empty && !st.rows.length && st.fieldRing && !st.listRing, `${at}: no match: empty line ${st.empty ? 'shown' : 'missing'}, ${st.rows.length} result(s), ring on ${st.fieldRing ? 'field' : 'not the field'}`);
+        for (const s of [r.noResults, r.noResultsHelp]) check(await A(`textIncludes(${JSON.stringify(s)})`), `${at}: no match: "${s}" missing`);
+        check((await sameStep()) && !(await A('nudgeShown()')), `${at}: a no-match nudged or changed the step`);
+        if (stepShots) await shot(`${tag}_search_no_results`);
+        await tapClear();
+        await typeText(search.q);
+        st = await A('searchState()');
+        check(st.rows.join() === search.rows.join() && st.listRing, `${at}: retyped "${search.q}": listed [${st.rows}]`);
+        if (stepShots) await shot(`${tag}_search_results`);
+        tapAt = await A(`point('[data-search-row="${search.open}"]')`);
+        check(tapAt, `${at}: result ${search.open} not found`);
+      }
+
+      // Document picker: three photo rows, the rest of the screen inert (a gentle nudge); the run's file is chosen
+      if (step.highlight_element === 'doc_recent_files') {
+        const hs = await A(`heights('[data-doc-file]')`);
+        check(hs.length === 3 && Math.min(...hs) >= 64, `${at}: Recent files shows ${hs.length} row(s), smallest ${Math.round(Math.min(...hs))}px`);
+        await waitFor(async () => !(await A('nudgeShown()')), 3500);
+        const bp = await A(`clickPointForText(${JSON.stringify(r.browseOtherApps)})`);
+        if (check(bp, `${at}: "${r.browseOtherApps}" not found`)) {
+          await click(bp.cx, bp.cy);
+          check(await waitFor(() => A('nudgeShown()'), 1000), `${at}: tapping "${r.browseOtherApps}" did not nudge`);
+          check(await sameStep(), `${at}: tapping "${r.browseOtherApps}" changed the step`);
+        }
+        tapAt = await A(`point('[data-doc-file="${docPick}"]')`);
+        check(tapAt, `${at}: file ${docPick} not found`);
+      }
+
+      // Send location: "Share live location" is not the step: a gentle nudge, nothing sent, same step
+      if (step.highlight_element === 'send_current_location') {
+        await waitFor(async () => !(await A('nudgeShown()')), 3500);
+        const lp = await A(`point('[data-live-location]')`);
+        await click(lp.cx, lp.cy);
+        check(await waitFor(() => A('nudgeShown()'), 1000), `${at}: tapping Share live location did not nudge`);
+        check((await sameStep()) && !(await A('sentBubble()')), `${at}: tapping Share live location changed the step or sent something`);
+        if (stepShots) await shot(`${tag}_live_location_nudge`);
+      }
+
       // Send money: the learner types on the number pad. Keys never nudge; only the first real digit
       // completes the "type" step, and only the blue arrow (once an amount is typed) completes the next.
       if (step.highlight_element === 'amount_keypad' || step.highlight_element === 'amount_next_button') {
@@ -1005,21 +1240,35 @@ async function runTutorials(w, h, lang, reduce, scale) {
       }
 
       playMark = await cdp.eval('window.__plays.length');
-      await click(info.cx, info.cy);
+      const at2 = tapAt || info;
+      await click(at2.cx, at2.cy);
       if (i + 1 < total) {
         check(await waitFor(async () => (await A('label()')) === stepText(t, i + 2, total)), `${at}: tapping the target did not advance`);
       } else {
-        // Result screen (sent message, photo or voice note): shown after the tap, for about 2s, before "Well done"
+        // Result screen (sent message, photo, voice note, document or location; the opened chat after a search):
+        // shown after the tap, for about 2s, before "Well done"
         if (step.result_screen) {
-          check(await waitFor(() => A('sentBubble()'), 1000), `${at}: no sent bubble after the Send tap`);
-          await sleep(reduce ? 100 : 350); // its 250ms fade-in
-          const sb = await A('sentBubble()');
-          if (sb) {
-            check(sb.inside || sb.tallEndShown, `${at}: sent bubble not fully visible`);
-            if (!sb.inside && sb.tallEndShown) notes.push(`${at}: sent bubble taller than the chat area, its end (time and ticks) shown`);
+          if (search) {
+            const want = chatName(r, search.open);
+            check(
+              await waitFor(async () => (await cdp.eval(`document.querySelector('[data-chat-name]')?.textContent || ''`)) === want, 1000),
+              `${at}: tapping a result did not open the chat with ${want}`
+            );
+            await sleep(reduce ? 100 : 350);
+          } else {
+            check(await waitFor(() => A('sentBubble()'), 1000), `${at}: no sent bubble after the Send tap`);
+            await sleep(reduce ? 100 : 350); // its 250ms fade-in
+            const sb = await A('sentBubble()');
+            if (sb) {
+              check(sb.inside || sb.tallEndShown, `${at}: sent bubble not fully visible`);
+              if (!sb.inside && sb.tallEndShown) notes.push(`${at}: sent bubble taller than the chat area, its end (time and ticks) shown`);
+            }
           }
           check(!(await A(`buttonWithText(${JSON.stringify(t.practiceAgain)})`)), `${at}: "Well done" shown before the result screen`);
           if (task.task_id === 'whatsapp_send_text') check(await A(`textIncludes(${JSON.stringify(r.chatSent)})`), `${at}: sent message text missing`);
+          if (docPick) check((await A(`textIncludes(${JSON.stringify(docPick)})`)) && (await A(`textIncludes('JPG • ')`)), `${at}: document bubble does not show ${docPick} with "JPG •"`);
+          if (task.task_id === 'whatsapp_share_location')
+            check((await A(`point('[data-location-bubble]')`)) && (await A(`textIncludes(${JSON.stringify(r.addrMainRoad)})`)), `${at}: location bubble with map and place missing`);
           for (const s of await A('smallText()')) check(false, `${at} result: text under 18px: ${s}`);
           for (const s of await A('sideways()')) check(false, `${at} result: ${s}`);
           check(!(await A('loops()')).length, `${at} result: looping animation on the result screen`);

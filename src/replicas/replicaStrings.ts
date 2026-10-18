@@ -23,7 +23,6 @@ export interface ReplicaStrings {
   chatSent: string;
   chatTyped: string;
   messagePlaceholder: string;
-  shareContent: string;
   gallery: string;
   camera: string;
   document: string;
@@ -56,6 +55,41 @@ export interface ReplicaStrings {
   temple: string;
   grandchild: string;
   birthday: string;
+  /** Attach sheet pills (Gallery and Document above) */
+  location: string;
+  contact: string;
+  poll: string;
+  payment: string;
+  event: string;
+  aiImages: string;
+  /** Chat search: filter chips before and after typing, and the empty result */
+  chipPhotos: string;
+  chipVideos: string;
+  chipLinks: string;
+  chipDocuments: string;
+  chipStickers: string;
+  noResults: string;
+  noResultsHelp: string;
+  clearSearch: string;
+  /** Document picker */
+  recent: string;
+  chipImages: string;
+  chipAudio: string;
+  browseOtherApps: string;
+  recentFiles: string;
+  jpgImage: string;
+  /** Send location screen and the location message (invented places) */
+  sendLocation: string;
+  shareLiveLocation: string;
+  nearbyPlaces: string;
+  sendCurrentLocation: string;
+  accurateTo: string;
+  myLocation: string;
+  placeBusStop: string;
+  placePostOffice: string;
+  addrMainRoad: string;
+  addrStation: string;
+  addrTemple: string;
 
   // Phone home screen
   homeDate: string;
@@ -166,7 +200,6 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     chatSent: 'I am doing well son, all good!',
     chatTyped: 'I am doing well son...',
     messagePlaceholder: 'Message',
-    shareContent: 'Share Content',
     gallery: 'Gallery',
     camera: 'Camera',
     document: 'Document',
@@ -197,6 +230,37 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     temple: 'Temple',
     grandchild: 'Grandchild',
     birthday: 'Birthday',
+    location: 'Location',
+    contact: 'Contact',
+    poll: 'Poll',
+    payment: 'Payment',
+    event: 'Event',
+    aiImages: 'AI images',
+    chipPhotos: 'Photos',
+    chipVideos: 'Videos',
+    chipLinks: 'Links',
+    chipDocuments: 'Documents',
+    chipStickers: 'Stickers',
+    noResults: 'No chats found',
+    noResultsHelp: 'Tap ✕ to clear the box, then type another name, like Priya.',
+    clearSearch: 'Clear',
+    recent: 'Recent',
+    chipImages: 'Images',
+    chipAudio: 'Audio',
+    browseOtherApps: 'Browse files in other apps',
+    recentFiles: 'Recent files',
+    jpgImage: 'JPG image',
+    sendLocation: 'Send location',
+    shareLiveLocation: 'Share live location',
+    nearbyPlaces: 'Nearby places',
+    sendCurrentLocation: 'Send your current location',
+    accurateTo: 'Accurate to 20 meters',
+    myLocation: 'My location',
+    placeBusStop: 'Bus Stop',
+    placePostOffice: 'Post Office',
+    addrMainRoad: 'Main Road, Practice Town',
+    addrStation: 'Station Road, Practice Town',
+    addrTemple: 'Temple Street, Practice Town',
 
     homeDate: 'Monday, 9 March',
     appPhone: 'Phone',
@@ -298,7 +362,6 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     chatSent: 'मैं ठीक हूँ बेटा, सब कुशल है।',
     chatTyped: 'मैं ठीक हूँ बेटा...',
     messagePlaceholder: 'संदेश लिखें',
-    shareContent: 'अटैच करें',
     gallery: 'गैलरी',
     camera: 'कैमरा',
     document: 'डॉक्यूमेंट',
@@ -329,6 +392,37 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     temple: 'मंदिर',
     grandchild: 'पोता-पोती',
     birthday: 'जन्मदिन',
+    location: 'लोकेशन',
+    contact: 'संपर्क',
+    poll: 'पोल',
+    payment: 'पेमेंट',
+    event: 'इवेंट',
+    aiImages: 'AI तस्वीरें',
+    chipPhotos: 'फ़ोटो',
+    chipVideos: 'वीडियो',
+    chipLinks: 'लिंक',
+    chipDocuments: 'डॉक्यूमेंट',
+    chipStickers: 'स्टिकर',
+    noResults: 'कोई चैट नहीं मिली',
+    noResultsHelp: '✕ दबाकर बॉक्स खाली करें, फिर कोई दूसरा नाम लिखें, जैसे प्रिया।',
+    clearSearch: 'साफ़ करें',
+    recent: 'हाल ही में',
+    chipImages: 'इमेज',
+    chipAudio: 'ऑडियो',
+    browseOtherApps: 'दूसरे ऐप में फ़ाइलें देखें',
+    recentFiles: 'हाल की फ़ाइलें',
+    jpgImage: 'JPG इमेज',
+    sendLocation: 'लोकेशन भेजें',
+    shareLiveLocation: 'लाइव लोकेशन शेयर करें',
+    nearbyPlaces: 'आस-पास की जगहें',
+    sendCurrentLocation: 'अपनी मौजूदा लोकेशन भेजें',
+    accurateTo: '20 मीटर तक सटीक',
+    myLocation: 'मेरी लोकेशन',
+    placeBusStop: 'बस स्टॉप',
+    placePostOffice: 'डाकघर',
+    addrMainRoad: 'मेन रोड, अभ्यास नगर',
+    addrStation: 'स्टेशन रोड, अभ्यास नगर',
+    addrTemple: 'मंदिर मार्ग, अभ्यास नगर',
 
     homeDate: 'सोमवार, 9 मार्च',
     appPhone: 'फ़ोन',
@@ -430,7 +524,6 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     chatSent: 'ഞാൻ ഇവിടെ സുഖമായിരിക്കുന്നു മകനേ.',
     chatTyped: 'ഞാൻ സുഖമായി ഇരിക്കുന്നു...',
     messagePlaceholder: 'സന്ദേശം എഴുതുക',
-    shareContent: 'തിരഞ്ഞെടുക്കുക',
     gallery: 'ഗ്യാലറി',
     camera: 'ക്യാമറ',
     document: 'ഡോക്യുമെന്റ്',
@@ -461,6 +554,37 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     temple: 'ക്ഷേത്രം',
     grandchild: 'പേരക്കുട്ടി',
     birthday: 'ജന്മദിനം',
+    location: 'ലൊക്കേഷൻ',
+    contact: 'കോൺടാക്റ്റ്',
+    poll: 'പോൾ',
+    payment: 'പേയ്മെന്റ്',
+    event: 'ഇവന്റ്',
+    aiImages: 'AI ചിത്രങ്ങൾ',
+    chipPhotos: 'ഫോട്ടോകൾ',
+    chipVideos: 'വീഡിയോകൾ',
+    chipLinks: 'ലിങ്കുകൾ',
+    chipDocuments: 'ഡോക്യുമെന്റുകൾ',
+    chipStickers: 'സ്റ്റിക്കറുകൾ',
+    noResults: 'ചാറ്റുകളൊന്നും കണ്ടെത്തിയില്ല',
+    noResultsHelp: '✕ തൊട്ട് ബോക്സ് മായ്ക്കുക, എന്നിട്ട് പ്രിയ പോലെ മറ്റൊരു പേര് എഴുതുക.',
+    clearSearch: 'മായ്ക്കുക',
+    recent: 'അടുത്തിടെ',
+    chipImages: 'ചിത്രങ്ങൾ',
+    chipAudio: 'ഓഡിയോ',
+    browseOtherApps: 'മറ്റ് ആപ്പുകളിലെ ഫയലുകൾ കാണുക',
+    recentFiles: 'അടുത്തിടെയുള്ള ഫയലുകൾ',
+    jpgImage: 'JPG ചിത്രം',
+    sendLocation: 'ലൊക്കേഷൻ അയക്കുക',
+    shareLiveLocation: 'ലൈവ് ലൊക്കേഷൻ പങ്കിടുക',
+    nearbyPlaces: 'സമീപത്തുള്ള സ്ഥലങ്ങൾ',
+    sendCurrentLocation: 'നിലവിലെ ലൊക്കേഷൻ അയക്കുക',
+    accurateTo: '20 മീറ്റർ വരെ കൃത്യം',
+    myLocation: 'എന്റെ ലൊക്കേഷൻ',
+    placeBusStop: 'ബസ് സ്റ്റോപ്പ്',
+    placePostOffice: 'പോസ്റ്റ് ഓഫീസ്',
+    addrMainRoad: 'മെയിൻ റോഡ്, പരിശീലന നഗരം',
+    addrStation: 'സ്റ്റേഷൻ റോഡ്, പരിശീലന നഗരം',
+    addrTemple: 'ക്ഷേത്ര റോഡ്, പരിശീലന നഗരം',
 
     homeDate: 'തിങ്കൾ, 9 മാർച്ച്',
     appPhone: 'ഫോൺ',

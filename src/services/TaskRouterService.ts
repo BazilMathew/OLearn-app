@@ -58,6 +58,26 @@ const KEYWORDS: Record<string, Array<[string, number]>> = {
     ...w(2, [...VOICE, 'audio', 'speaking', 'आवाज', 'ऑडियो', 'ശബ്ദം', 'ഓഡിയോ', 'പറഞ്ഞ്']),
     ...w(1, [...SEND, ...WHATSAPP_APP])
   ],
+  whatsapp_search_contact: [
+    ...w(5, ['search contact*', 'find contact*', 'find a contact*', 'संपर्क खोज*', 'संपर्क ढूंढ*', 'नंबर ढूंढ*', 'കോൺടാക്റ്റ് തിരയ*', 'ആളെ കണ്ടെത്ത*']),
+    ...w(4, ['search*', 'find*', 'look for', 'खोज*', 'ढूंढ*', 'सर्च', 'तलाश*', 'തിരയ*', 'സെർച്ച്', 'കണ്ടെത്ത*', 'കണ്ടുപിടിക്ക*']),
+    ...w(2, ['contact*', 'person', 'someone', 'name', 'number', 'संपर्क', 'कॉन्टैक्ट', 'नाम', 'नंबर', 'व्यक्ति', 'कोई', 'കോൺടാക്റ്റ്', 'ആളെ', 'ഒരാളെ', 'പേര്', 'നമ്പർ']),
+    ...w(1, WHATSAPP_APP)
+  ],
+  whatsapp_send_document: [
+    // "photo as a document" names this task, not the photo task: the phrase covers its "photo" word
+    ...w(6, ['photo as document*', 'photo as a document*', 'photos as document*', 'फोटो को डॉक्यूमेंट*', 'फोटो डॉक्यूमेंट*', 'ഫോട്ടോ ഡോക്യുമെന്റ്']),
+    ...w(5, ['document*', 'doc', 'docs', 'डॉक्यूमेंट*', 'डाक्यूमेंट*', 'दस्तावेज*', 'ഡോക്യുമെന്റ്', 'ഡോക്യുമെൻറ്', 'രേഖ*']),
+    ...w(4, ['file*', 'pdf', 'full quality', 'original quality', 'फाइल*', 'पीडीएफ', 'पूरी क्वालिटी', 'ഫയൽ', 'പിഡിഎഫ്']),
+    ...w(2, ['quality', 'क्वालिटी', 'ക്വാളിറ്റി', 'ഗുണമേന്മ*']),
+    ...w(1, [...SEND, 'share*', ...WHATSAPP_APP])
+  ],
+  whatsapp_share_location: [
+    ...w(5, ['location*', 'live location', 'लोकेशन', 'लोकेसन', 'लोकेशन*', 'ലൊക്കേഷൻ', 'ലോക്കേഷൻ']),
+    ...w(4, ['where i am', 'where am i', 'कहां हूं', 'कहां हैं', 'എവിടെ*']),
+    ...w(3, ['address', 'map*', 'place', 'पता बताना', 'नक्शा', 'मैप', 'जगह', 'സ്ഥലം', 'വിലാസം', 'അഡ്രസ്', 'മാപ്പ്']),
+    ...w(1, [...SEND, 'share*', 'शेयर', 'ഷെയർ', ...WHATSAPP_APP])
+  ],
   gpay_check_balance: [
     ...w(4, ['bank balance', 'account balance', 'how much money', 'कितने पैसे', 'कितना पैसा', 'कितने रुपये', 'कितने रुपए', 'पैसे कितने', 'रुपये कितने', 'रुपए कितने', 'എത്ര രൂപ', 'രൂപ എത്ര', 'എത്ര പണം', 'പണം എത്ര', 'എത്ര പൈസ', 'പൈസ എത്ര']),
     ...w(3, ['balance*', 'बैलेंस', 'बैलेन्स', 'बैलन्स', 'बेलेंस', 'शेष', 'बकाया', 'ബാലൻസ്', 'ബാലെൻസ്', 'ബാക്കി']),
