@@ -18,3 +18,5 @@ visual_extracted.txt
 .env
 .env.*
 !.env.example
+
+reference-shots/
