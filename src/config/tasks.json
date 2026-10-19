@@ -391,7 +391,7 @@
         "audio_ml": "assets/audio/ml/gpay_bal_step1.mp3",
         "hint_text": {
           "en": "Tap on Check bank balance at the bottom of the screen.",
-          "hi": "स्क्रीन के नीचे 'चेक बैंक बैलेंस' विकल्प पर टैप करें।",
+          "hi": "स्क्रीन के नीचे 'बैंक बैलेंस चेक करें' विकल्प पर टैप करें।",
           "ml": "സ്ക്രീനിന്റെ താഴെയുള്ള ബാങ്ക് ബാലൻസ് പരിശോധിക്കുക തൊടുക."
         }
       },
@@ -455,7 +455,7 @@
         "audio_ml": "assets/audio/ml/gpay_qr_step1.mp3",
         "hint_text": {
           "en": "Tap the large Scan any QR code button at the top.",
-          "hi": "ऊपर बड़े 'स्कैन एनी क्यूआर कोड' बटन पर टैप करें।",
+          "hi": "ऊपर बड़े 'कोई भी क्यूआर स्कैन करें' बटन पर टैप करें।",
           "ml": "മുകളിലുള്ള 'ഏതെങ്കിലും ക്യുആർ സ്കാൻ ചെയ്യുക' വലിയ ബട്ടണിൽ തൊടുക."
         }
       },
@@ -479,7 +479,7 @@
         "audio_ml": "assets/audio/ml/gpay_qr_step3.mp3",
         "hint_text": {
           "en": "Enter the amount ₹200 and tap the blue Proceed to Pay button.",
-          "hi": "राशि ₹200 डालें और नीले 'प्रोसीड टू पे' बटन पर टैप करें।",
+          "hi": "राशि ₹200 डालें और नीले 'भुगतान करें' बटन पर टैप करें।",
           "ml": "തുക ₹200 നൽകി നീല 'പണം നൽകുക' ബട്ടൺ തൊടുക."
         }
       },
@@ -543,8 +543,8 @@
         "audio_ml": "assets/audio/ml/gpay_contact_step1.mp3",
         "hint_text": {
           "en": "Tap Pay contacts on your home screen.",
-          "hi": "अपनी होम स्क्रीन पर 'पे कॉन्टैक्ट्स' पर टैप करें।",
-          "ml": "ഹോം സ്ക്രീനിലുള്ള 'കോൺടാക്റ്റുകൾക്ക് നൽകുക' തൊടുക."
+          "hi": "अपनी होम स्क्रीन पर 'संपर्कों को पैसे भेजें' पर टैप करें।",
+          "ml": "ഹോം സ്ക്രീനിലുള്ള 'കോൺടാക്റ്റുകൾക്ക് പണം നൽകുക' തൊടുക."
         }
       },
       {
@@ -603,8 +603,8 @@
         "audio_ml": "assets/audio/ml/gpay_contact_step6.mp3",
         "hint_text": {
           "en": "Your bank is selected. Tap the blue Pay button.",
-          "hi": "आपका बैंक चुना हुआ है। नीले 'पे' बटन पर टैप करें।",
-          "ml": "ബാങ്ക് തിരഞ്ഞെടുത്തു. നീല 'പേ' ബട്ടൺ തൊടുക."
+          "hi": "आपका बैंक चुना हुआ है। नीले 'भुगतान करें' बटन पर टैप करें।",
+          "ml": "ബാങ്ക് തിരഞ്ഞെടുത്തു. നീല 'നൽകുക' ബട്ടൺ തൊടുക."
         }
       },
       {
@@ -667,7 +667,7 @@
         "audio_ml": "assets/audio/ml/gpay_history_step1.mp3",
         "hint_text": {
           "en": "Tap See transaction history, near the bottom.",
-          "hi": "नीचे 'सी ट्रांज़ैक्शन हिस्ट्री' पर टैप करें।",
+          "hi": "नीचे 'लेन-देन का इतिहास देखें' पर टैप करें।",
           "ml": "താഴെയുള്ള 'ഇടപാട് ചരിത്രം കാണുക' തൊടുക."
         }
       },
@@ -679,8 +679,8 @@
         "audio_ml": "assets/audio/ml/gpay_history_step2.mp3",
         "hint_text": {
           "en": "Received from means money came to you. You never need a PIN for that. Tap Got it.",
-          "hi": "'प्राप्त हुआ' यानी पैसे आपको मिले। इसके लिए पिन कभी नहीं चाहिए। 'गॉट इट' पर टैप करें।",
-          "ml": "പണം ലഭിക്കാൻ പിൻ വേണ്ട. 'ഗോട്ട് ഇറ്റ്' തൊടുക."
+          "hi": "'प्राप्त हुआ' यानी पैसे आपको मिले। इसके लिए पिन कभी नहीं चाहिए। 'ठीक है' पर टैप करें।",
+          "ml": "പണം ലഭിക്കാൻ പിൻ വേണ്ട. 'ശരി' തൊടുക."
         }
       },
       {
@@ -732,7 +732,7 @@
         "audio_ml": "assets/audio/ml/gpay_upi_step1.mp3",
         "hint_text": {
           "en": "Tap Pay anyone.",
-          "hi": "'पे एनीवन' पर टैप करें।",
+          "hi": "'किसी को भी पैसे भेजें' पर टैप करें।",
           "ml": "'ആർക്കും പണം നൽകുക' തൊടുക."
         }
       },
@@ -792,8 +792,8 @@
         "audio_ml": "assets/audio/ml/gpay_contact_step6.mp3",
         "hint_text": {
           "en": "Your bank is selected. Tap the blue Pay button.",
-          "hi": "आपका बैंक चुना हुआ है। नीले 'पे' बटन पर टैप करें।",
-          "ml": "ബാങ്ക് തിരഞ്ഞെടുത്തു. നീല 'പേ' ബട്ടൺ തൊടുക."
+          "hi": "आपका बैंक चुना हुआ है। नीले 'भुगतान करें' बटन पर टैप करें।",
+          "ml": "ബാങ്ക് തിരഞ്ഞെടുത്തു. നീല 'നൽകുക' ബട്ടൺ തൊടുക."
         }
       },
       {
@@ -845,7 +845,7 @@
         "audio_ml": "assets/audio/ml/gpay_recharge_step1.mp3",
         "hint_text": {
           "en": "Tap Mobile recharge, under Pay bills.",
-          "hi": "'पे बिल्स' में 'मोबाइल रिचार्ज' पर टैप करें।",
+          "hi": "'बिल भरें' में 'मोबाइल रिचार्ज' पर टैप करें।",
           "ml": "'മൊബൈൽ റീചാർജ്' തൊടുക."
         }
       },
@@ -881,8 +881,8 @@
         "audio_ml": "assets/audio/ml/gpay_contact_step6.mp3",
         "hint_text": {
           "en": "Your bank is selected. Tap the blue Pay button.",
-          "hi": "आपका बैंक चुना हुआ है। नीले 'पे' बटन पर टैप करें।",
-          "ml": "ബാങ്ക് തിരഞ്ഞെടുത്തു. നീല 'പേ' ബട്ടൺ തൊടുക."
+          "hi": "आपका बैंक चुना हुआ है। नीले 'भुगतान करें' बटन पर टैप करें।",
+          "ml": "ബാങ്ക് തിരഞ്ഞെടുത്തു. നീല 'നൽകുക' ബട്ടൺ തൊടുക."
         }
       },
       {
@@ -958,7 +958,7 @@
         "audio_ml": "assets/audio/ml/gpay_bank_step3.mp3",
         "hint_text": {
           "en": "Tap Search for IFSC to choose the bank.",
-          "hi": "बैंक चुनने के लिए 'सर्च फॉर IFSC' पर टैप करें।",
+          "hi": "बैंक चुनने के लिए 'IFSC खोजें' पर टैप करें।",
           "ml": "ബാങ്ക് തിരഞ്ഞെടുക്കാൻ 'IFSC തിരയുക' തൊടുക."
         }
       },
@@ -970,8 +970,8 @@
         "audio_ml": "assets/audio/ml/gpay_bank_step4.mp3",
         "hint_text": {
           "en": "Tap Practice Bank.",
-          "hi": "'प्रैक्टिस बैंक' पर टैप करें।",
-          "ml": "'പ്രാക്ടീസ് ബാങ്ക്' തൊടുക."
+          "hi": "'Practice Bank' पर टैप करें।",
+          "ml": "'Practice Bank' തൊടുക."
         }
       },
       {
@@ -982,7 +982,7 @@
         "audio_ml": "assets/audio/ml/gpay_bank_step5.mp3",
         "hint_text": {
           "en": "Check the account and IFSC, then tap Continue.",
-          "hi": "खाता और IFSC जांचें, फिर 'कंटिन्यू' पर टैप करें।",
+          "hi": "खाता और IFSC जांचें, फिर 'आगे बढ़ें' पर टैप करें।",
           "ml": "വിവരങ്ങൾ നോക്കി 'തുടരുക' തൊടുക."
         }
       },
@@ -1018,8 +1018,8 @@
         "audio_ml": "assets/audio/ml/gpay_contact_step6.mp3",
         "hint_text": {
           "en": "Your bank is selected. Tap the blue Pay button.",
-          "hi": "आपका बैंक चुना हुआ है। नीले 'पे' बटन पर टैप करें।",
-          "ml": "ബാങ്ക് തിരഞ്ഞെടുത്തു. നീല 'പേ' ബട്ടൺ തൊടുക."
+          "hi": "आपका बैंक चुना हुआ है। नीले 'भुगतान करें' बटन पर टैप करें।",
+          "ml": "ബാങ്ക് തിരഞ്ഞെടുത്തു. നീല 'നൽകുക' ബട്ടൺ തൊടുക."
         }
       },
       {
@@ -1071,7 +1071,7 @@
         "audio_ml": "assets/audio/ml/gpay_history_step1.mp3",
         "hint_text": {
           "en": "Tap See transaction history, near the bottom.",
-          "hi": "नीचे 'सी ट्रांज़ैक्शन हिस्ट्री' पर टैप करें।",
+          "hi": "नीचे 'लेन-देन का इतिहास देखें' पर टैप करें।",
           "ml": "താഴെയുള്ള 'ഇടപാട് ചരിത്രം കാണുക' തൊടുക."
         }
       },
@@ -1172,7 +1172,7 @@
         "audio_ml": "assets/audio/ml/gpay_history_step1.mp3",
         "hint_text": {
           "en": "Tap See transaction history, near the bottom.",
-          "hi": "नीचे 'सी ट्रांज़ैक्शन हिस्ट्री' पर टैप करें।",
+          "hi": "नीचे 'लेन-देन का इतिहास देखें' पर टैप करें।",
           "ml": "താഴെയുള്ള 'ഇടപാട് ചരിത്രം കാണുക' തൊടുക."
         }
       },

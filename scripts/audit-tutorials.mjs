@@ -38,6 +38,7 @@
 // in every language) on the report screen; one Got it label for both notes; the other detail chip, Pay again, the
 // other Get help choices and Submit report on the reading step nudge; any payment and share target; and their
 // results (report submitted with the helpline line in every language, shared to the chosen target; taps ignored).
+// Every task: a label an instruction quotes is shown, as a whole word, on that step's practice screen.
 // Exit code 1 if any check fails.
 
 import { spawn, execFileSync } from 'node:child_process';
@@ -231,6 +232,12 @@ for (const l of LANGS) {
   if (!PIN_WORD[l].test(note) || !OTP_WORD[l].test(note)) failures.push(`fraud report (${l}): the safety note does not name the PIN and the OTP: ${note}`);
   if (!REPLICA_STRINGS[l].fraudHelpline.includes('1930')) failures.push(`fraud report (${l}): the helpline line has no 1930: ${REPLICA_STRINGS[l].fraudHelpline}`);
 }
+// Every task: a label an instruction quotes ('…' in Hindi and Malayalam, "…" or curly quotes in any language) is
+// shown on that step's practice screen as a whole word (checked once per step and language at 100%, in the step loop)
+const quotedLabels = (l, s) => [...s.matchAll(l === 'en' ? /["“]([^"”]+)["”]/g : /['"‘“]([^'"’”]+)['"’”]/g)].map((m) => m[1].trim());
+const shownAsWord = (text, label) =>
+  new RegExp(`(?<![\\p{L}\\p{M}\\p{N}])${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\p{L}\\p{M}\\p{N}])`, 'u').test(text.replace(/\s+/g, ' '));
+const labelsChecked = new Set();
 // Practice data: the learner's number in the fake range, UPI IDs that never read as e-mail addresses, and only
 // invented operator and bank names
 if (!/^\+91 90000 000\d\d$/.test(MY_NUMBER) || MY_NUMBER <= '+91 90000 00003') failures.push(`recharge: ${MY_NUMBER} is not a new number in the fake range +91 90000 000xx`);
@@ -856,6 +863,8 @@ const PAGE_HELPERS = `
       const el = document.getElementById('tutorial-hint');
       return Math.round(el.scrollHeight / parseFloat(getComputedStyle(el).lineHeight));
     },
+    // The text the practice screen shows (the replica only, not the instruction)
+    replicaText() { return this.replicaRoot()?.innerText || ''; },
     // A sent bubble on the practice screen (result screens only): is it fully inside its visible region
     sentBubble() {
       const b = document.querySelector('[data-sent-bubble]');
@@ -1225,6 +1234,18 @@ async function runTutorials(w, h, lang, reduce, scale) {
         const lines = await A('hintLines()');
         if (lang === 'ml') check(lines <= 2, `${at}: Malayalam instruction takes ${lines} lines at 360px (max 2)`);
         else if (lines > 2) notes.push(`${at}: instruction takes ${lines} lines at ${w}x${h}`);
+      }
+      // Every task: each label the instruction quotes is on this practice screen (on the last step, a label it is
+      // not on may describe the result screen instead, and is checked there after the tap)
+      const quoted = quotedLabels(lang, step.hint_text[lang]);
+      let quotedForResult = [];
+      if (quoted.length && scale === 1 && !labelsChecked.has(`${task.task_id} ${i} ${lang}`)) {
+        labelsChecked.add(`${task.task_id} ${i} ${lang}`);
+        const shown = await A('replicaText()');
+        const missing = quoted.filter((q) => !shownAsWord(shown, q));
+        if (step.result_screen && i === total - 1) quotedForResult = missing;
+        else for (const q of missing) check(false, `${at}: the instruction quotes '${q}', which this practice screen does not show`);
+        if (lang === 'ml' && w === 360 && !newOwnHint && (await A('hintLines()')) > 2) notes.push(`${at}: Malayalam instruction quoting a label takes more than 2 lines at 360px`);
       }
       // Attach sheet: eight pills, Gallery the only purple one, the target pills at least 64px
       if (step.screen === 'whatsapp_attachment_sheet') {
@@ -1834,6 +1855,8 @@ async function runTutorials(w, h, lang, reduce, scale) {
         // Result screen (sent message, photo, voice note, document or location; the opened chat after a search):
         // shown after the tap, for about 2s, before "Well done"
         if (step.result_screen) {
+          for (const q of quotedForResult)
+            check(await waitFor(async () => shownAsWord(await A('replicaText()'), q), 1000), `${at}: the instruction quotes '${q}', which neither this practice screen nor its result shows`);
           if (search) {
             const want = chatName(r, search.open);
             check(
