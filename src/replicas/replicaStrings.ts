@@ -188,10 +188,8 @@ export interface ReplicaStrings {
   availableBalance: string;
   doneBalance: string;
   transactionHistory: string;
-  paymentReceipt: string;
   completed: string;
   upiRefNo: string;
-  paymentMode: string;
   mockData: string;
   scanAnyQr: string;
   payContacts: string;
@@ -202,17 +200,58 @@ export interface ReplicaStrings {
   tabMain: string;
   tabBank: string;
   tabProfile: string;
-  /** Google Pay home sections (inert) */
-  sendToBank: string;
+  /** Google Pay home sections */
+  payAnyone: string;
+  bankTransfer: string;
   sectionPeople: string;
   sectionShops: string;
   sectionBills: string;
-  billPhone: string;
+  mobileRecharge: string;
   billElectricity: string;
   billWater: string;
   sectionMoney: string;
   moneyReceived: string;
   choosePhoto: string;
+  /** Amount screen header for any payee (the contact flow keeps payingRamesh) */
+  paying: (name: string) => string;
+  /** Pay anyone: the text field, the practice line and the results */
+  payAnyoneField: string;
+  payAnyonePractice: string;
+  payAnyoneResults: string;
+  payAnyoneNoMatch: string;
+  clearField: string;
+  /** Mobile recharge */
+  enterMobileNumber: string;
+  myRecharges: string;
+  mobileOperators: string;
+  prepaid: (operator: string) => string;
+  myNumber: string;
+  recommendedPlans: string;
+  planBasic: string;
+  planValue: string;
+  planLong: string;
+  planDetails: (days: number, gbPerDay: string) => string;
+  /** Bank transfer */
+  toOthers: string;
+  toSelf: string;
+  receiver: string;
+  accountNumberField: string;
+  ifscField: string;
+  searchIfsc: string;
+  continueLabel: string;
+  bankPracticeNote: string;
+  chooseBank: string;
+  searchBank: string;
+  /** Transaction history: every row says in words which way the money went */
+  paidTo: (name: string) => string;
+  receivedFrom: (name: string) => string;
+  historyNote: string;
+  gotIt: string;
+  payAgain: string;
+  share: string;
+  havingIssues: string;
+  paidFrom: string;
+  creditedTo: string;
 }
 
 export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
@@ -384,10 +423,8 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     availableBalance: 'Available Balance',
     doneBalance: 'Done',
     transactionHistory: 'Transaction History',
-    paymentReceipt: 'Payment Receipt',
     completed: 'Completed',
     upiRefNo: 'UPI Ref No',
-    paymentMode: 'Payment Mode',
     mockData: 'OLearn Sandboxed Mock Data',
     scanAnyQr: 'Scan any QR code',
     payContacts: 'Pay contacts',
@@ -397,16 +434,52 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     tabMain: 'Main',
     tabBank: 'My bank',
     tabProfile: 'Profile',
-    sendToBank: 'Send to bank',
+    payAnyone: 'Pay anyone',
+    bankTransfer: 'Bank transfer',
     sectionPeople: 'People',
     sectionShops: 'Shops',
     sectionBills: 'Pay bills',
-    billPhone: 'Phone recharge',
+    mobileRecharge: 'Mobile recharge',
     billElectricity: 'Electricity',
     billWater: 'Water',
     sectionMoney: 'Your money',
     moneyReceived: 'Money received',
-    choosePhoto: 'Choose from photos'
+    choosePhoto: 'Choose from photos',
+    paying: (name) => `Paying ${name}`,
+    payAnyoneField: 'Enter UPI ID or phone number',
+    payAnyonePractice: 'Practice: any name or number will do.',
+    payAnyoneResults: 'Results',
+    payAnyoneNoMatch: 'No match. Practice names:',
+    clearField: 'Clear',
+    enterMobileNumber: 'Enter mobile number',
+    myRecharges: 'My recharges',
+    mobileOperators: 'Mobile operators',
+    prepaid: (operator) => `${operator} Prepaid`,
+    myNumber: 'My number',
+    recommendedPlans: 'Recommended plans',
+    planBasic: 'Basic pack',
+    planValue: 'Value pack',
+    planLong: 'Long pack',
+    planDetails: (days, gb) => `${days} days • ${gb} GB/day • Unlimited calls`,
+    toOthers: 'To others',
+    toSelf: 'To self',
+    receiver: 'Receiver',
+    accountNumberField: 'Bank account number',
+    ifscField: 'IFSC code',
+    searchIfsc: 'Search for IFSC',
+    continueLabel: 'Continue',
+    bankPracticeNote: 'Practice details only. Nothing is saved.',
+    chooseBank: 'Choose bank',
+    searchBank: 'Search bank name',
+    paidTo: (name) => `Paid to ${name}`,
+    receivedFrom: (name) => `Received from ${name}`,
+    historyNote: 'Received from means money came to you. Paid to means you paid. Receiving money never needs your UPI PIN.',
+    gotIt: 'Got it',
+    payAgain: 'Pay again',
+    share: 'Share',
+    havingIssues: 'Having issues?',
+    paidFrom: 'Paid from',
+    creditedTo: 'Credited to'
   },
   hi: {
     rameshSon: 'रमेश (बेटा)',
@@ -576,10 +649,8 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     availableBalance: 'उपलब्ध शेष राशि',
     doneBalance: 'पूर्ण (डन)',
     transactionHistory: 'लेन-देन इतिहास',
-    paymentReceipt: 'भुगतान रसीद',
     completed: 'सफल भुगतान',
     upiRefNo: 'यूपीआई रेफ़ नंबर',
-    paymentMode: 'भुगतान का तरीका',
     mockData: 'OLearn अभ्यास डेटा',
     scanAnyQr: 'कोई भी क्यूआर स्कैन करें',
     payContacts: 'संपर्कों को पैसे भेजें',
@@ -589,16 +660,52 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     tabMain: 'मुख्य',
     tabBank: 'मेरा बैंक',
     tabProfile: 'प्रोफ़ाइल',
-    sendToBank: 'बैंक में भेजें',
+    payAnyone: 'किसी को भी पैसे भेजें',
+    bankTransfer: 'बैंक ट्रांसफर',
     sectionPeople: 'लोग',
     sectionShops: 'दुकानें',
     sectionBills: 'बिल भरें',
-    billPhone: 'फ़ोन रिचार्ज',
+    mobileRecharge: 'मोबाइल रिचार्ज',
     billElectricity: 'बिजली',
     billWater: 'पानी',
     sectionMoney: 'आपका पैसा',
     moneyReceived: 'पैसे मिले',
-    choosePhoto: 'फ़ोटो से चुनें'
+    choosePhoto: 'फ़ोटो से चुनें',
+    paying: (name) => `${name} को भुगतान`,
+    payAnyoneField: 'यूपीआई आईडी या फ़ोन नंबर डालें',
+    payAnyonePractice: 'अभ्यास: कोई भी नाम या नंबर चलेगा।',
+    payAnyoneResults: 'नतीजे',
+    payAnyoneNoMatch: 'कोई मेल नहीं। अभ्यास के नाम:',
+    clearField: 'मिटाएं',
+    enterMobileNumber: 'मोबाइल नंबर डालें',
+    myRecharges: 'मेरे रिचार्ज',
+    mobileOperators: 'मोबाइल ऑपरेटर',
+    prepaid: (operator) => `${operator} प्रीपेड`,
+    myNumber: 'मेरा नंबर',
+    recommendedPlans: 'सुझाए गए प्लान',
+    planBasic: 'बेसिक पैक',
+    planValue: 'वैल्यू पैक',
+    planLong: 'लंबा पैक',
+    planDetails: (days, gb) => `${days} दिन • ${gb} GB/दिन • अनलिमिटेड कॉल`,
+    toOthers: 'दूसरों को',
+    toSelf: 'अपने खाते में',
+    receiver: 'पाने वाला',
+    accountNumberField: 'बैंक अकाउंट नंबर',
+    ifscField: 'IFSC कोड',
+    searchIfsc: 'IFSC खोजें',
+    continueLabel: 'आगे बढ़ें',
+    bankPracticeNote: 'केवल अभ्यास विवरण। कुछ भी सेव नहीं होता।',
+    chooseBank: 'बैंक चुनें',
+    searchBank: 'बैंक का नाम खोजें',
+    paidTo: (name) => `${name} को भुगतान किया`,
+    receivedFrom: (name) => `${name} से प्राप्त हुआ`,
+    historyNote: 'प्राप्त हुआ = आपको पैसे मिले। भुगतान किया = आपने पैसे दिए। पैसे पाने के लिए यूपीआई पिन कभी नहीं चाहिए।',
+    gotIt: 'ठीक है',
+    payAgain: 'फिर से भुगतान करें',
+    share: 'शेयर करें',
+    havingIssues: 'कोई समस्या?',
+    paidFrom: 'इस खाते से',
+    creditedTo: 'इस खाते में'
   },
   ml: {
     rameshSon: 'രമേഷ് (മകൻ)',
@@ -768,10 +875,8 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     availableBalance: 'ലഭ്യമായ ബാലൻസ്',
     doneBalance: 'മടങ്ങുക (ഡൺ)',
     transactionHistory: 'ഇടപാട് ചരിത്രം',
-    paymentReceipt: 'പേയ്മെന്റ് രസീത്',
     completed: 'വിജയകരം',
     upiRefNo: 'യുപിഐ റഫ് നമ്പർ',
-    paymentMode: 'പേയ്മെന്റ് രീതി',
     mockData: 'OLearn പരിശീലന ഡാറ്റ',
     scanAnyQr: 'ഏതെങ്കിലും ക്യുആർ സ്കാൻ ചെയ്യുക',
     payContacts: 'കോൺടാക്റ്റുകൾക്ക് പണം നൽകുക',
@@ -781,15 +886,51 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     tabMain: 'പ്രധാനം',
     tabBank: 'എന്റെ ബാങ്ക്',
     tabProfile: 'പ്രൊഫൈൽ',
-    sendToBank: 'ബാങ്കിലേക്ക് അയയ്ക്കുക',
+    payAnyone: 'ആർക്കും പണം നൽകുക',
+    bankTransfer: 'ബാങ്ക് ട്രാൻസ്ഫർ',
     sectionPeople: 'ആളുകൾ',
     sectionShops: 'കടകൾ',
     sectionBills: 'ബില്ലുകൾ അടയ്ക്കുക',
-    billPhone: 'ഫോൺ റീചാർജ്',
+    mobileRecharge: 'മൊബൈൽ റീചാർജ്',
     billElectricity: 'കറന്റ് ബിൽ',
     billWater: 'വെള്ളം',
     sectionMoney: 'നിങ്ങളുടെ പണം',
     moneyReceived: 'പണം ലഭിച്ചു',
-    choosePhoto: 'ഫോട്ടോയിൽ നിന്ന് തിരഞ്ഞെടുക്കുക'
+    choosePhoto: 'ഫോട്ടോയിൽ നിന്ന് തിരഞ്ഞെടുക്കുക',
+    paying: (name) => `പണം നൽകുന്നത്: ${name}`,
+    payAnyoneField: 'യുപിഐ ഐഡി അല്ലെങ്കിൽ ഫോൺ നമ്പർ',
+    payAnyonePractice: 'പരിശീലനം: ഏത് പേരും നമ്പറും മതി.',
+    payAnyoneResults: 'ഫലങ്ങൾ',
+    payAnyoneNoMatch: 'പൊരുത്തമില്ല. പരിശീലന പേരുകൾ:',
+    clearField: 'മായ്ക്കുക',
+    enterMobileNumber: 'മൊബൈൽ നമ്പർ നൽകുക',
+    myRecharges: 'എന്റെ റീചാർജുകൾ',
+    mobileOperators: 'മൊബൈൽ ഓപ്പറേറ്റർമാർ',
+    prepaid: (operator) => `${operator} പ്രീപെയ്ഡ്`,
+    myNumber: 'എന്റെ നമ്പർ',
+    recommendedPlans: 'നിർദ്ദേശിച്ച പ്ലാനുകൾ',
+    planBasic: 'ബേസിക് പായ്ക്ക്',
+    planValue: 'വാല്യൂ പായ്ക്ക്',
+    planLong: 'ലോങ് പായ്ക്ക്',
+    planDetails: (days, gb) => `${days} ദിവസം • ${gb} GB/ദിവസം • അൺലിമിറ്റഡ് കോൾ`,
+    toOthers: 'മറ്റുള്ളവർക്ക്',
+    toSelf: 'സ്വന്തം അക്കൗണ്ടിലേക്ക്',
+    receiver: 'സ്വീകർത്താവ്',
+    accountNumberField: 'ബാങ്ക് അക്കൗണ്ട് നമ്പർ',
+    ifscField: 'IFSC കോഡ്',
+    searchIfsc: 'IFSC തിരയുക',
+    continueLabel: 'തുടരുക',
+    bankPracticeNote: 'പരിശീലന വിവരങ്ങൾ മാത്രം. ഒന്നും സേവ് ചെയ്യില്ല.',
+    chooseBank: 'ബാങ്ക് തിരഞ്ഞെടുക്കുക',
+    searchBank: 'ബാങ്കിന്റെ പേര് തിരയുക',
+    paidTo: (name) => `നൽകിയത്: ${name}`,
+    receivedFrom: (name) => `ലഭിച്ചത്: ${name}`,
+    historyNote: 'ലഭിച്ചത് = നിങ്ങൾക്ക് വന്ന പണം. നൽകിയത് = നിങ്ങൾ നൽകിയ പണം. പണം ലഭിക്കാൻ യുപിഐ പിൻ ഒരിക്കലും വേണ്ട.',
+    gotIt: 'ശരി',
+    payAgain: 'വീണ്ടും നൽകുക',
+    share: 'ഷെയർ ചെയ്യുക',
+    havingIssues: 'പ്രശ്നമുണ്ടോ?',
+    paidFrom: 'ഈ അക്കൗണ്ടിൽ നിന്ന്',
+    creditedTo: 'ഈ അക്കൗണ്ടിലേക്ക്'
   }
 };

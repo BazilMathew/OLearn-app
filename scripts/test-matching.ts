@@ -78,6 +78,21 @@ const CASES: Record<string, Record<SupportedLanguage, string[]>> = {
     en: ['see transaction history', 'show my past payments', 'where is my payment receipt', 'check old transactions'],
     hi: ['लेनदेन का इतिहास देखना है', 'पुराने भुगतान देखें', 'ट्रांजैक्शन हिस्ट्री', 'पैसे का हिसाब देखना'],
     ml: ['ഇടപാടുകളുടെ ചരിത്രം കാണണം', 'പഴയ പേയ്മെന്റ് നോക്കാൻ', 'ട്രാൻസാക്ഷൻ ഹിസ്റ്ററി', 'രസീത് കാണണം']
+  },
+  gpay_pay_upi_or_phone: {
+    en: ['pay a UPI ID', 'how to pay anyone on google pay', 'send money to a phone number', 'pay a phone number'],
+    hi: ['यूपीआई आईडी पर पैसे भेजने हैं', 'फ़ोन नंबर पर पैसे भेजना', 'नंबर पर पैसे भेजो'],
+    ml: ['യുപിഐ ഐഡിയിലേക്ക് പണം അയക്കണം', 'ഫോൺ നമ്പറിലേക്ക് പണം അയക്കാൻ', 'നമ്പറിലേക്ക് പണം അയക്കുന്നത് എങ്ങനെ']
+  },
+  gpay_recharge_mobile: {
+    en: ['recharge my phone', 'mobile recharge', 'how to top up my mobile', 'buy a prepaid plan recharge'],
+    hi: ['मोबाइल रिचार्ज करना है', 'फ़ोन रिचार्ज कैसे करें', 'रिचार्ज करो'],
+    ml: ['മൊബൈൽ റീചാർജ് ചെയ്യണം', 'ഫോൺ റീചാർജ് ചെയ്യുന്നത് എങ്ങനെ', 'റീചാർജ് ചെയ്യാൻ']
+  },
+  gpay_bank_transfer: {
+    en: ['bank transfer', 'send money to a bank account', 'pay using account number and IFSC', 'how to do a bank transfer'],
+    hi: ['बैंक ट्रांसफर करना है', 'बैंक खाते में पैसे भेजने हैं', 'खाता नंबर से पैसे भेजना'],
+    ml: ['ബാങ്ക് ട്രാൻസ്ഫർ ചെയ്യണം', 'ബാങ്ക് അക്കൗണ്ടിലേക്ക് പണം അയക്കാൻ', 'അക്കൗണ്ട് നമ്പർ ഉപയോഗിച്ച് പണം അയക്കുന്നത് എങ്ങനെ']
   }
 };
 
@@ -103,6 +118,23 @@ const EXTRA: Array<[SupportedLanguage, string, string]> = [
   ['hi', 'मैसेज भेजना है', 'whatsapp_send_text'],
   ['en', 'send location', 'whatsapp_share_location'],
   ['ml', 'സ്റ്റാറ്റസ് ഫോട്ടോ ഇടണം', 'whatsapp_add_status'],
+  // The new Google Pay tasks take only their own requests: a phone number to find stays with the WhatsApp search,
+  // plain "send money" with send-money, a balance question with the balance task
+  ['en', 'search a phone number', 'whatsapp_search_contact'],
+  ['en', 'type a phone number to find a chat', 'whatsapp_search_contact'],
+  ['hi', 'फ़ोन नंबर खोजना है', 'whatsapp_search_contact'],
+  ['hi', 'चैट ढूंढने के लिए फ़ोन नंबर टाइप करना', 'whatsapp_search_contact'],
+  ['ml', 'ഫോൺ നമ്പർ തിരയണം', 'whatsapp_search_contact'],
+  ['ml', 'ചാറ്റ് കണ്ടെത്താൻ നമ്പർ ടൈപ്പ് ചെയ്യുക', 'whatsapp_search_contact'],
+  ['en', 'send money', 'gpay_send_contact'],
+  ['hi', 'पैसे भेजने हैं', 'gpay_send_contact'],
+  ['ml', 'പണം അയക്കണം', 'gpay_send_contact'],
+  ['en', 'check bank account balance', 'gpay_check_balance'],
+  ['en', 'how much money is in my bank account', 'gpay_check_balance'],
+  ['hi', 'बैंक खाते में कितने पैसे हैं', 'gpay_check_balance'],
+  ['en', 'recharge my phone number', 'gpay_recharge_mobile'],
+  ['en', 'money received', 'gpay_transaction_history'],
+  ['en', 'transfer money to my son', 'gpay_send_contact'],
   ['en', 'whatsapp', 'none'],
   ['ml', 'ജിപേ', 'none'],
   ['hi', 'नमस्ते', 'none'],

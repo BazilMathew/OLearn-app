@@ -662,38 +662,378 @@
       {
         "screen": "gpay_home_screen",
         "highlight_element": "transaction_history_button",
-        "audio_en": "assets/audio/en/gpay_hist_step1.mp3",
-        "audio_hi": "assets/audio/hi/gpay_hist_step1.mp3",
-        "audio_ml": "assets/audio/ml/gpay_hist_step1.mp3",
+        "audio_en": "assets/audio/en/gpay_history_step1.mp3",
+        "audio_hi": "assets/audio/hi/gpay_history_step1.mp3",
+        "audio_ml": "assets/audio/ml/gpay_history_step1.mp3",
         "hint_text": {
-          "en": "Scroll down and tap See transaction history.",
-          "hi": "नीचे स्क्रॉल करें और 'सी ट्रांज़ैक्शन हिस्ट्री' पर टैप करें।",
-          "ml": "താഴേക്ക് സ്ക്രോൾ ചെയ്ത് 'ഇടപാട് ചരിത്രം കാണുക' തൊടുക."
+          "en": "Tap See transaction history, near the bottom.",
+          "hi": "नीचे 'सी ट्रांज़ैक्शन हिस्ट्री' पर टैप करें।",
+          "ml": "താഴെയുള്ള 'ഇടപാട് ചരിത്രം കാണുക' തൊടുക."
         }
       },
       {
         "screen": "gpay_history_list_screen",
-        "highlight_element": "history_item_1",
-        "audio_en": "assets/audio/en/gpay_hist_step2.mp3",
-        "audio_hi": "assets/audio/hi/gpay_hist_step2.mp3",
-        "audio_ml": "assets/audio/ml/gpay_hist_step2.mp3",
+        "highlight_element": "history_note_ok",
+        "audio_en": "assets/audio/en/gpay_history_step2.mp3",
+        "audio_hi": "assets/audio/hi/gpay_history_step2.mp3",
+        "audio_ml": "assets/audio/ml/gpay_history_step2.mp3",
         "hint_text": {
-          "en": "Tap on the first transaction to view its payment receipt.",
-          "hi": "रसीद देखने के लिए पहले लेन-देन पर टैप करें।",
-          "ml": "രസീത് കാണാൻ ആദ്യത്തെ ഇടപാടിൽ തൊടുക."
+          "en": "Received from means money came to you. You never need a PIN for that. Tap Got it.",
+          "hi": "'प्राप्त हुआ' यानी पैसे आपको मिले। इसके लिए पिन कभी नहीं चाहिए। 'गॉट इट' पर टैप करें।",
+          "ml": "പണം ലഭിക്കാൻ പിൻ വേണ്ട. 'ഗോട്ട് ഇറ്റ്' തൊടുക."
         }
       },
       {
-        "screen": "gpay_receipt_detail_screen",
-        "highlight_element": "receipt_back_button",
-        "audio_en": "assets/audio/en/gpay_hist_step3.mp3",
-        "audio_hi": "assets/audio/hi/gpay_hist_step3.mp3",
-        "audio_ml": "assets/audio/ml/gpay_hist_step3.mp3",
+        "screen": "gpay_history_list_screen",
+        "highlight_element": "history_list",
+        "audio_en": "assets/audio/en/gpay_history_step3.mp3",
+        "audio_hi": "assets/audio/hi/gpay_history_step3.mp3",
+        "audio_ml": "assets/audio/ml/gpay_history_step3.mp3",
         "hint_text": {
-          "en": "Review the payment details, then tap the top Back arrow to return.",
-          "hi": "भुगतान विवरण देखें, फिर वापस जाने के लिए ऊपर बैक तीर पर टैप करें।",
-          "ml": "പേയ്മെന്റ് വിവരങ്ങൾ കണ്ട് മുകളിലുള്ള ബാക്ക് അമ്പടയാളത്തിൽ തൊടുക."
+          "en": "Tap any payment to see its details.",
+          "hi": "विवरण देखने के लिए किसी भी लेन-देन पर टैप करें।",
+          "ml": "ഏതെങ്കിലും ഇടപാട് തൊടുക."
+        },
+        "result_screen": "gpay_history_detail_screen"
+      }
+    ]
+  },
+  {
+    "task_id": "gpay_pay_upi_or_phone",
+    "app": "gpay",
+    "title": {
+      "en": "Pay a UPI ID or Phone Number",
+      "hi": "यूपीआई आईडी या फ़ोन नंबर पर पैसे भेजें",
+      "ml": "യുപിഐ ഐഡിയിലേക്കോ നമ്പറിലേക്കോ പണം അയക്കുക"
+    },
+    "description": {
+      "en": "Pay anyone by typing their UPI ID or phone number",
+      "hi": "यूपीआई आईडी या फ़ोन नंबर टाइप करके किसी को भी पैसे भेजें",
+      "ml": "യുപിഐ ഐഡിയോ നമ്പറോ ടൈപ്പ് ചെയ്ത് പണം അയക്കുക"
+    },
+    "steps": [
+      {
+        "screen": "phone_home_screen",
+        "highlight_element": "home_gpay_icon",
+        "audio_en": "assets/audio/en/gpay_start_step1.mp3",
+        "audio_hi": "assets/audio/hi/gpay_start_step1.mp3",
+        "audio_ml": "assets/audio/ml/gpay_start_step1.mp3",
+        "hint_text": {
+          "en": "Tap the blue Google Pay icon.",
+          "hi": "नीले गूगल पे आइकॉन पर टैप करें।",
+          "ml": "നീല ഗൂഗിൾ പേ ഐക്കണിൽ തൊടുക."
         }
+      },
+      {
+        "screen": "gpay_home_screen",
+        "highlight_element": "pay_anyone_button",
+        "audio_en": "assets/audio/en/gpay_upi_step1.mp3",
+        "audio_hi": "assets/audio/hi/gpay_upi_step1.mp3",
+        "audio_ml": "assets/audio/ml/gpay_upi_step1.mp3",
+        "hint_text": {
+          "en": "Tap Pay anyone.",
+          "hi": "'पे एनीवन' पर टैप करें।",
+          "ml": "'ആർക്കും പണം നൽകുക' തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_pay_anyone_screen",
+        "highlight_element": "payanyone_input",
+        "audio_en": "assets/audio/en/gpay_upi_step2.mp3",
+        "audio_hi": "assets/audio/hi/gpay_upi_step2.mp3",
+        "audio_ml": "assets/audio/ml/gpay_upi_step2.mp3",
+        "hint_text": {
+          "en": "Type a UPI ID or phone number in the box.",
+          "hi": "बॉक्स में यूपीआई आईडी या फ़ोन नंबर टाइप करें।",
+          "ml": "യുപിഐ ഐഡിയോ നമ്പറോ ടൈപ്പ് ചെയ്യുക."
+        }
+      },
+      {
+        "screen": "gpay_pay_anyone_screen",
+        "highlight_element": "payanyone_results",
+        "audio_en": "assets/audio/en/gpay_upi_step3.mp3",
+        "audio_hi": "assets/audio/hi/gpay_upi_step3.mp3",
+        "audio_ml": "assets/audio/ml/gpay_upi_step3.mp3",
+        "hint_text": {
+          "en": "Tap the name you want in the list.",
+          "hi": "सूची में जिसे पैसे भेजने हैं, उस नाम पर टैप करें।",
+          "ml": "വേണ്ട പേര് തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_amount_keypad_screen",
+        "highlight_element": "amount_keypad",
+        "audio_en": "assets/audio/en/gpay_contact_step4.mp3",
+        "audio_hi": "assets/audio/hi/gpay_contact_step4.mp3",
+        "audio_ml": "assets/audio/ml/gpay_contact_step4.mp3",
+        "hint_text": {
+          "en": "Type the amount you want to send on the number pad.",
+          "hi": "नंबर पैड पर वह राशि टाइप करें जो आप भेजना चाहते हैं।",
+          "ml": "അയക്കേണ്ട തുക നമ്പർ പാഡിൽ ടൈപ്പ് ചെയ്യുക."
+        }
+      },
+      {
+        "screen": "gpay_amount_keypad_screen",
+        "highlight_element": "amount_next_button",
+        "audio_en": "assets/audio/en/gpay_contact_step5.mp3",
+        "audio_hi": "assets/audio/hi/gpay_contact_step5.mp3",
+        "audio_ml": "assets/audio/ml/gpay_contact_step5.mp3",
+        "hint_text": {
+          "en": "When the amount is right, tap the blue arrow button.",
+          "hi": "राशि सही हो तो नीले तीर वाले बटन पर टैप करें।",
+          "ml": "തുക ശരിയെങ്കിൽ നീല അമ്പ് ബട്ടൺ തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_payment_method_sheet",
+        "highlight_element": "paymethod_pay_button",
+        "audio_en": "assets/audio/en/gpay_contact_step6.mp3",
+        "audio_hi": "assets/audio/hi/gpay_contact_step6.mp3",
+        "audio_ml": "assets/audio/ml/gpay_contact_step6.mp3",
+        "hint_text": {
+          "en": "Your bank is selected. Tap the blue Pay button.",
+          "hi": "आपका बैंक चुना हुआ है। नीले 'पे' बटन पर टैप करें।",
+          "ml": "ബാങ്ക് തിരഞ്ഞെടുത്തു. നീല 'പേ' ബട്ടൺ തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_upi_pin_screen",
+        "highlight_element": "pin_keypad_submit",
+        "audio_en": "assets/audio/en/gpay_qr_step4.mp3",
+        "audio_hi": "assets/audio/hi/gpay_qr_step4.mp3",
+        "audio_ml": "assets/audio/ml/gpay_qr_step4.mp3",
+        "hint_text": {
+          "en": "Enter your UPI PIN and tap the checkmark button.",
+          "hi": "अपना यूपीआई पिन डालें और टिक मार्क बटन पर टैप करें।",
+          "ml": "നിങ്ങളുടെ യുപിഐ പിൻ നൽകി ശരി ചിഹ്നം തൊടുക."
+        },
+        "result_screen": "gpay_payment_success_screen"
+      }
+    ]
+  },
+  {
+    "task_id": "gpay_recharge_mobile",
+    "app": "gpay",
+    "title": {
+      "en": "Recharge a Mobile Number",
+      "hi": "मोबाइल रिचार्ज करें",
+      "ml": "മൊബൈൽ റീചാർജ് ചെയ്യുക"
+    },
+    "description": {
+      "en": "Pick a number, choose a plan and pay for a mobile recharge",
+      "hi": "नंबर चुनें, प्लान चुनें और मोबाइल रिचार्ज का भुगतान करें",
+      "ml": "നമ്പറും പ്ലാനും തിരഞ്ഞെടുത്ത് റീചാർജ് ചെയ്യുക"
+    },
+    "steps": [
+      {
+        "screen": "phone_home_screen",
+        "highlight_element": "home_gpay_icon",
+        "audio_en": "assets/audio/en/gpay_start_step1.mp3",
+        "audio_hi": "assets/audio/hi/gpay_start_step1.mp3",
+        "audio_ml": "assets/audio/ml/gpay_start_step1.mp3",
+        "hint_text": {
+          "en": "Tap the blue Google Pay icon.",
+          "hi": "नीले गूगल पे आइकॉन पर टैप करें।",
+          "ml": "നീല ഗൂഗിൾ പേ ഐക്കണിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_home_screen",
+        "highlight_element": "mobile_recharge_button",
+        "audio_en": "assets/audio/en/gpay_recharge_step1.mp3",
+        "audio_hi": "assets/audio/hi/gpay_recharge_step1.mp3",
+        "audio_ml": "assets/audio/ml/gpay_recharge_step1.mp3",
+        "hint_text": {
+          "en": "Tap Mobile recharge, under Pay bills.",
+          "hi": "'पे बिल्स' में 'मोबाइल रिचार्ज' पर टैप करें।",
+          "ml": "'മൊബൈൽ റീചാർജ്' തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_recharge_screen",
+        "highlight_element": "recharge_numbers",
+        "audio_en": "assets/audio/en/gpay_recharge_step2.mp3",
+        "audio_hi": "assets/audio/hi/gpay_recharge_step2.mp3",
+        "audio_ml": "assets/audio/ml/gpay_recharge_step2.mp3",
+        "hint_text": {
+          "en": "Tap the number you want to recharge.",
+          "hi": "जिस नंबर पर रिचार्ज करना है, उस पर टैप करें।",
+          "ml": "റീചാർജ് ചെയ്യേണ്ട നമ്പർ തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_recharge_plans",
+        "highlight_element": "recharge_plans",
+        "audio_en": "assets/audio/en/gpay_recharge_step3.mp3",
+        "audio_hi": "assets/audio/hi/gpay_recharge_step3.mp3",
+        "audio_ml": "assets/audio/ml/gpay_recharge_step3.mp3",
+        "hint_text": {
+          "en": "Tap the plan you want.",
+          "hi": "अपनी पसंद के प्लान पर टैप करें।",
+          "ml": "വേണ്ട പ്ലാൻ തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_recharge_paysheet",
+        "highlight_element": "paymethod_pay_button",
+        "audio_en": "assets/audio/en/gpay_contact_step6.mp3",
+        "audio_hi": "assets/audio/hi/gpay_contact_step6.mp3",
+        "audio_ml": "assets/audio/ml/gpay_contact_step6.mp3",
+        "hint_text": {
+          "en": "Your bank is selected. Tap the blue Pay button.",
+          "hi": "आपका बैंक चुना हुआ है। नीले 'पे' बटन पर टैप करें।",
+          "ml": "ബാങ്ക് തിരഞ്ഞെടുത്തു. നീല 'പേ' ബട്ടൺ തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_upi_pin_screen",
+        "highlight_element": "pin_keypad_submit",
+        "audio_en": "assets/audio/en/gpay_qr_step4.mp3",
+        "audio_hi": "assets/audio/hi/gpay_qr_step4.mp3",
+        "audio_ml": "assets/audio/ml/gpay_qr_step4.mp3",
+        "hint_text": {
+          "en": "Enter your UPI PIN and tap the checkmark button.",
+          "hi": "अपना यूपीआई पिन डालें और टिक मार्क बटन पर टैप करें।",
+          "ml": "നിങ്ങളുടെ യുപിഐ പിൻ നൽകി ശരി ചിഹ്നം തൊടുക."
+        },
+        "result_screen": "gpay_payment_success_screen"
+      }
+    ]
+  },
+  {
+    "task_id": "gpay_bank_transfer",
+    "app": "gpay",
+    "title": {
+      "en": "Send Money to a Bank Account",
+      "hi": "बैंक खाते में पैसे भेजें",
+      "ml": "ബാങ്ക് അക്കൗണ്ടിലേക്ക് പണം അയക്കുക"
+    },
+    "description": {
+      "en": "Send money using an account number and IFSC code",
+      "hi": "खाता नंबर और IFSC कोड से पैसे भेजें",
+      "ml": "അക്കൗണ്ട് നമ്പറും IFSC കോഡും ഉപയോഗിച്ച് പണം അയക്കുക"
+    },
+    "steps": [
+      {
+        "screen": "phone_home_screen",
+        "highlight_element": "home_gpay_icon",
+        "audio_en": "assets/audio/en/gpay_start_step1.mp3",
+        "audio_hi": "assets/audio/hi/gpay_start_step1.mp3",
+        "audio_ml": "assets/audio/ml/gpay_start_step1.mp3",
+        "hint_text": {
+          "en": "Tap the blue Google Pay icon.",
+          "hi": "नीले गूगल पे आइकॉन पर टैप करें।",
+          "ml": "നീല ഗൂഗിൾ പേ ഐക്കണിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_home_screen",
+        "highlight_element": "bank_transfer_button",
+        "audio_en": "assets/audio/en/gpay_bank_step1.mp3",
+        "audio_hi": "assets/audio/hi/gpay_bank_step1.mp3",
+        "audio_ml": "assets/audio/ml/gpay_bank_step1.mp3",
+        "hint_text": {
+          "en": "Tap Bank transfer.",
+          "hi": "'बैंक ट्रांसफर' पर टैप करें।",
+          "ml": "'ബാങ്ക് ട്രാൻസ്ഫർ' തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_bank_transfer_form",
+        "highlight_element": "bank_account_field",
+        "audio_en": "assets/audio/en/gpay_bank_step2.mp3",
+        "audio_hi": "assets/audio/hi/gpay_bank_step2.mp3",
+        "audio_ml": "assets/audio/ml/gpay_bank_step2.mp3",
+        "hint_text": {
+          "en": "Tap Bank account number. A practice number fills in.",
+          "hi": "'बैंक अकाउंट नंबर' पर टैप करें। अभ्यास नंबर भर जाएगा।",
+          "ml": "'ബാങ്ക് അക്കൗണ്ട് നമ്പർ' തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_bank_transfer_form",
+        "highlight_element": "ifsc_search_link",
+        "audio_en": "assets/audio/en/gpay_bank_step3.mp3",
+        "audio_hi": "assets/audio/hi/gpay_bank_step3.mp3",
+        "audio_ml": "assets/audio/ml/gpay_bank_step3.mp3",
+        "hint_text": {
+          "en": "Tap Search for IFSC to choose the bank.",
+          "hi": "बैंक चुनने के लिए 'सर्च फॉर IFSC' पर टैप करें।",
+          "ml": "ബാങ്ക് തിരഞ്ഞെടുക്കാൻ 'IFSC തിരയുക' തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_bank_list",
+        "highlight_element": "practice_bank_row",
+        "audio_en": "assets/audio/en/gpay_bank_step4.mp3",
+        "audio_hi": "assets/audio/hi/gpay_bank_step4.mp3",
+        "audio_ml": "assets/audio/ml/gpay_bank_step4.mp3",
+        "hint_text": {
+          "en": "Tap Practice Bank.",
+          "hi": "'प्रैक्टिस बैंक' पर टैप करें।",
+          "ml": "'പ്രാക്ടീസ് ബാങ്ക്' തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_bank_transfer_form",
+        "highlight_element": "bank_continue_button",
+        "audio_en": "assets/audio/en/gpay_bank_step5.mp3",
+        "audio_hi": "assets/audio/hi/gpay_bank_step5.mp3",
+        "audio_ml": "assets/audio/ml/gpay_bank_step5.mp3",
+        "hint_text": {
+          "en": "Check the account and IFSC, then tap Continue.",
+          "hi": "खाता और IFSC जांचें, फिर 'कंटिन्यू' पर टैप करें।",
+          "ml": "വിവരങ്ങൾ നോക്കി 'തുടരുക' തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_amount_keypad_screen",
+        "highlight_element": "amount_keypad",
+        "audio_en": "assets/audio/en/gpay_contact_step4.mp3",
+        "audio_hi": "assets/audio/hi/gpay_contact_step4.mp3",
+        "audio_ml": "assets/audio/ml/gpay_contact_step4.mp3",
+        "hint_text": {
+          "en": "Type the amount you want to send on the number pad.",
+          "hi": "नंबर पैड पर वह राशि टाइप करें जो आप भेजना चाहते हैं।",
+          "ml": "അയക്കേണ്ട തുക നമ്പർ പാഡിൽ ടൈപ്പ് ചെയ്യുക."
+        }
+      },
+      {
+        "screen": "gpay_amount_keypad_screen",
+        "highlight_element": "amount_next_button",
+        "audio_en": "assets/audio/en/gpay_contact_step5.mp3",
+        "audio_hi": "assets/audio/hi/gpay_contact_step5.mp3",
+        "audio_ml": "assets/audio/ml/gpay_contact_step5.mp3",
+        "hint_text": {
+          "en": "When the amount is right, tap the blue arrow button.",
+          "hi": "राशि सही हो तो नीले तीर वाले बटन पर टैप करें।",
+          "ml": "തുക ശരിയെങ്കിൽ നീല അമ്പ് ബട്ടൺ തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_payment_method_sheet",
+        "highlight_element": "paymethod_pay_button",
+        "audio_en": "assets/audio/en/gpay_contact_step6.mp3",
+        "audio_hi": "assets/audio/hi/gpay_contact_step6.mp3",
+        "audio_ml": "assets/audio/ml/gpay_contact_step6.mp3",
+        "hint_text": {
+          "en": "Your bank is selected. Tap the blue Pay button.",
+          "hi": "आपका बैंक चुना हुआ है। नीले 'पे' बटन पर टैप करें।",
+          "ml": "ബാങ്ക് തിരഞ്ഞെടുത്തു. നീല 'പേ' ബട്ടൺ തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_upi_pin_screen",
+        "highlight_element": "pin_keypad_submit",
+        "audio_en": "assets/audio/en/gpay_qr_step4.mp3",
+        "audio_hi": "assets/audio/hi/gpay_qr_step4.mp3",
+        "audio_ml": "assets/audio/ml/gpay_qr_step4.mp3",
+        "hint_text": {
+          "en": "Enter your UPI PIN and tap the checkmark button.",
+          "hi": "अपना यूपीआई पिन डालें और टिक मार्क बटन पर टैप करें।",
+          "ml": "നിങ്ങളുടെ യുപിഐ പിൻ നൽകി ശരി ചിഹ്നം തൊടുക."
+        },
+        "result_screen": "gpay_payment_success_screen"
       }
     ]
   },

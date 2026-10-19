@@ -28,6 +28,11 @@
 // character, emptied field, keyboard open, never saved), the scam link and Cancel nudging, the press-and-hold by
 // mouse and by finger (a short tap nudges with the hold wording, a drifting hold does nothing), changing the
 // contact, and their results (taps there ignored).
+// The Pay anyone, recharge, bank transfer and history tasks also check: no ordinal, colour or fixed amount in their own
+// instructions, Malayalam in 2 lines, the fake number range and invented UPI IDs, operators and bank; Pay anyone's
+// typing (first character, filtering by name, UPI ID and digits, clear, no-match lists everyone, keyboard open, never
+// saved); any number and plan; the account and IFSC filling only on their taps, Continue grey until then; history
+// rows in words with + and green (4.5:1) for money received; and their results (success screen or payment details).
 // Exit code 1 if any check fails.
 
 import { spawn, execFileSync } from 'node:child_process';
@@ -37,7 +42,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { I18N } from '../src/config/i18n.ts';
 import { REPLICA_STRINGS } from '../src/replicas/replicaStrings.ts';
-import { UNKNOWN_NUMBER } from '../src/config/mockData.ts';
+import { UNKNOWN_NUMBER, MY_NUMBER, UPI_PAYEES, RECHARGE_OPERATORS, RECHARGE_PLANS, PRACTICE_BANK, MOCK_TRANSACTIONS } from '../src/config/mockData.ts';
 
 const args = Object.fromEntries(
   process.argv.slice(2).map((a, i, all) => (a.startsWith('--') ? [a.slice(2), all[i + 1]?.startsWith('--') ? true : all[i + 1] ?? true] : null)).filter(Boolean)
@@ -161,6 +166,49 @@ for (const id of LABEL_FIRST_TASKS) {
 }
 // The block task's number is in the fake range
 if (!/^\+91 90000 000\d\d$/.test(UNKNOWN_NUMBER)) failures.push(`block task: unknown number ${UNKNOWN_NUMBER} is not in the fake range +91 90000 000xx`);
+// Pay anyone, recharge, bank transfer and history: an instruction of their own (not shared with the older tasks)
+// has no ordinal wording, names no colour and no fixed amount
+const NEW_GPAY_TASKS = ['gpay_pay_upi_or_phone', 'gpay_recharge_mobile', 'gpay_bank_transfer', 'gpay_transaction_history'];
+const ownGpayHint = (s) => !TASKS.some((o) => !NEW_GPAY_TASKS.includes(o.task_id) && o.steps.some((x) => x.hint_text.en === s.hint_text.en));
+for (const id of NEW_GPAY_TASKS) {
+  TASKS.find((t) => t.task_id === id).steps.forEach((s, i) => {
+    if (!ownGpayHint(s)) return;
+    for (const l of LANGS) {
+      if (ORDINALS[l].test(s.hint_text[l])) failures.push(`${id} step ${i + 1} (${l}): ordinal wording in the instruction: ${s.hint_text[l]}`);
+      if (COLOURS[l].test(s.hint_text[l])) failures.push(`${id} step ${i + 1} (${l}): instruction names a colour: ${s.hint_text[l]}`);
+      if (/₹\s?\d/.test(s.hint_text[l])) failures.push(`${id} step ${i + 1} (${l}): instruction names a fixed amount: ${s.hint_text[l]}`);
+    }
+  });
+  // Every pay flow ends on the PIN tap with the success screen as its result; history ends on the payment details
+  const last = TASKS.find((t) => t.task_id === id).steps.at(-1);
+  const want = id === 'gpay_transaction_history' ? 'gpay_history_detail_screen' : 'gpay_payment_success_screen';
+  if (last.result_screen !== want) failures.push(`${id}: last step's result screen is ${last.result_screen}, expected ${want}`);
+}
+// Practice data: the learner's number in the fake range, UPI IDs that never read as e-mail addresses, and only
+// invented operator and bank names
+if (!/^\+91 90000 000\d\d$/.test(MY_NUMBER) || MY_NUMBER <= '+91 90000 00003') failures.push(`recharge: ${MY_NUMBER} is not a new number in the fake range +91 90000 000xx`);
+for (const p of UPI_PAYEES) if (/@[^@\s]*\./.test(p.upiId)) failures.push(`Pay anyone: UPI ID ${p.upiId} has a dot after the @ (reads as an e-mail address)`);
+for (const op of RECHARGE_OPERATORS) if (!/^(Practice|Demo|Sample) /.test(op)) failures.push(`recharge: operator "${op}" is not an invented name`);
+if (PRACTICE_BANK.name !== 'Practice Bank' || PRACTICE_BANK.accountMasked !== '••••0001' || PRACTICE_BANK.ifsc !== 'PRAC0000001') failures.push('bank transfer: practice bank data changed');
+// Pay anyone runs in turn: what is typed, the payees that must be listed (in order) and the one picked. Digits find a
+// payee by number; a UPI ID part finds its owner.
+const UPI_RUNS = [
+  { q: 'shop', rows: ['shop'], pick: 'shop' },
+  { q: '98765', rows: ['ramesh', 'priya'], pick: 'priya' },
+  { q: 'ramesh@', rows: ['ramesh'], pick: 'ramesh' }
+];
+let upiTurn = 0;
+// Recharge runs in turn: the number and the plan picked
+const RECHARGE_RUNS = [
+  { num: 'me', plan: 'basic' },
+  { num: 'ramesh', plan: 'long' },
+  { num: 'priya', plan: 'value' }
+];
+let rechargeTurn = 0;
+// History runs in turn: the payment opened (the received one first)
+const HIST_PICKS = ['history_item_2', 'history_item_1', 'history_item_3'];
+let histTurn = 0;
+const personName = (r, key) => ({ shop: r.shopName, ramesh: r.ramesh, priya: r.priya, me: r.myNumber })[key];
 // Chat search runs in turn: what is typed, the chats that must be listed (in order) and the one opened
 // (not always the top row: any chat may be chosen). Digits find a chat by its number.
 const SEARCHES = [
@@ -623,7 +671,7 @@ const PAGE_HELPERS = `
     heights: (sel) => [...document.querySelectorAll(sel)].map((e) => e.getBoundingClientRect().height),
     // Phone keyboard open (short screen): the instruction bar, the search field and the first result are
     // fully on screen and the topmost element at their centre
-    keyboardFit() {
+    keyboardFit(field = '[data-search-input]', row = '[data-search-row]') {
       const out = [];
       const inView = (el, name) => {
         if (!el) return out.push(name + ' not found');
@@ -634,10 +682,54 @@ const PAGE_HELPERS = `
         if (!hit || !el.contains(hit)) out.push(name + ' covered at its centre');
       };
       inView(document.getElementById('tutorial-hint')?.closest('[aria-live]'), 'instruction bar');
-      inView(document.querySelector('[data-search-input]'), 'search field');
-      inView(document.querySelector('[data-search-row]'), 'first result');
+      inView(document.querySelector(field), 'text field');
+      inView(document.querySelector(row), 'first result');
       return out;
     },
+    // Pay anyone: the typed text, the listed payees (keys), which of field and list has the ring, the no-match line
+    payState() {
+      const input = document.querySelector('[data-payanyone-input]');
+      if (!input) return null;
+      const ring = (id) => !!document.querySelector('[data-element-id="' + id + '"]')?.classList.contains('highlight-active');
+      return {
+        value: input.value,
+        rows: [...document.querySelectorAll('[data-payanyone-row]')].map((r) => r.getAttribute('data-payanyone-row')),
+        fieldRing: ring('payanyone_input'),
+        listRing: ring('payanyone_results'),
+        noMatch: !!document.querySelector('[data-payanyone-nomatch]'),
+        focused: document.activeElement === input
+      };
+    },
+    // Empties a text field the way the keyboard's delete key would (React sees an input event)
+    clearInput(sel) {
+      const input = document.querySelector(sel);
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, '');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    },
+    // History rows: id, received or paid, the words line, the amount and its colour
+    historyRows() {
+      return [...document.querySelectorAll('[data-history-row]')].map((row) => {
+        const amt = row.querySelector('[data-history-amount]');
+        return {
+          id: row.getAttribute('data-history-row'),
+          credit: row.getAttribute('data-credit') === 'true',
+          words: row.querySelector('[data-history-words]')?.textContent.trim(),
+          amount: amt?.textContent.trim(),
+          color: amt && getComputedStyle(amt).color,
+          h: row.getBoundingClientRect().height
+        };
+      });
+    },
+    // Contrast of an element's text colour on white (the history page)
+    contrastOnWhite(sel) {
+      const el = document.querySelector(sel);
+      if (!el) return 0;
+      const c = getComputedStyle(el).color.match(/[\\d.]+/g).slice(0, 3).map(Number);
+      const lum = c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+      const L = 0.2126 * lum[0] + 0.7152 * lum[1] + 0.0722 * lum[2];
+      return 1.05 / (L + 0.05);
+    },
+    attr: (sel, name) => document.querySelector(sel)?.getAttribute(name) ?? null,
     // Text status: the typed text, focus, and which of field and Send has the ring
     statusState() {
       const input = document.querySelector('[data-status-input]');
@@ -960,8 +1052,16 @@ async function runTutorials(w, h, lang, reduce, scale) {
     const showMeRun = task.task_id === 'whatsapp_send_text';
     let playMark = 0;
     // Send money: the amount this run types on the number pad, and how the app must show it
-    const sendAmount = task.task_id === 'gpay_send_contact' ? SEND_AMOUNTS[amountTurn++ % SEND_AMOUNTS.length] : null;
-    const sendShown = sendAmount && '₹' + Number(sendAmount).toLocaleString('en-IN');
+    const keypadTask = ['gpay_send_contact', 'gpay_pay_upi_or_phone', 'gpay_bank_transfer'].includes(task.task_id);
+    const sendAmount = keypadTask ? SEND_AMOUNTS[amountTurn++ % SEND_AMOUNTS.length] : null;
+    // Pay anyone, recharge and history: this run's choices (recharge pays the plan's price)
+    const upiRun = task.task_id === 'gpay_pay_upi_or_phone' ? UPI_RUNS[upiTurn++ % UPI_RUNS.length] : null;
+    const rechargeRun = task.task_id === 'gpay_recharge_mobile' ? RECHARGE_RUNS[rechargeTurn++ % RECHARGE_RUNS.length] : null;
+    const histPick = task.task_id === 'gpay_transaction_history' ? HIST_PICKS[histTurn++ % HIST_PICKS.length] : null;
+    const planPrice = rechargeRun && RECHARGE_PLANS.find((p) => p.key === rechargeRun.plan).price;
+    const sendShown = sendAmount ? '₹' + Number(sendAmount).toLocaleString('en-IN') : planPrice ? '₹' + planPrice : null;
+    // Who the payment goes to, as the success screen names them
+    const payeeShown = upiRun ? personName(r, upiRun.pick) : rechargeRun ? personName(r, rechargeRun.num) : task.task_id === 'gpay_bank_transfer' ? r.ramesh : null;
     const search = task.task_id === 'whatsapp_search_contact' ? SEARCHES[searchTurn++ % SEARCHES.length] : null;
     const docPick = task.task_id === 'whatsapp_send_document' ? DOC_PICKS[docTurn++ % DOC_PICKS.length] : null;
     const statusText = task.task_id === 'whatsapp_add_status' ? STATUS_TEXTS[statusTurn++ % STATUS_TEXTS.length] : null;
@@ -1056,7 +1156,8 @@ async function runTutorials(w, h, lang, reduce, scale) {
       // New WhatsApp tasks: a new Malayalam instruction takes at most 2 lines at 360px (100% text). Steps shared
       // with the older tasks (start steps, paperclip) keep their existing text and are not checked here.
       const sharedHint = TASKS.some((o) => !NEW_WA_TASKS.includes(o.task_id) && o.steps.some((s) => s.hint_text.en === step.hint_text.en));
-      if (NEW_WA_TASKS.includes(task.task_id) && !sharedHint && w === 360 && scale === 1) {
+      const newOwnHint = (NEW_WA_TASKS.includes(task.task_id) && !sharedHint) || (NEW_GPAY_TASKS.includes(task.task_id) && ownGpayHint(step));
+      if (newOwnHint && w === 360 && scale === 1) {
         const lines = await A('hintLines()');
         if (lang === 'ml') check(lines <= 2, `${at}: Malayalam instruction takes ${lines} lines at 360px (max 2)`);
         else if (lines > 2) notes.push(`${at}: instruction takes ${lines} lines at ${w}x${h}`);
@@ -1113,10 +1214,15 @@ async function runTutorials(w, h, lang, reduce, scale) {
 
       // Sample data on the Google Pay payment screens
       if (step.screen === 'gpay_amount_keypad_screen' && step.highlight_element === 'amount_keypad') {
-        for (const s of [r.payingRamesh, r.bankingName(r.ramesh), r.upiId('ramesh@practice'), r.addNote, r.keyNext])
+        // The header names who is paid: Ramesh (send money), the payee picked (Pay anyone) or the practice account
+        const header =
+          upiRun ? [r.paying(payeeShown), UPI_PAYEES.find((p) => p.key === upiRun.pick).upiId]
+          : task.task_id === 'gpay_bank_transfer' ? [r.paying(r.ramesh), r.bankingName(r.ramesh), `${PRACTICE_BANK.name} ${PRACTICE_BANK.accountMasked}`]
+          : [r.payingRamesh, r.bankingName(r.ramesh), r.upiId('ramesh@practice')];
+        for (const s of [...header, r.addNote, r.keyNext])
           check(await A(`textIncludes(${JSON.stringify(s)})`), `${at}: "${s}" missing on the amount screen`);
       }
-      if (step.screen === 'gpay_payment_method_sheet') {
+      if (step.screen === 'gpay_payment_method_sheet' || step.screen === 'gpay_recharge_paysheet') {
         for (const s of [r.selectPaymentMethod, 'State Bank of India', '•••• 4829', r.checkNow, r.payAmount(sendShown)])
           check(await A(`textIncludes(${JSON.stringify(s)})`), `${at}: "${s}" missing on the payment method sheet`);
         if (sendAmount === '999999') check(await A(`textIncludes(${JSON.stringify(r.payAmount('₹9,99,999'))})`), `${at}: Pay button does not show ₹9,99,999`);
@@ -1275,6 +1381,135 @@ async function runTutorials(w, h, lang, reduce, scale) {
 
       // Add status sheet: Music is not the step
       if (step.highlight_element === 'status_text_option') await inertTap(await A(`clickPointForText(${JSON.stringify(r.statusMusic)})`), 'Music');
+
+      // Pay anyone, typing step: the practice line is shown; a tap on the field focuses it (no nudge, no step);
+      // the first character completes the step
+      if (step.highlight_element === 'payanyone_input') {
+        await waitFor(async () => !(await A('nudgeShown()')), 3500);
+        check(await A(`textIncludes(${JSON.stringify(r.payAnyonePractice)})`), `${at}: the practice line is missing`);
+        let st = await A('payState()');
+        if (!check(st, `${at}: Pay anyone field not found`)) break;
+        check(st.value === '' && st.fieldRing && !st.listRing && !st.rows.length, `${at}: before typing: "${st.value}", ${st.rows.length} row(s), ring on ${st.fieldRing ? 'field' : 'not the field'}`);
+        const fp = await A(`point('[data-payanyone-input]')`);
+        await click(fp.cx, fp.cy);
+        await sleep(150);
+        check((await sameStep()) && !(await A('nudgeShown()')), `${at}: tapping the field nudged or changed the step`);
+        check((await A('payState()')).focused, `${at}: the field is not focused (the phone keyboard would not open)`);
+        playMark = await cdp.eval('window.__plays.length');
+        await cdp.send('Input.insertText', { text: upiRun.q[0] });
+        check(await waitFor(async () => (await A('label()')) === stepText(t, i + 2, total)), `${at}: typing the first character did not complete the step`);
+        st = await A('payState()');
+        check(st && st.value === upiRun.q[0], `${at}: first character not typed ("${st && st.value}")`);
+        check(!(await A('nudgeShown()')), `${at}: typing nudged`);
+        continue;
+      }
+
+      // Pay anyone, list step: more typing filters by name, UPI ID or digits; clearing gives the ring back to the
+      // field; a no-match lists every practice payee (any name will do); with the keyboard open the instruction,
+      // the field and a payee stay in view; the typed text is never saved; the run's payee is picked
+      if (step.highlight_element === 'payanyone_results') {
+        await typeText(upiRun.q.slice(1));
+        let st = await A('payState()');
+        check(st.value === upiRun.q && st.rows.join() === upiRun.rows.join() && !st.noMatch, `${at}: typed "${st.value}", listed [${st.rows}] (expected [${upiRun.rows}])`);
+        check(st.listRing && !st.fieldRing, `${at}: with payees listed the ring is not on the list`);
+        check((await sameStep()) && !(await A('nudgeShown()')), `${at}: typing more nudged or changed the step`);
+        for (const hgt of await A(`heights('[data-payanyone-row]')`)) check(hgt >= 64, `${at}: a payee row is ${Math.round(hgt)}px (needs 64px)`);
+        if (w === 360 && h === 690 && scale === 1) {
+          await cdp.send('Emulation.setDeviceMetricsOverride', { width: 360, height: 400, deviceScaleFactor: 1, mobile: true });
+          await sleep(400);
+          for (const s of await A(`keyboardFit('[data-payanyone-input]', '[data-payanyone-row]')`)) check(false, `${at}: keyboard open (360x400): ${s}`);
+          if (!reduce) await shot(`${tag}_payanyone_keyboard_360x400`);
+          await setScreen(w, h, reduce);
+          await sleep(400);
+        }
+        await A(`clearInput('[data-payanyone-input]')`);
+        await sleep(150);
+        st = await A('payState()');
+        check(st.value === '' && !st.rows.length && st.fieldRing && !st.listRing, `${at}: after clearing: "${st.value}", ${st.rows.length} row(s), ring on ${st.fieldRing ? 'field' : 'not the field'}`);
+        check((await sameStep()) && !(await A('nudgeShown()')), `${at}: clearing nudged or changed the step`);
+        await typeText('zzq');
+        st = await A('payState()');
+        check(st.noMatch && st.rows.join() === 'shop,ramesh,priya' && st.listRing, `${at}: no match: line ${st.noMatch ? 'shown' : 'missing'}, listed [${st.rows}], ring ${st.listRing ? 'on' : 'not on'} the list`);
+        check((await sameStep()) && !(await A('nudgeShown()')), `${at}: a no-match nudged or changed the step`);
+        if (stepShots) await shot(`${tag}_payanyone_no_match`);
+        await A(`clearInput('[data-payanyone-input]')`);
+        await typeText(upiRun.q);
+        st = await A('payState()');
+        check(st.rows.join() === upiRun.rows.join() && st.listRing, `${at}: retyped "${upiRun.q}": listed [${st.rows}]`);
+        check(!(await A(`storedAnywhere(${JSON.stringify(upiRun.q)})`)), `${at}: the typed text was saved in browser storage`);
+        if (stepShots) await shot(`${tag}_payanyone_results`);
+        tapAt = await A(`point('[data-payanyone-row="${upiRun.pick}"]')`);
+        check(tapAt, `${at}: payee ${upiRun.pick} not found`);
+      }
+
+      // Mobile recharge: three numbers of at least 64px, the operators inert; the run's number is picked
+      if (step.highlight_element === 'recharge_numbers') {
+        await has([r.mobileRecharge, r.enterMobileNumber, r.myRecharges, r.myNumber, MY_NUMBER], 'the recharge screen');
+        const hs = await A(`heights('[data-recharge-row]')`);
+        check(hs.length === 3 && Math.min(...hs) >= 64, `${at}: My recharges shows ${hs.length} row(s), smallest ${Math.round(Math.min(...hs))}px`);
+        await inertTap(await A(`clickPointForText(${JSON.stringify(r.prepaid(RECHARGE_OPERATORS[1]))})`), 'an operator');
+        tapAt = await A(`point('[data-recharge-row="${rechargeRun.num}"]')`);
+        check(tapAt, `${at}: number ${rechargeRun.num} not found`);
+      }
+      // Plans: for the number picked; three plans of at least 64px; the run's plan is picked
+      if (step.highlight_element === 'recharge_plans') {
+        check((await A(`textOf('[data-recharge-for]')`)) === personName(r, rechargeRun.num), `${at}: plans are for "${await A(`textOf('[data-recharge-for]')`)}", expected ${personName(r, rechargeRun.num)}`);
+        const hs = await A(`heights('[data-recharge-plan]')`);
+        check(hs.length === 3 && Math.min(...hs) >= 64, `${at}: ${hs.length} plan(s), smallest ${Math.round(Math.min(...hs))}px`);
+        tapAt = await A(`point('[data-recharge-plan="${rechargeRun.plan}"]')`);
+        check(tapAt, `${at}: plan ${rechargeRun.plan} not found`);
+      }
+
+      // Bank transfer: "To self" is not the step; the account fills in only on its tap, the IFSC code only after the
+      // bank is chosen, and Continue stays grey (a nudge) until both are filled
+      if (step.highlight_element === 'bank_account_field') {
+        check((await A(`textOf('[data-bank-account]')`)) === r.accountNumberField, `${at}: account field shows "${await A(`textOf('[data-bank-account]')`)}" before its tap`);
+        check(!(await A(`textIncludes(${JSON.stringify(PRACTICE_BANK.ifsc)})`)), `${at}: IFSC code shown before the bank is chosen`);
+        check((await A(`attr('[data-element-id="bank_continue_button"] > div', 'aria-disabled')`)) === 'true', `${at}: Continue is active before the form is filled`);
+        await inertTap(await A(`point('[data-bank-to-self]')`), 'To self');
+      }
+      if (step.highlight_element === 'ifsc_search_link') {
+        check((await A(`textIncludes(${JSON.stringify(PRACTICE_BANK.accountMasked)})`)), `${at}: the account ${PRACTICE_BANK.accountMasked} was not filled in`);
+        check(!(await A(`textIncludes(${JSON.stringify(PRACTICE_BANK.ifsc)})`)), `${at}: IFSC code shown before the bank is chosen`);
+        await inertTap(await A(`targetPoint('bank_continue_button')`), 'the grey Continue');
+        tapAt = await A(`targetPoint('ifsc_search_link')`);
+      }
+      if (step.highlight_element === 'practice_bank_row') {
+        await inertTap(await A(`clickPointForText(${JSON.stringify(r.searchBank)})`), 'the bank search box');
+        tapAt = await A(`targetPoint('practice_bank_row')`);
+      }
+      if (step.highlight_element === 'bank_continue_button') {
+        await has([PRACTICE_BANK.accountMasked, PRACTICE_BANK.ifsc, PRACTICE_BANK.name, r.bankingName(r.ramesh)], 'the filled bank form');
+        check((await A(`attr('[data-element-id="bank_continue_button"] > div', 'aria-disabled')`)) === 'false', `${at}: Continue is not active once the form is filled`);
+        tapAt = await A(`targetPoint('bank_continue_button')`);
+      }
+
+      // History: the note says what "Received from" means and that receiving needs no PIN; every row says in words
+      // which way the money went, received amounts carry + and green (4.5:1 on white), paid ones neither; a
+      // payment is not the reading step; on the list step any payment opens (the run's pick)
+      if (step.highlight_element === 'history_note_ok' || step.highlight_element === 'history_list') {
+        const rows = await A('historyRows()');
+        check(rows.length === MOCK_TRANSACTIONS.length, `${at}: ${rows.length} history row(s)`);
+        for (const row of rows) {
+          const txn = MOCK_TRANSACTIONS.find((x) => x.id === row.id);
+          const name = txn.merchant[lang] || txn.merchant.en;
+          check(row.words === (txn.isCredit ? r.receivedFrom(name) : r.paidTo(name)), `${at}: row ${row.id} reads "${row.words}"`);
+          check(row.h >= 64, `${at}: row ${row.id} is ${Math.round(row.h)}px (needs 64px)`);
+          if (txn.isCredit) check(row.amount === '+ ' + txn.amount && row.color === 'rgb(20, 108, 46)', `${at}: received row ${row.id}: "${row.amount}" in ${row.color}`);
+          else check(row.amount === txn.amount && row.color === 'rgb(31, 31, 31)', `${at}: paid row ${row.id}: "${row.amount}" in ${row.color}`);
+        }
+        check(rows.some((x) => x.credit) && rows.some((x) => !x.credit), `${at}: history needs a received and a paid row`);
+        check((await A(`contrastOnWhite('[data-credit="true"] [data-history-amount]')`)) >= 4.5, `${at}: the received amount's green is under 4.5:1 on white`);
+        await has([r.historyNote], 'the history note');
+        if (step.highlight_element === 'history_note_ok') {
+          await inertTap(await A(`point('[data-history-row="history_item_1"]')`), 'a payment on the reading step');
+          tapAt = await A(`targetPoint('history_note_ok')`);
+        } else {
+          check(!(await A(`target('history_note_ok')`)), `${at}: Got it is still shown after it was tapped`);
+          tapAt = await A(`point('[data-history-row="${histPick}"]')`);
+          check(tapAt, `${at}: payment ${histPick} not found`);
+        }
+      }
 
       // Text status, typing step: a tap on the field focuses it (no nudge, no step), no Send yet; the first
       // character completes the step
@@ -1475,6 +1710,9 @@ async function runTutorials(w, h, lang, reduce, scale) {
         for (const d of sendAmount) await press(d);
         p = await pad();
         check(p.typed === sendAmount && p.arrowActive && p.arrowRing, `${at}: retyped: amount "${p.typed}", arrow ${p.arrowActive ? 'active' : 'inactive'}`);
+        // The arrow is the target again: let its scroll-into-view (300ms after it is ringed) settle before a key is
+        // measured, or a screen that scrolls (larger text) moves under the tap
+        await sleep(reduce ? 450 : 900);
         await press('next');
         check(await waitFor(() => A('nudgeShown()'), 1000), `${at}: the keyboard's Next key did not nudge`);
         check(await sameStep(), `${at}: the keyboard's Next key changed the step`);
@@ -1506,6 +1744,21 @@ async function runTutorials(w, h, lang, reduce, scale) {
             await sleep(reduce ? 100 : 350);
             check((await A(`textOf('[data-status-posted]')`))?.includes(statusText), `${at}: "My status" does not show the typed text`);
             await has([r.myStatus, r.justNow], 'the posted status');
+          } else if (payeeShown) {
+            // Pay anyone, recharge, bank transfer: the success screen after the PIN tap, with who was paid and how much
+            check(await waitFor(() => A(`textIncludes(${JSON.stringify(r.paidSuccessfully)})`), 1000), `${at}: the success screen is not shown after the PIN tap`);
+            await sleep(reduce ? 100 : 350);
+            await has([sendShown + '.00', payeeShown], 'the success screen');
+          } else if (histPick) {
+            // History: the details of the payment tapped, in words and with its sample reference and bank
+            check(await waitFor(() => A(`point('[data-history-detail]')`), 1000), `${at}: the payment details are not shown after the tap`);
+            await sleep(reduce ? 100 : 350);
+            const txn = MOCK_TRANSACTIONS.find((x) => x.id === histPick);
+            const name = txn.merchant[lang] || txn.merchant.en;
+            check((await A(`attr('[data-history-detail]', 'data-history-detail')`)) === histPick, `${at}: details shown for ${await A(`attr('[data-history-detail]', 'data-history-detail')`)}, tapped ${histPick}`);
+            check((await A(`textOf('[data-detail-words]')`)) === (txn.isCredit ? r.receivedFrom(name) : r.paidTo(name)), `${at}: details read "${await A(`textOf('[data-detail-words]')`)}"`);
+            check((await A(`textOf('[data-detail-amount]')`)) === (txn.isCredit ? '+ ' : '') + txn.amount, `${at}: details amount "${await A(`textOf('[data-detail-amount]')`)}"`);
+            await has([txn.upiRef, r.completed, txn.date[lang]], 'the payment details');
           } else if (task.task_id === 'whatsapp_block_number') {
             check(await waitFor(() => A(`point('[data-blocked]')`), 1000), `${at}: the blocked notice is not shown after the Block tap`);
             await sleep(reduce ? 100 : 350);
@@ -1529,7 +1782,7 @@ async function runTutorials(w, h, lang, reduce, scale) {
             check((await cdp.eval(`document.querySelector('[data-forwarded-msg]')?.getAttribute('data-forwarded-msg')`)) === fwd.msg, `${at}: the forwarded bubble does not show the held message ${fwd.msg}`);
           }
           // Taps on the result screen are ignored (no nudge)
-          if (statusText || fwd || task.task_id === 'whatsapp_block_number') {
+          if (statusText || fwd || task.task_id === 'whatsapp_block_number' || payeeShown || histPick) {
             const pp = await A('progressPoint()');
             await click(pp.cx, pp.cy);
             await sleep(200);

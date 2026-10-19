@@ -119,7 +119,29 @@ const KEYWORDS: Record<string, Array<[string, number]>> = {
     ...w(2, PAY),
     ...w(1, ['son', 'daughter', 'ramesh', 'family', 'बेटा', 'बेटे', 'बेटी', 'रमेश', 'മകൻ', 'മകൾ', 'രമേഷ്', ...SEND, ...GPAY_APP])
   ],
+  gpay_pay_upi_or_phone: [
+    // Specific phrases only: a bare "phone number" belongs to the WhatsApp search. The phrases cover "send money"
+    // (the send-money task) and "number" (a search word).
+    ...w(6, ['pay anyone', 'upi id*', 'pay phone number*', 'pay a phone number*', 'pay to phone number*', 'pay to a phone number*',
+      'send money to phone number*', 'send money to a phone number*', 'money to a phone number*', 'money to phone number*',
+      'यूपीआई आईडी', 'फोन नंबर पर पैसे*', 'नंबर पर पैसे भेज*', 'फोन नंबर पर भुगतान*', 'किसी को भी पैसे*',
+      'യുപിഐ ഐഡി*', 'നമ്പറിലേക്ക് പണം*', 'ഫോൺ നമ്പറിലേക്ക്*', 'ആർക്കും പണം*']),
+    ...w(1, GPAY_APP)
+  ],
+  gpay_recharge_mobile: [
+    ...w(8, ['recharge*', 'top up', 'topup', 'रिचार्ज*', 'रीचार्ज*', 'റീചാർജ്*', 'റിചാർജ്*']),
+    ...w(3, ['prepaid', 'plan*', 'talktime', 'प्रीपेड', 'प्लान', 'टॉकटाइम', 'പ്രീപെയ്ഡ്', 'പ്ലാൻ*']),
+    ...w(1, ['mobile', 'मोबाइल', 'മൊബൈൽ', ...GPAY_APP])
+  ],
+  gpay_bank_transfer: [
+    // "bank transfer" covers "transfer" (a send-money word). A plain "bank account" is left out: it is a balance request.
+    ...w(6, ['bank transfer*', 'to bank account*', 'to a bank account*', 'to my bank account*', 'into bank account*', 'account number*', 'ifsc*',
+      'बैंक ट्रांसफर', 'बैंक खाते में पैसे भेज*', 'बैंक खाते में भेज*', 'खाता नंबर', 'अकाउंट नंबर', 'आईएफएससी',
+      'ബാങ്ക് ട്രാൻസ്ഫർ', 'ബാങ്ക് അക്കൗണ്ടിലേക്ക്*', 'അക്കൗണ്ട് നമ്പർ*', 'ഐഎഫ്എസ്സി']),
+    ...w(1, ['bank', 'बैंक', 'ബാങ്ക്', ...GPAY_APP])
+  ],
   gpay_transaction_history: [
+    ...w(4, ['money received', 'received money', 'पैसे मिले', 'ലഭിച്ച പണം']),
     ...w(4, ['past payment*', 'old payment*', 'previous payment*', 'payment record*', 'पुराने भुगतान', 'पुराने पेमेंट', 'പഴയ പേയ്മെന്റ്']),
     ...w(4, ['history', 'transaction*', 'statement*', 'receipt*', 'passbook', 'इतिहास', 'हिस्ट्री', 'लेनदेन', 'लेन देन', 'ट्रांजैक्शन', 'ट्रांजेक्शन', 'स्टेटमेंट', 'पासबुक', 'हिसाब', 'रसीद', 'ചരിത്രം', 'ഹിസ്റ്ററി', 'ഇടപാട്', 'ട്രാൻസാക്ഷൻ', 'സ്റ്റേറ്റ്മെന്റ്', 'രസീത്', 'പാസ്ബുക്ക്', 'കണക്ക്']),
     ...w(2, ['previous', 'past', 'spent', 'पुराने', 'पिछले', 'खर्च*', 'പഴയ', 'മുമ്പ*', 'മുൻപ്', 'ചെലവ*']),

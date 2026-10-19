@@ -1,7 +1,16 @@
 import React, { useState } from 'react';
 import { SupportedLanguage } from '../types/task';
 import { HighlightTarget } from '../engine/HighlightTarget';
-import { MOCK_TRANSACTIONS, MOCK_BANK_BALANCE, MockTransaction } from '../config/mockData';
+import {
+  MOCK_TRANSACTIONS,
+  MOCK_BANK_BALANCE,
+  MockTransaction,
+  UPI_PAYEES,
+  RECHARGE_NUMBERS,
+  RECHARGE_OPERATORS,
+  RECHARGE_PLANS,
+  PRACTICE_BANK
+} from '../config/mockData';
 import { REPLICA_STRINGS, ReplicaStrings } from './replicaStrings';
 import { PhoneHomeScreen } from './WhatsAppReplica';
 import {
@@ -32,7 +41,12 @@ import {
   History,
   ArrowRight,
   CircleDot,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Send,
+  Contact,
+  Info,
+  Share2,
+  CircleQuestionMark
 } from 'lucide-react';
 
 interface GPayReplicaProps {
@@ -89,7 +103,28 @@ const DEFAULT_PAYMENT_AMOUNT = 200;
 const MAX_AMOUNT_DIGITS = 6;
 const KEYPAD_ROWS = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9'], ['back', '0', 'next']];
 // Fictional UPI ID of the practice contact (not a real bank handle)
-const CONTACT_UPI_ID = 'ramesh@practice';
+const CONTACT_UPI_ID = UPI_PAYEES.find((p) => p.key === 'ramesh')!.upiId;
+
+// The sample people of Pay anyone and Mobile recharge ('me' is the learner's own number), in a string table
+type PersonKey = 'shop' | 'ramesh' | 'priya' | 'me';
+const personName = (s: ReplicaStrings, key: PersonKey) =>
+  key === 'shop' ? s.shopName : key === 'ramesh' ? s.ramesh : key === 'priya' ? s.priya : s.myNumber;
+const personInitial = (s: ReplicaStrings, key: PersonKey) =>
+  key === 'shop' ? s.shopInitial : key === 'ramesh' ? s.rameshInitial : key === 'priya' ? s.priyaInitial : s.myNumber.charAt(0);
+
+// Pay anyone: the payees whose name (screen language or English), UPI ID or phone digits contain what was
+// typed. With no match every practice payee is listed, so whatever the learner types, they can go on.
+const findPayees = (query: string, s: ReplicaStrings) => {
+  const text = query.trim().toLowerCase();
+  if (!text) return { rows: [], matched: false, digits: false };
+  const digits = /^[\d\s+]+$/.test(text) ? text.replace(/\D/g, '') : '';
+  const hits = UPI_PAYEES.filter((p) =>
+    digits
+      ? p.phone.replace(/\D/g, '').includes(digits)
+      : [personName(s, p.key), personName(REPLICA_STRINGS.en, p.key), p.upiId].some((v) => v.toLowerCase().includes(text))
+  );
+  return { rows: hits.length ? hits : UPI_PAYEES, matched: hits.length > 0, digits: !!digits };
+};
 
 // Who the practice payment goes to, per task; other flows pay the shop.
 // The shop shows a "Banking Name Verified" line; a contact shows their phone number instead.
@@ -161,24 +196,29 @@ const AppBar: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </div>
 );
 
-// One transaction row: letter avatar, name and date, amount on the right (received amounts in green)
-const TransactionRow: React.FC<{ txn: MockTransaction; language: SupportedLanguage }> = ({ txn, language }) => {
+// One transaction row: letter avatar, "Paid to" or "Received from" and the name, then the date with the amount
+// at the right (received amounts with + and in green), so the colour is never the only cue. The amount sits on the
+// date line so the words get the full width (a list of three stays short enough to be seen whole).
+const TransactionRow: React.FC<{ txn: MockTransaction; language: SupportedLanguage; r: ReplicaStrings }> = ({ txn, language, r }) => {
   const name = txn.merchant[language] || txn.merchant.en;
   return (
-    <div className="min-h-[76px] px-sm py-sm flex items-center justify-between gap-md">
-      <div className="flex items-center gap-lg min-w-0">
-        <LetterAvatar letter={name.charAt(0)} />
-        <div className="min-w-0">
-          <div className="text-body font-semibold text-[color:var(--gp-ink)] break-words">{name}</div>
-          <div className="text-label font-normal text-[color:var(--gp-ink-muted)]">{txn.date[language] || txn.date.en}</div>
+    <div className="min-h-[64px] px-sm py-xs flex items-center gap-lg">
+      <LetterAvatar letter={name.charAt(0)} />
+      <div className="flex-1 min-w-0">
+        <div data-history-words className="text-body font-semibold text-[color:var(--gp-ink)] leading-tight break-words">
+          {txn.isCredit ? r.receivedFrom(name) : r.paidTo(name)}
         </div>
-      </div>
-      <div
-        className={`text-body font-semibold flex-shrink-0 ${
-          txn.isCredit ? 'text-[color:var(--gp-success)]' : 'text-[color:var(--gp-ink)]'
-        }`}
-      >
-        {txn.isCredit ? `+ ${txn.amount}` : txn.amount}
+        <div className="flex items-baseline justify-between gap-md">
+          <span className="text-label font-normal text-[color:var(--gp-ink-muted)] min-w-0 break-words">{txn.date[language] || txn.date.en}</span>
+          <span
+            data-history-amount
+            className={`text-body font-semibold flex-shrink-0 ${
+              txn.isCredit ? 'text-[color:var(--gp-success)]' : 'text-[color:var(--gp-ink)]'
+            }`}
+          >
+            {txn.isCredit ? `+ ${txn.amount}` : txn.amount}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -202,9 +242,75 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
   const amountValue = typed ? Number(typed) : DEFAULT_PAYMENT_AMOUNT;
   const amount = '₹' + amountValue.toLocaleString('en-IN');
   const amountExact = '₹' + amountValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // What the learner types and picks in the Pay anyone, recharge, bank transfer and history practice. Like the
+  // amount, kept only while the practice runs: never stored, logged or sent.
+  const [query, setQuery] = useState('');
+  const [picked, setPicked] = useState<PersonKey | null>(null);
+  const [bankForm, setBankForm] = useState({ account: false, bank: false });
+  const [txnIndex, setTxnIndex] = useState(0);
+
   const payee = (taskId && PAYEES[taskId]) || SHOP_PAYEE;
-  const payeeName = r[payee.nameKey];
-  const payeeInitial = r[payee.initialKey];
+  // Pay anyone and Mobile recharge pay whoever was picked; Bank transfer pays Ramesh's practice account
+  const flowPerson: PersonKey | null =
+    taskId === 'gpay_pay_upi_or_phone' ? picked || 'shop'
+    : taskId === 'gpay_recharge_mobile' ? picked || 'me'
+    : taskId === 'gpay_bank_transfer' ? 'ramesh'
+    : null;
+  const payeeName = flowPerson ? personName(r, flowPerson) : r[payee.nameKey];
+  const payeeInitial = flowPerson ? personInitial(r, flowPerson) : r[payee.initialKey];
+  // Who the amount screen names: the contact flow keeps its Ramesh header; Pay anyone shows the payee's UPI ID
+  // (no banking-name line: a long shop name would push the number pad into scrolling), Bank transfer the
+  // practice bank account
+  const keypadPayee: { initial: string; title: string; banking?: string; detail: string } =
+    taskId === 'gpay_pay_upi_or_phone'
+      ? { initial: payeeInitial, title: r.paying(payeeName), detail: UPI_PAYEES.find((p) => p.key === flowPerson)?.upiId || '' }
+      : taskId === 'gpay_bank_transfer'
+        ? {
+            initial: payeeInitial,
+            title: r.paying(payeeName),
+            banking: r.bankingName(payeeName),
+            detail: `${PRACTICE_BANK.name} ${PRACTICE_BANK.accountMasked}`
+          }
+        : { initial: r.rameshInitial, title: r.payingRamesh, banking: r.bankingName(r.ramesh), detail: r.upiId(CONTACT_UPI_ID) };
+
+  // "Select payment method" sheet over a dimmed screen: the mock bank, a balance link (inert) and the blue Pay button
+  const paymentSheet = (
+    <div className="absolute inset-0 bg-black/50 flex flex-col justify-end">
+      <div className="screen-enter bg-[var(--gp-surface)] rounded-t-[28px] px-lg pt-sm pb-md space-y-md">
+        <div className="w-10 h-1 bg-[var(--gp-border)] rounded-full mx-auto" aria-hidden="true" />
+        <div className="text-[24px] leading-[30px] font-bold break-words">{r.selectPaymentMethod}</div>
+        <div className="min-h-[64px] flex items-center gap-md">
+          <div className="w-12 h-12 bg-[var(--gp-brand-blue-soft)] rounded-full flex items-center justify-center flex-shrink-0">
+            <Building2 className="w-7 h-7 text-[color:var(--gp-brand-blue-ink)]" aria-hidden="true" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-body font-normal leading-tight break-words">{MOCK_BANK_BALANCE.bankName}</div>
+            <div className="text-label font-normal text-[color:var(--gp-ink-muted)]">•••• 4829</div>
+            <div className="text-label font-normal text-[color:var(--gp-ink-muted)] break-words">
+              {r.balanceLabel} <span className="font-bold text-[color:var(--gp-brand-blue-deep)]">{r.checkNow}</span>
+            </div>
+          </div>
+          <CircleDot className="w-7 h-7 text-[color:var(--gp-brand-blue-deep)] flex-shrink-0" aria-hidden="true" />
+        </div>
+        <HighlightTarget elementId="paymethod_pay_button" {...tp} className="w-full rounded-full">
+          <div className="w-full min-h-[64px] bg-[var(--gp-brand-blue)] text-white text-body font-bold rounded-full flex items-center justify-center px-lg text-center">
+            {r.payAmount(amount)}
+          </div>
+        </HighlightTarget>
+        <div className="flex items-center justify-center gap-sm text-label font-bold text-[color:var(--gp-ink-muted)]" aria-hidden="true">
+          <Landmark className="w-5 h-5 flex-shrink-0" />
+          <span>UPI</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  // A row of a ringed list: on the list's step any row completes it (after noting the choice); otherwise a nudge
+  const listRow = (listId: string, choose: () => void) => () => {
+    if (highlightElement !== listId) return onWrongTap();
+    choose();
+    onCorrectTap();
+  };
 
   // 0. PHONE HOME SCREEN (every tutorial starts here; shared with the WhatsApp replica)
   if (screen === 'phone_home_screen') {
@@ -349,14 +455,16 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
           <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
             <X className="w-7 h-7" aria-hidden="true" />
           </div>
-          <LetterAvatar letter={r.rameshInitial} />
+          <LetterAvatar letter={keypadPayee.initial} />
           <div className="min-w-0 flex-1">
-            <div className="text-body font-normal leading-tight break-words">{r.payingRamesh}</div>
-            <div className="text-label font-normal text-[color:var(--gp-ink-muted)] flex items-center gap-xs">
-              <ShieldCheck className="w-5 h-5 text-[color:var(--gp-success)] flex-shrink-0" aria-hidden="true" />
-              <span className="min-w-0 break-words">{r.bankingName(r.ramesh)}</span>
-            </div>
-            <div className="text-label font-normal text-[color:var(--gp-ink-muted)] break-words">{r.upiId(CONTACT_UPI_ID)}</div>
+            <div data-keypad-payee className="text-body font-normal leading-tight break-words">{keypadPayee.title}</div>
+            {keypadPayee.banking && (
+              <div className="text-label font-normal text-[color:var(--gp-ink-muted)] flex items-center gap-xs">
+                <ShieldCheck className="w-5 h-5 text-[color:var(--gp-success)] flex-shrink-0" aria-hidden="true" />
+                <span className="min-w-0 break-words">{keypadPayee.banking}</span>
+              </div>
+            )}
+            <div className="text-label font-normal text-[color:var(--gp-ink-muted)] break-words">{keypadPayee.detail}</div>
           </div>
         </div>
 
@@ -411,37 +519,8 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
           </HighlightTarget>
         </div>
 
-        {/* 2b. Payment method sheet: the mock bank, a balance link (inert) and the blue Pay button */}
-        {sheet && (
-          <div className="absolute inset-0 bg-black/50 flex flex-col justify-end">
-            <div className="screen-enter bg-[var(--gp-surface)] rounded-t-[28px] px-lg pt-sm pb-md space-y-md">
-              <div className="w-10 h-1 bg-[var(--gp-border)] rounded-full mx-auto" aria-hidden="true" />
-              <div className="text-[24px] leading-[30px] font-bold break-words">{r.selectPaymentMethod}</div>
-              <div className="min-h-[64px] flex items-center gap-md">
-                <div className="w-12 h-12 bg-[var(--gp-brand-blue-soft)] rounded-full flex items-center justify-center flex-shrink-0">
-                  <Building2 className="w-7 h-7 text-[color:var(--gp-brand-blue-ink)]" aria-hidden="true" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-body font-normal leading-tight break-words">{MOCK_BANK_BALANCE.bankName}</div>
-                  <div className="text-label font-normal text-[color:var(--gp-ink-muted)]">•••• 4829</div>
-                  <div className="text-label font-normal text-[color:var(--gp-ink-muted)] break-words">
-                    {r.balanceLabel} <span className="font-bold text-[color:var(--gp-brand-blue-deep)]">{r.checkNow}</span>
-                  </div>
-                </div>
-                <CircleDot className="w-7 h-7 text-[color:var(--gp-brand-blue-deep)] flex-shrink-0" aria-hidden="true" />
-              </div>
-              <HighlightTarget elementId="paymethod_pay_button" {...tp} className="w-full rounded-full">
-                <div className="w-full min-h-[64px] bg-[var(--gp-brand-blue)] text-white text-body font-bold rounded-full flex items-center justify-center px-lg text-center">
-                  {r.payAmount(amount)}
-                </div>
-              </HighlightTarget>
-              <div className="flex items-center justify-center gap-sm text-label font-bold text-[color:var(--gp-ink-muted)]" aria-hidden="true">
-                <Landmark className="w-5 h-5 flex-shrink-0" />
-                <span>UPI</span>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* 2b. Payment method sheet */}
+        {sheet && paymentSheet}
       </div>
     );
   }
@@ -702,79 +781,443 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
     );
   }
 
-  // 8. TRANSACTION HISTORY LIST SCREEN
+  // 8. TRANSACTION HISTORY: a note on what "Received from" means (its Got it button only on the reading step),
+  // then the payments. Any payment opens its details; on the reading step a payment is not the step (a nudge).
   if (screen === 'gpay_history_list_screen') {
     return (
-      <div className="h-full w-full bg-[var(--gp-surface)] text-[color:var(--gp-ink)] flex flex-col" style={GP_THEME}>
+      <div className="min-h-full shrink-0 w-full bg-[var(--gp-surface)] text-[color:var(--gp-ink)] flex flex-col" style={GP_THEME}>
         <AppBar>
           <div className="text-title">
             {r.transactionHistory}
           </div>
         </AppBar>
 
-        <div className="px-lg pt-sm space-y-xs">
-          <HighlightTarget elementId="history_item_1" {...tp}>
-            <TransactionRow txn={MOCK_TRANSACTIONS[0]} language={language} />
-          </HighlightTarget>
-
-          <div onClick={onWrongTap}>
-            <TransactionRow txn={MOCK_TRANSACTIONS[1]} language={language} />
+        <div data-history-note className="mx-lg rounded-[var(--gp-r-card)] bg-[var(--gp-brand-blue-soft)] text-[color:var(--gp-brand-blue-ink)] px-md py-sm space-y-sm">
+          <div className="flex items-start gap-sm">
+            <Info className="w-6 h-6 flex-shrink-0 mt-[2px]" aria-hidden="true" />
+            <p className="text-label font-normal leading-snug min-w-0 break-words">{r.historyNote}</p>
           </div>
+          {highlightElement === 'history_note_ok' && (
+            <div className="flex justify-end">
+              <HighlightTarget elementId="history_note_ok" {...tp} className="rounded-full">
+                <div className="min-h-[64px] min-w-[96px] px-lg bg-[var(--gp-brand-blue)] text-white text-body font-bold rounded-full flex items-center justify-center">
+                  {r.gotIt}
+                </div>
+              </HighlightTarget>
+            </div>
+          )}
+        </div>
+
+        <div className="px-lg pt-sm pb-md">
+          <HighlightTarget elementId="history_list" {...tp}>
+            {/* Taps between rows do nothing */}
+            <div onClick={(e) => e.stopPropagation()}>
+              {MOCK_TRANSACTIONS.map((txn, i) => (
+                <div
+                  key={txn.id}
+                  data-history-row={txn.id}
+                  data-credit={txn.isCredit}
+                  onClick={listRow('history_list', () => setTxnIndex(i))}
+                  className="cursor-pointer"
+                >
+                  <TransactionRow txn={txn} language={language} r={r} />
+                </div>
+              ))}
+            </div>
+          </HighlightTarget>
         </div>
       </div>
     );
   }
 
-  // 9. RECEIPT DETAIL SCREEN
-  if (screen === 'gpay_receipt_detail_screen') {
+  // 9. PAYMENT DETAILS (result screen of the history task): who, which way, the amount, its status and date,
+  // the reference and bank from the sample data. Read-only: the buttons are inert.
+  if (screen === 'gpay_history_detail_screen') {
+    const txn = MOCK_TRANSACTIONS[txnIndex];
+    const name = txn.merchant[language] || txn.merchant.en;
     return (
-      <div className="h-full w-full bg-[var(--gp-surface)] text-[color:var(--gp-ink)] flex flex-col justify-between" style={GP_THEME}>
-        <div className="flex items-center justify-between gap-md px-md py-md border-b border-[color:var(--gp-border)]">
-          <HighlightTarget elementId="receipt_back_button" {...tp} className="rounded-full">
-            <div className="w-16 h-16 bg-[var(--gp-surface-alt)] rounded-full flex items-center justify-center">
-              <ArrowLeft className="w-8 h-8" />
+      <div
+        data-history-detail={txn.id}
+        className="min-h-full shrink-0 w-full bg-[var(--gp-surface)] text-[color:var(--gp-ink)] flex flex-col items-center px-lg pb-md text-center"
+        style={GP_THEME}
+      >
+        <div className="w-full flex items-center justify-between py-sm" aria-hidden="true">
+          <ArrowLeft className="w-7 h-7" />
+          <MoreVertical className="w-7 h-7" />
+        </div>
+        <LetterAvatar letter={name.charAt(0)} size="lg" />
+        <div data-detail-words className="text-body font-normal mt-sm break-words">
+          {txn.isCredit ? r.receivedFrom(name) : r.paidTo(name)}
+        </div>
+        <div
+          data-detail-amount
+          className={`text-[48px] leading-[56px] font-normal tracking-tight ${
+            txn.isCredit ? 'text-[color:var(--gp-success)]' : 'text-[color:var(--gp-ink)]'
+          }`}
+        >
+          {txn.isCredit ? `+ ${txn.amount}` : txn.amount}
+        </div>
+        {!txn.isCredit && (
+          <div className="mt-xs min-h-[64px] px-xl bg-[var(--gp-brand-blue)] text-white text-body font-bold rounded-full flex items-center justify-center">
+            {r.payAgain}
+          </div>
+        )}
+        <div className="mt-sm flex items-center justify-center gap-xs text-label font-normal">
+          <CheckCircle2 className="w-6 h-6 text-[color:var(--gp-success)] flex-shrink-0" aria-hidden="true" />
+          <span>{r.completed}</span>
+        </div>
+        <div className="text-label font-normal text-[color:var(--gp-ink-muted)]">{txn.date[language] || txn.date.en}</div>
+
+        <div className="w-full mt-md bg-[var(--gp-surface-card)] rounded-[var(--gp-r-card)] border border-[color:var(--gp-border)] p-md space-y-sm text-left text-label font-normal">
+          <div>
+            <div className="text-[color:var(--gp-ink-muted)]">{r.upiRefNo}</div>
+            <div className="font-bold break-words">{txn.upiRef}</div>
+          </div>
+          <div>
+            <div className="text-[color:var(--gp-ink-muted)]">{txn.isCredit ? r.creditedTo : r.paidFrom}</div>
+            <div className="font-bold break-words">{`${MOCK_BANK_BALANCE.bankName} ${MOCK_BANK_BALANCE.accountNumberMasked}`}</div>
+          </div>
+        </div>
+
+        <div className="w-full mt-md flex flex-wrap gap-sm justify-center">
+          <div className="min-h-[64px] px-lg rounded-full border border-[color:var(--gp-border)] text-[color:var(--gp-brand-blue-deep)] text-label font-bold flex items-center gap-sm">
+            <Share2 className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+            <span>{r.share}</span>
+          </div>
+          <div className="min-h-[64px] px-lg rounded-full border border-[color:var(--gp-border)] text-[color:var(--gp-brand-blue-deep)] text-label font-bold flex items-center gap-sm">
+            <CircleQuestionMark className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+            <span>{r.havingIssues}</span>
+          </div>
+        </div>
+        <div className="mt-md text-label font-normal text-[color:var(--gp-ink-muted)]">{r.mockData}</div>
+      </div>
+    );
+  }
+
+  // 10. PAY ANYONE: a real text field, so the phone's own keyboard opens. Typing lists the practice payees by
+  // name, UPI ID or phone digits (all of them when nothing matches); the first character completes the "type"
+  // step and any payee in the list can be picked. Under 480px tall (keyboard open) the screen tightens.
+  if (screen === 'gpay_pay_anyone_screen') {
+    const found = findPayees(query, r);
+    const typed = query.trim() !== '';
+    // The ring is on the list once something is typed; with an empty box it goes back to the field
+    const payTp = {
+      ...tp,
+      activeHighlightId: highlightElement === 'payanyone_results' && !typed ? 'payanyone_input' : highlightElement
+    };
+    const onType = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setQuery(e.target.value);
+      if (highlightElement === 'payanyone_input' && e.target.value.trim()) onCorrectTap();
+    };
+
+    return (
+      <div className="h-full w-full bg-[var(--gp-surface)] text-[color:var(--gp-ink)] flex flex-col" style={GP_THEME}>
+        <div className="px-lg pt-md [@media(max-height:480px)]:pt-xs">
+          <HighlightTarget elementId="payanyone_input" {...payTp} className="rounded-full">
+            {/* Taps on the field only focus it: never a nudge, never a step */}
+            <div onClick={(e) => e.stopPropagation()} className="min-h-[64px] rounded-full border border-[color:var(--gp-border)] bg-[var(--gp-surface)] flex items-center pl-xs">
+              <div onClick={onWrongTap} className="w-12 h-12 flex items-center justify-center flex-shrink-0">
+                <ArrowLeft className="w-7 h-7" aria-hidden="true" />
+              </div>
+              <input
+                data-payanyone-input
+                type="text"
+                inputMode="text"
+                enterKeyHint="search"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                autoFocus
+                aria-label={r.payAnyoneField}
+                placeholder={r.payAnyoneField}
+                value={query}
+                onChange={onType}
+                className={`flex-1 min-w-0 min-h-[48px] bg-transparent outline-none select-text text-body text-[color:var(--gp-ink)] placeholder:text-[color:var(--gp-ink-muted)] ${query ? '' : 'pr-lg'}`}
+              />
+              {query && (
+                // Keeps the keyboard open (focus stays in the field)
+                <button
+                  type="button"
+                  aria-label={r.clearField}
+                  onPointerDown={(e) => e.preventDefault()}
+                  onClick={() => setQuery('')}
+                  className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0"
+                >
+                  <X className="w-7 h-7 text-[color:var(--gp-ink-muted)]" aria-hidden="true" />
+                </button>
+              )}
             </div>
           </HighlightTarget>
-          <span className="text-body font-bold">
-            {r.paymentReceipt}
-          </span>
-          <div className="w-16" />
         </div>
 
-        <div className="bg-[var(--gp-surface-card)] rounded-[var(--gp-r-card)] p-xl space-y-xl mx-lg my-auto">
-          <div className="text-center space-y-sm">
-            <CheckCircle2 className="w-16 h-16 text-[color:var(--gp-success)] mx-auto" aria-hidden="true" />
-            <div className="text-body font-normal">
-              {MOCK_TRANSACTIONS[0].merchant[language] || MOCK_TRANSACTIONS[0].merchant.en}
-            </div>
-            <div className="text-5xl font-normal">
-              {MOCK_TRANSACTIONS[0].amount}
-            </div>
-            <div className="text-label text-[color:var(--gp-success)] bg-[var(--gp-success-soft)] py-xs px-md rounded-full inline-block">
-              {r.completed}
-            </div>
-          </div>
+        {/* Practice line (inert): any name or number will do. With the keyboard open it keeps to one line. */}
+        <p
+          data-payanyone-practice
+          className="text-label font-normal text-[color:var(--gp-ink-muted)] px-lg pt-xs leading-snug [@media(max-height:480px)]:pt-0 [@media(max-height:480px)]:line-clamp-1"
+        >
+          {r.payAnyonePractice}
+        </p>
 
-          <div className="border-t border-[color:var(--gp-border)] pt-lg space-y-md text-label font-normal text-[color:var(--gp-ink-muted)]">
-            <div className="flex justify-between gap-md">
-              <span>{r.upiRefNo}</span>
-              <span className="font-bold text-[color:var(--gp-ink)]">428901847192</span>
-            </div>
-            <div className="flex justify-between gap-md">
-              <span>{r.paymentMode}</span>
-              <span className="font-bold text-[color:var(--gp-ink)] text-right">SBI Bank •••• 4829</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="text-center text-[color:var(--gp-ink-muted)] text-label font-normal pb-lg">
-          {r.mockData}
+        <div className="flex-1 min-h-0 flex flex-col px-lg pt-xs pb-md [@media(max-height:480px)]:pt-0 [@media(max-height:480px)]:pb-xs">
+          {typed && (
+            <HighlightTarget elementId="payanyone_results" {...payTp} className="flex-1 min-h-0 flex flex-col">
+              {/* Any payee in the list can be picked; taps between rows do nothing */}
+              <div onClick={(e) => e.stopPropagation()} className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+                {found.matched ? (
+                  <div className="text-label font-bold text-[color:var(--gp-ink-muted)] px-sm pt-xs [@media(max-height:480px)]:hidden">{r.payAnyoneResults}</div>
+                ) : (
+                  <div data-payanyone-nomatch className="text-label font-bold text-[color:var(--gp-ink-muted)] px-sm pt-xs">{r.payAnyoneNoMatch}</div>
+                )}
+                {found.rows.map((p) => (
+                  <div
+                    key={p.key}
+                    data-payanyone-row={p.key}
+                    onClick={listRow('payanyone_results', () => setPicked(p.key))}
+                    className="min-h-[64px] px-sm py-xs flex items-center gap-lg cursor-pointer"
+                  >
+                    <LetterAvatar letter={personInitial(r, p.key)} />
+                    <div className="min-w-0">
+                      <div className="text-body font-semibold break-words">{personName(r, p.key)}</div>
+                      <div className="text-label font-normal text-[color:var(--gp-ink-muted)] break-words">{found.digits ? p.phone : p.upiId}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </HighlightTarget>
+          )}
         </div>
       </div>
     );
   }
 
-  // 10. GPAY HOME SCREEN (Default)
+  // 11. MOBILE RECHARGE: the number field (inert), "My recharges" (any number can be picked) and the invented
+  // operators (inert)
+  if (screen === 'gpay_recharge_screen') {
+    return (
+      <div className="min-h-full shrink-0 w-full bg-[var(--gp-surface)] text-[color:var(--gp-ink)] flex flex-col pb-md" style={GP_THEME}>
+        <AppBar>
+          <div className="text-title">{r.mobileRecharge}</div>
+        </AppBar>
+
+        <div className="px-lg">
+          <div className="text-label font-bold text-[color:var(--gp-ink-muted)] pb-xs">{r.enterMobileNumber}</div>
+          <div onClick={onWrongTap} className="min-h-[64px] rounded-xl border border-[color:var(--gp-border)] px-md flex items-center gap-sm">
+            <span className="text-body text-[color:var(--gp-ink-muted)] flex-1">+91</span>
+            <Contact className="w-7 h-7 text-[color:var(--gp-brand-blue-deep)] flex-shrink-0" aria-hidden="true" />
+          </div>
+        </div>
+
+        <SectionTitle>{r.myRecharges}</SectionTitle>
+        <div className="px-lg">
+          <HighlightTarget elementId="recharge_numbers" {...tp}>
+            <div onClick={(e) => e.stopPropagation()}>
+              {RECHARGE_NUMBERS.map((n) => (
+                <div
+                  key={n.key}
+                  data-recharge-row={n.key}
+                  onClick={listRow('recharge_numbers', () => setPicked(n.key))}
+                  className="min-h-[76px] px-sm py-sm flex items-center gap-lg cursor-pointer"
+                >
+                  {n.key === 'me' ? (
+                    <div className="w-12 h-12 rounded-full bg-[var(--gp-brand-blue-soft)] flex items-center justify-center flex-shrink-0">
+                      <CircleUserRound className="w-7 h-7 text-[color:var(--gp-brand-blue-ink)]" aria-hidden="true" />
+                    </div>
+                  ) : (
+                    <LetterAvatar letter={personInitial(r, n.key)} />
+                  )}
+                  <div className="min-w-0">
+                    <div className="text-body font-semibold break-words">{personName(r, n.key)}</div>
+                    <div className="text-label font-normal text-[color:var(--gp-ink-muted)]">{n.phone}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </HighlightTarget>
+        </div>
+
+        <SectionTitle>{r.mobileOperators}</SectionTitle>
+        <div className="px-lg space-y-xs">
+          {RECHARGE_OPERATORS.map((op) => (
+            <div key={op} onClick={onWrongTap} className="min-h-[64px] px-sm flex items-center gap-lg">
+              <div className="w-12 h-12 rounded-full bg-[var(--gp-surface-alt)] flex items-center justify-center flex-shrink-0">
+                <Smartphone className="w-7 h-7 text-[color:var(--gp-ink-muted)]" aria-hidden="true" />
+              </div>
+              <span className="text-body font-normal min-w-0 break-words">{r.prepaid(op)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // 11a. RECHARGE PLANS for the picked number (any plan can be picked; its price becomes the amount), and
+  // 11b. the payment method sheet over them, dimmed
+  if (screen === 'gpay_recharge_plans' || screen === 'gpay_recharge_paysheet') {
+    const person = flowPerson || 'me';
+    const number = RECHARGE_NUMBERS.find((n) => n.key === person) || RECHARGE_NUMBERS[0];
+    const planName = { basic: r.planBasic, value: r.planValue, long: r.planLong };
+    return (
+      <div className="relative h-full w-full overflow-hidden bg-[var(--gp-surface)] text-[color:var(--gp-ink)] flex flex-col" style={GP_THEME}>
+        <div className="flex items-center gap-md px-lg py-sm">
+          <ArrowLeft className="w-7 h-7 flex-shrink-0" aria-hidden="true" />
+          <div className="min-w-0">
+            <div data-recharge-for className="text-body font-normal leading-tight break-words">{personName(r, person)}</div>
+            <div className="text-label font-normal text-[color:var(--gp-ink-muted)] break-words">{`${number.phone} • ${r.prepaid(RECHARGE_OPERATORS[0])}`}</div>
+          </div>
+        </div>
+        {/* Room under the label for the list's ring */}
+        <div className="text-label font-bold text-[color:var(--gp-ink-muted)] px-lg pb-md">{r.recommendedPlans}</div>
+
+        <div className="flex-1 min-h-0 flex flex-col px-lg pb-md">
+          <HighlightTarget elementId="recharge_plans" {...tp} className="flex-1 min-h-0 flex flex-col">
+            <div onClick={(e) => e.stopPropagation()} className="flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-sm p-xs">
+              {RECHARGE_PLANS.map((plan) => (
+                <div
+                  key={plan.key}
+                  data-recharge-plan={plan.key}
+                  onClick={listRow('recharge_plans', () => setTyped(String(plan.price)))}
+                  className="min-h-[64px] rounded-[var(--gp-r-card)] border border-[color:var(--gp-border)] px-md py-sm flex items-center gap-md cursor-pointer"
+                >
+                  <div className="text-title font-bold flex-shrink-0">{'₹' + plan.price}</div>
+                  <div className="min-w-0">
+                    <div className="text-body font-semibold break-words">{planName[plan.key]}</div>
+                    <div className="text-label font-normal text-[color:var(--gp-ink-muted)] break-words">{r.planDetails(plan.days, plan.gbPerDay)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </HighlightTarget>
+        </div>
+
+        {screen === 'gpay_recharge_paysheet' && paymentSheet}
+      </div>
+    );
+  }
+
+  // 12. BANK TRANSFER, "To others": tapping the account field fills in the practice account (nothing is typed),
+  // Search for IFSC opens the bank list, and Continue turns blue once both are filled. "To self" is inert.
+  if (screen === 'gpay_bank_transfer_form') {
+    const ready = bankForm.account && bankForm.bank;
+    return (
+      <div className="min-h-full shrink-0 w-full bg-[var(--gp-surface)] text-[color:var(--gp-ink)] flex flex-col pb-md" style={GP_THEME}>
+        <AppBar>
+          <div className="text-title">{r.bankTransfer}</div>
+        </AppBar>
+
+        <div className="flex border-b border-[color:var(--gp-border)]">
+          <div className="flex-1 min-w-0 min-h-[56px] px-sm flex items-center justify-center text-center text-label font-bold text-[color:var(--gp-brand-blue-deep)] border-b-[3px] border-[color:var(--gp-brand-blue-deep)]">
+            {r.toOthers}
+          </div>
+          <div onClick={onWrongTap} data-bank-to-self className="flex-1 min-w-0 min-h-[56px] px-sm flex items-center justify-center text-center text-label font-normal text-[color:var(--gp-ink-muted)]">
+            {r.toSelf}
+          </div>
+        </div>
+
+        <div className="px-lg pt-md space-y-md">
+          <div className="text-body font-bold">{r.receiver}</div>
+
+          <HighlightTarget elementId="bank_account_field" {...tp} className="rounded-xl">
+            <div
+              data-bank-account
+              onClick={() => highlightElement === 'bank_account_field' && setBankForm((f) => ({ ...f, account: true }))}
+              className="min-h-[64px] rounded-xl border border-[color:var(--gp-border)] px-md py-xs flex flex-col justify-center"
+            >
+              {bankForm.account ? (
+                <>
+                  <span className="text-label font-normal text-[color:var(--gp-ink-muted)]">{r.accountNumberField}</span>
+                  <span className="text-body font-normal">{PRACTICE_BANK.accountMasked}</span>
+                </>
+              ) : (
+                <span className="text-body font-normal text-[color:var(--gp-ink-muted)]">{r.accountNumberField}</span>
+              )}
+            </div>
+          </HighlightTarget>
+
+          <div onClick={onWrongTap} className="min-h-[64px] rounded-xl border border-[color:var(--gp-border)] pl-md pr-xs flex items-center gap-sm">
+            <div data-bank-ifsc className="flex-1 min-w-0">
+              {bankForm.bank ? (
+                <>
+                  <div className="text-label font-normal text-[color:var(--gp-ink-muted)]">{r.ifscField}</div>
+                  <div className="text-body font-normal">{PRACTICE_BANK.ifsc}</div>
+                </>
+              ) : (
+                <span className="text-body font-normal text-[color:var(--gp-ink-muted)] break-words">{r.ifscField}</span>
+              )}
+            </div>
+            <HighlightTarget elementId="ifsc_search_link" {...tp} className="rounded-full flex-shrink-0">
+              <div className="min-h-[64px] px-sm rounded-full flex items-center text-center text-label font-bold text-[color:var(--gp-brand-blue-deep)]">
+                {r.searchIfsc}
+              </div>
+            </HighlightTarget>
+          </div>
+
+          {bankForm.bank && (
+            <div data-bank-chosen className="space-y-xs text-label font-normal">
+              <div className="flex items-center gap-sm">
+                <Building2 className="w-5 h-5 text-[color:var(--gp-brand-blue-deep)] flex-shrink-0" aria-hidden="true" />
+                <span className="min-w-0 break-words">{PRACTICE_BANK.name}</span>
+              </div>
+              {bankForm.account && (
+                <div className="flex items-center gap-sm">
+                  <ShieldCheck className="w-5 h-5 text-[color:var(--gp-success)] flex-shrink-0" aria-hidden="true" />
+                  <span className="min-w-0 break-words">{r.bankingName(r.ramesh)}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          <HighlightTarget elementId="bank_continue_button" {...tp} className="w-full rounded-full">
+            <div
+              aria-disabled={!ready}
+              className={`w-full min-h-[64px] rounded-full flex items-center justify-center px-lg text-body font-bold ${
+                ready ? 'bg-[var(--gp-brand-blue)] text-white' : 'bg-[var(--gp-surface-alt)] text-[color:var(--gp-ink-muted)]'
+              }`}
+            >
+              {r.continueLabel}
+            </div>
+          </HighlightTarget>
+
+          <p className="text-label font-normal text-[color:var(--gp-ink-muted)] text-center">{r.bankPracticeNote}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 12a. BANK LIST (from Search for IFSC): the search box is inert; Practice Bank fills in the IFSC code
+  if (screen === 'gpay_bank_list') {
+    return (
+      <div className="min-h-full shrink-0 w-full bg-[var(--gp-surface)] text-[color:var(--gp-ink)] flex flex-col" style={GP_THEME}>
+        <AppBar>
+          <div className="text-title">{r.chooseBank}</div>
+        </AppBar>
+        <div className="px-lg">
+          <div onClick={onWrongTap} className="min-h-[64px] rounded-full bg-[var(--gp-surface-alt)] flex items-center gap-md px-lg">
+            <Search className="w-7 h-7 flex-shrink-0" aria-hidden="true" />
+            <span className="text-body text-[color:var(--gp-ink-muted)] min-w-0 break-words">{r.searchBank}</span>
+          </div>
+        </div>
+        <div className="px-lg pt-md">
+          <HighlightTarget elementId="practice_bank_row" {...tp}>
+            <div
+              onClick={() => highlightElement === 'practice_bank_row' && setBankForm((f) => ({ ...f, bank: true }))}
+              className="min-h-[76px] px-sm py-sm flex items-center gap-lg"
+            >
+              <div className="w-12 h-12 rounded-full bg-[var(--gp-brand-blue-soft)] flex items-center justify-center flex-shrink-0">
+                <Building2 className="w-7 h-7 text-[color:var(--gp-brand-blue-ink)]" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-body font-semibold break-words">{PRACTICE_BANK.name}</div>
+                <div className="text-label font-normal text-[color:var(--gp-ink-muted)]">{PRACTICE_BANK.ifsc}</div>
+              </div>
+            </div>
+          </HighlightTarget>
+        </div>
+      </div>
+    );
+  }
+
+  // 13. GPAY HOME SCREEN (Default)
   return (
     <div className="h-full w-full bg-[var(--gp-surface)] text-[color:var(--gp-ink)] flex flex-col" style={GP_THEME}>
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden flex flex-col">
@@ -814,9 +1257,13 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
             <Shortcut icon={Users} label={r.payContacts} />
           </HighlightTarget>
 
-          <div onClick={onWrongTap} className="min-w-0">
-            <Shortcut icon={Landmark} label={r.sendToBank} />
-          </div>
+          <HighlightTarget elementId="pay_anyone_button" {...tp}>
+            <Shortcut icon={Send} label={r.payAnyone} />
+          </HighlightTarget>
+
+          <HighlightTarget elementId="bank_transfer_button" {...tp}>
+            <Shortcut icon={Landmark} label={r.bankTransfer} />
+          </HighlightTarget>
         </div>
 
         {/* People (inert): Ramesh first. Columns are at least 88px so names wrap by word (3 per row at 360px,
@@ -850,12 +1297,15 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
           </div>
         </div>
 
-        {/* Pay bills (inert): soft-blue circles with dark icons */}
+        {/* Pay bills: soft-blue circles with dark icons; Mobile recharge opens the recharge, the others are inert.
+            Columns are at least 120px so the widest single word (Malayalam മൊബൈൽ, 119px) never breaks */}
         <SectionTitle>{r.sectionBills}</SectionTitle>
-        <div className="grid grid-cols-3 gap-x-xs px-lg">
-          <RoundItem circleClass="bg-[var(--gp-brand-blue-soft)] text-[color:var(--gp-ink)]" label={r.billPhone} onClick={onWrongTap}>
-            <Smartphone className="w-8 h-8" aria-hidden="true" />
-          </RoundItem>
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-x-xs gap-y-sm px-lg">
+          <HighlightTarget elementId="mobile_recharge_button" {...tp} className="min-w-0">
+            <RoundItem circleClass="bg-[var(--gp-brand-blue-soft)] text-[color:var(--gp-ink)]" label={r.mobileRecharge}>
+              <Smartphone className="w-8 h-8" aria-hidden="true" />
+            </RoundItem>
+          </HighlightTarget>
           <RoundItem circleClass="bg-[var(--gp-brand-blue-soft)] text-[color:var(--gp-ink)]" label={r.billElectricity} onClick={onWrongTap}>
             <Lightbulb className="w-8 h-8" aria-hidden="true" />
           </RoundItem>

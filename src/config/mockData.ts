@@ -47,6 +47,39 @@ export const MOCK_CHAT_PHONES: Record<string, string> = {
 // The unknown number of the block tutorial (same fake range). It is not a contact and not in the chat search.
 export const UNKNOWN_NUMBER = '+91 90000 00003';
 
+// Google Pay practice data for Pay anyone, Mobile recharge and Bank transfer. Every name is an existing sample
+// contact; the learner's own number is in the same fake range. UPI IDs use invented handles with no dot after
+// the @, so they never read as e-mail addresses.
+export const MY_NUMBER = '+91 90000 00004';
+
+export interface UpiPayee {
+  key: 'shop' | 'ramesh' | 'priya';
+  upiId: string;
+  phone: string;
+}
+// Who Pay anyone finds, by name, UPI ID or phone digits
+export const UPI_PAYEES: UpiPayee[] = [
+  { key: 'shop', upiId: 'shop.practice@demobank', phone: MOCK_CHAT_PHONES.shop },
+  { key: 'ramesh', upiId: 'ramesh@practice', phone: MOCK_CONTACTS[0].phone },
+  { key: 'priya', upiId: 'priya.practice@demobank', phone: MOCK_CONTACTS[1].phone }
+];
+
+// Mobile recharge: the numbers under "My recharges" (all on the invented operator) and the invented plans
+export const RECHARGE_NUMBERS: { key: 'me' | 'ramesh' | 'priya'; phone: string }[] = [
+  { key: 'me', phone: MY_NUMBER },
+  { key: 'ramesh', phone: MOCK_CONTACTS[0].phone },
+  { key: 'priya', phone: MOCK_CONTACTS[1].phone }
+];
+export const RECHARGE_OPERATORS = ['Practice Mobile', 'Demo Telecom', 'Sample Phone'];
+export const RECHARGE_PLANS: { key: 'basic' | 'value' | 'long'; price: number; days: number; gbPerDay: string }[] = [
+  { key: 'basic', price: 199, days: 28, gbPerDay: '1' },
+  { key: 'value', price: 299, days: 28, gbPerDay: '2' },
+  { key: 'long', price: 599, days: 84, gbPerDay: '1.5' }
+];
+
+// Bank transfer: the receiver's invented bank, masked account number and IFSC-style code
+export const PRACTICE_BANK = { name: 'Practice Bank', accountMasked: '••••0001', ifsc: 'PRAC0000001' };
+
 export interface MockTransaction {
   id: string;
   merchant: { en: string; hi: string; ml: string };
