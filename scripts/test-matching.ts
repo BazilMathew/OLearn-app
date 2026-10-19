@@ -93,6 +93,16 @@ const CASES: Record<string, Record<SupportedLanguage, string[]>> = {
     en: ['bank transfer', 'send money to a bank account', 'pay using account number and IFSC', 'how to do a bank transfer'],
     hi: ['बैंक ट्रांसफर करना है', 'बैंक खाते में पैसे भेजने हैं', 'खाता नंबर से पैसे भेजना'],
     ml: ['ബാങ്ക് ട്രാൻസ്ഫർ ചെയ്യണം', 'ബാങ്ക് അക്കൗണ്ടിലേക്ക് പണം അയക്കാൻ', 'അക്കൗണ്ട് നമ്പർ ഉപയോഗിച്ച് പണം അയക്കുന്നത് എങ്ങനെ']
+  },
+  gpay_report_fraud: {
+    en: ['report fraud on google pay', 'I paid a scammer, how to report a payment', 'UPI fraud', 'report a wrong payment'],
+    hi: ['पेमेंट फ्रॉड की शिकायत करनी है', 'यूपीआई फ्रॉड', 'गूगल पे पर धोखा हुआ'],
+    ml: ['പണം തട്ടിപ്പ് റിപ്പോർട്ട് ചെയ്യണം', 'യുപിഐ തട്ടിപ്പ്', 'ഗൂഗിൾ പേ വഴി തട്ടിപ്പ് നടന്നു']
+  },
+  gpay_share_receipt: {
+    en: ['share a payment receipt', 'share receipt', 'send payment proof to my son', 'how to share a payment'],
+    hi: ['रसीद शेयर करनी है', 'पेमेंट का सबूत भेजना है', 'भुगतान की रसीद भेजो'],
+    ml: ['രസീത് ഷെയർ ചെയ്യണം', 'പേയ്മെന്റ് തെളിവ് അയക്കണം', 'രസീത് അയക്കണം']
   }
 };
 
@@ -135,6 +145,35 @@ const EXTRA: Array<[SupportedLanguage, string, string]> = [
   ['en', 'recharge my phone number', 'gpay_recharge_mobile'],
   ['en', 'money received', 'gpay_transaction_history'],
   ['en', 'transfer money to my son', 'gpay_send_contact'],
+  // Scam words: a scam message, unknown number or spam stays with the block task; a payment, money, UPI or app
+  // scam goes to the fraud report; a bare "scam" asks which one
+  ['en', 'scam message', 'whatsapp_block_number'],
+  ['en', 'unknown number scam', 'whatsapp_block_number'],
+  ['en', 'block spam', 'whatsapp_block_number'],
+  ['hi', 'अनजान नंबर से धोखा', 'whatsapp_block_number'],
+  ['hi', 'स्पैम मैसेज ब्लॉक करना', 'whatsapp_block_number'],
+  ['ml', 'അറിയാത്ത നമ്പർ തട്ടിപ്പ്', 'whatsapp_block_number'],
+  ['ml', 'തട്ടിപ്പ് മെസ്സേജ്', 'whatsapp_block_number'],
+  ['en', 'payment scam', 'gpay_report_fraud'],
+  ['en', 'fraud in my transaction', 'gpay_report_fraud'],
+  ['en', 'scammed on google pay', 'gpay_report_fraud'],
+  ['hi', 'पैसे का धोखा', 'gpay_report_fraud'],
+  ['hi', 'गूगल पे पर धोखा हुआ', 'gpay_report_fraud'],
+  ['ml', 'പണം തട്ടിപ്പ്', 'gpay_report_fraud'],
+  ['ml', 'ഗൂഗിൾ പേ വഴി തട്ടിപ്പ്', 'gpay_report_fraud'],
+  ['en', 'scam', 'clarify:whatsapp_block_number|gpay_report_fraud'],
+  ['hi', 'धोखा', 'clarify:whatsapp_block_number|gpay_report_fraud'],
+  ['ml', 'തട്ടിപ്പ്', 'clarify:whatsapp_block_number|gpay_report_fraud'],
+  // Sharing a receipt does not take location, photo or plain receipt requests
+  ['en', 'share my location', 'whatsapp_share_location'],
+  ['en', 'send a photo', 'whatsapp_send_photo'],
+  ['en', 'where is my payment receipt', 'gpay_transaction_history'],
+  ['hi', 'लोकेशन शेयर करनी है', 'whatsapp_share_location'],
+  ['hi', 'फोटो भेजना है', 'whatsapp_send_photo'],
+  ['hi', 'रसीद देखनी है', 'gpay_transaction_history'],
+  ['ml', 'ലൊക്കേഷൻ ഷെയർ ചെയ്യണം', 'whatsapp_share_location'],
+  ['ml', 'ഫോട്ടോ അയക്കണം', 'whatsapp_send_photo'],
+  ['ml', 'രസീത് കാണണം', 'gpay_transaction_history'],
   ['en', 'whatsapp', 'none'],
   ['ml', 'ജിപേ', 'none'],
   ['hi', 'नमस्ते', 'none'],

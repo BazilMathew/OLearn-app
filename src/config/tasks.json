@@ -1038,6 +1038,184 @@
     ]
   },
   {
+    "task_id": "gpay_report_fraud",
+    "app": "gpay",
+    "title": {
+      "en": "Report a Fraud Payment",
+      "hi": "धोखाधड़ी वाले भुगतान की शिकायत करें",
+      "ml": "തട്ടിപ്പ് പേയ്‌മെന്റ് റിപ്പോർട്ട് ചെയ്യുക"
+    },
+    "description": {
+      "en": "Get help with a payment you think was a scam",
+      "hi": "धोखे वाले भुगतान पर मदद लें",
+      "ml": "തട്ടിപ്പായ പേയ്‌മെന്റിന് സഹായം നേടുക"
+    },
+    "steps": [
+      {
+        "screen": "phone_home_screen",
+        "highlight_element": "home_gpay_icon",
+        "audio_en": "assets/audio/en/gpay_start_step1.mp3",
+        "audio_hi": "assets/audio/hi/gpay_start_step1.mp3",
+        "audio_ml": "assets/audio/ml/gpay_start_step1.mp3",
+        "hint_text": {
+          "en": "Tap the blue Google Pay icon.",
+          "hi": "नीले गूगल पे आइकॉन पर टैप करें।",
+          "ml": "നീല ഗൂഗിൾ പേ ഐക്കണിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_home_screen",
+        "highlight_element": "transaction_history_button",
+        "audio_en": "assets/audio/en/gpay_history_step1.mp3",
+        "audio_hi": "assets/audio/hi/gpay_history_step1.mp3",
+        "audio_ml": "assets/audio/ml/gpay_history_step1.mp3",
+        "hint_text": {
+          "en": "Tap See transaction history, near the bottom.",
+          "hi": "नीचे 'सी ट्रांज़ैक्शन हिस्ट्री' पर टैप करें।",
+          "ml": "താഴെയുള്ള 'ഇടപാട് ചരിത്രം കാണുക' തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_history_list_screen",
+        "highlight_element": "history_list",
+        "audio_en": "assets/audio/en/gpay_fraud_step1.mp3",
+        "audio_hi": "assets/audio/hi/gpay_fraud_step1.mp3",
+        "audio_ml": "assets/audio/ml/gpay_fraud_step1.mp3",
+        "hint_text": {
+          "en": "Tap the payment you are worried about.",
+          "hi": "जिस भुगतान पर शक है, उस पर टैप करें।",
+          "ml": "സംശയമുള്ള ഇടപാട് തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_history_detail_screen",
+        "highlight_element": "detail_help_chip",
+        "audio_en": "assets/audio/en/gpay_fraud_step2.mp3",
+        "audio_hi": "assets/audio/hi/gpay_fraud_step2.mp3",
+        "audio_ml": "assets/audio/ml/gpay_fraud_step2.mp3",
+        "hint_text": {
+          "en": "Tap Having issues? to get help with this payment.",
+          "hi": "'कोई समस्या?' पर टैप करें।",
+          "ml": "'പ്രശ്നമുണ്ടോ?' തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_help_screen",
+        "highlight_element": "help_report_fraud",
+        "audio_en": "assets/audio/en/gpay_fraud_step3.mp3",
+        "audio_hi": "assets/audio/hi/gpay_fraud_step3.mp3",
+        "audio_ml": "assets/audio/ml/gpay_fraud_step3.mp3",
+        "hint_text": {
+          "en": "Tap Report fraud or scam.",
+          "hi": "'धोखाधड़ी या स्कैम की शिकायत करें' पर टैप करें।",
+          "ml": "'തട്ടിപ്പ് റിപ്പോർട്ട് ചെയ്യുക' തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_fraud_report_screen",
+        "highlight_element": "fraud_note_ok",
+        "audio_en": "assets/audio/en/gpay_fraud_step4.mp3",
+        "audio_hi": "assets/audio/hi/gpay_fraud_step4.mp3",
+        "audio_ml": "assets/audio/ml/gpay_fraud_step4.mp3",
+        "hint_text": {
+          "en": "Tap Got it. Never share your UPI PIN or OTP, not even on a call.",
+          "hi": "'ठीक है' पर टैप करें। यूपीआई पिन या ओटीपी कभी किसी को न बताएं, कॉल पर भी नहीं।",
+          "ml": "'ശരി' തൊടുക. പിൻ ആരോടും പറയരുത്."
+        }
+      },
+      {
+        "screen": "gpay_fraud_report_screen",
+        "highlight_element": "fraud_submit_button",
+        "result_screen": "gpay_fraud_report_submitted",
+        "audio_en": "assets/audio/en/gpay_fraud_step5.mp3",
+        "audio_hi": "assets/audio/hi/gpay_fraud_step5.mp3",
+        "audio_ml": "assets/audio/ml/gpay_fraud_step5.mp3",
+        "hint_text": {
+          "en": "Tap Submit report. A real bank never asks for your PIN.",
+          "hi": "'रिपोर्ट भेजें' पर टैप करें। असली बैंक कभी पिन नहीं माँगता।",
+          "ml": "'റിപ്പോർട്ട് അയക്കുക' തൊടുക. പിൻ രഹസ്യം."
+        }
+      }
+    ]
+  },
+  {
+    "task_id": "gpay_share_receipt",
+    "app": "gpay",
+    "title": {
+      "en": "Share a Payment Receipt",
+      "hi": "भुगतान की रसीद शेयर करें",
+      "ml": "പേയ്‌മെന്റ് രസീത് ഷെയർ ചെയ്യുക"
+    },
+    "description": {
+      "en": "Send proof of a payment to someone",
+      "hi": "भुगतान का सबूत किसी को भेजें",
+      "ml": "പേയ്‌മെന്റിന്റെ തെളിവ് അയക്കുക"
+    },
+    "steps": [
+      {
+        "screen": "phone_home_screen",
+        "highlight_element": "home_gpay_icon",
+        "audio_en": "assets/audio/en/gpay_start_step1.mp3",
+        "audio_hi": "assets/audio/hi/gpay_start_step1.mp3",
+        "audio_ml": "assets/audio/ml/gpay_start_step1.mp3",
+        "hint_text": {
+          "en": "Tap the blue Google Pay icon.",
+          "hi": "नीले गूगल पे आइकॉन पर टैप करें।",
+          "ml": "നീല ഗൂഗിൾ പേ ഐക്കണിൽ തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_home_screen",
+        "highlight_element": "transaction_history_button",
+        "audio_en": "assets/audio/en/gpay_history_step1.mp3",
+        "audio_hi": "assets/audio/hi/gpay_history_step1.mp3",
+        "audio_ml": "assets/audio/ml/gpay_history_step1.mp3",
+        "hint_text": {
+          "en": "Tap See transaction history, near the bottom.",
+          "hi": "नीचे 'सी ट्रांज़ैक्शन हिस्ट्री' पर टैप करें।",
+          "ml": "താഴെയുള്ള 'ഇടപാട് ചരിത്രം കാണുക' തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_history_list_screen",
+        "highlight_element": "history_list",
+        "audio_en": "assets/audio/en/gpay_history_step3.mp3",
+        "audio_hi": "assets/audio/hi/gpay_history_step3.mp3",
+        "audio_ml": "assets/audio/ml/gpay_history_step3.mp3",
+        "hint_text": {
+          "en": "Tap any payment to see its details.",
+          "hi": "विवरण देखने के लिए किसी भी लेन-देन पर टैप करें।",
+          "ml": "ഏതെങ്കിലും ഇടപാട് തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_history_detail_screen",
+        "highlight_element": "detail_share_chip",
+        "audio_en": "assets/audio/en/gpay_share_step1.mp3",
+        "audio_hi": "assets/audio/hi/gpay_share_step1.mp3",
+        "audio_ml": "assets/audio/ml/gpay_share_step1.mp3",
+        "hint_text": {
+          "en": "Tap Share to send this payment's receipt.",
+          "hi": "'शेयर करें' पर टैप करें। इससे रसीद भेज सकते हैं।",
+          "ml": "'ഷെയർ ചെയ്യുക' തൊടുക."
+        }
+      },
+      {
+        "screen": "gpay_share_sheet",
+        "highlight_element": "share_targets",
+        "result_screen": "gpay_receipt_shared",
+        "audio_en": "assets/audio/en/gpay_share_step2.mp3",
+        "audio_hi": "assets/audio/hi/gpay_share_step2.mp3",
+        "audio_ml": "assets/audio/ml/gpay_share_step2.mp3",
+        "hint_text": {
+          "en": "Tap any choice to send or save the receipt.",
+          "hi": "रसीद भेजने या सेव करने के लिए कोई भी विकल्प टैप करें।",
+          "ml": "ഇഷ്ടമുള്ളത് തൊടുക."
+        }
+      }
+    ]
+  },
+  {
     "task_id": "whatsapp_voice_message",
     "app": "whatsapp",
     "title": {

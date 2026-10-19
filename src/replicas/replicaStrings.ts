@@ -252,6 +252,28 @@ export interface ReplicaStrings {
   havingIssues: string;
   paidFrom: string;
   creditedTo: string;
+  /** Get help and the fraud report (nothing is sent or stored) */
+  getHelp: string;
+  whatsWrong: string;
+  helpPaymentIssue: string;
+  helpReportFraud: string;
+  helpMissingReward: string;
+  helpCancelPayment: string;
+  helpOtherIssues: string;
+  fraudSafetyNote: string;
+  submitReport: string;
+  reportSubmitted: string;
+  reportPracticeNote: string;
+  fraudHelpline: string;
+  /** Share sheet of a payment's receipt (invented, generic targets) */
+  shareImageCount: string;
+  shareWhatsApp: string;
+  shareMessages: string;
+  shareMail: string;
+  shareSaveToPhone: string;
+  shareCopy: string;
+  sharedTo: (target: string) => string;
+  sharePracticeNote: string;
 }
 
 export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
@@ -479,7 +501,27 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     share: 'Share',
     havingIssues: 'Having issues?',
     paidFrom: 'Paid from',
-    creditedTo: 'Credited to'
+    creditedTo: 'Credited to',
+    getHelp: 'Get help',
+    whatsWrong: "What's wrong?",
+    helpPaymentIssue: 'Payment issue',
+    helpReportFraud: 'Report fraud or scam',
+    helpMissingReward: 'Missing reward',
+    helpCancelPayment: 'Cancel this payment',
+    helpOtherIssues: 'Other issues',
+    fraudSafetyNote: 'Never share your UPI PIN. Receiving money never needs a PIN. A real bank never asks for your PIN or OTP on a call.',
+    submitReport: 'Submit report',
+    reportSubmitted: 'Report submitted',
+    reportPracticeNote: 'Practice only. Nothing was sent or saved.',
+    fraudHelpline: 'If money was really taken: call 1930 (cyber crime helpline) now and tell your bank.',
+    shareImageCount: '1 image',
+    shareWhatsApp: 'WhatsApp',
+    shareMessages: 'Messages',
+    shareMail: 'Mail',
+    shareSaveToPhone: 'Save to phone',
+    shareCopy: 'Copy',
+    sharedTo: (target) => `Shared to ${target}`,
+    sharePracticeNote: 'Practice only. Nothing was sent.'
   },
   hi: {
     rameshSon: 'रमेश (बेटा)',
@@ -705,7 +747,27 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     share: 'शेयर करें',
     havingIssues: 'कोई समस्या?',
     paidFrom: 'इस खाते से',
-    creditedTo: 'इस खाते में'
+    creditedTo: 'इस खाते में',
+    getHelp: 'मदद लें',
+    whatsWrong: 'क्या समस्या है?',
+    helpPaymentIssue: 'भुगतान में समस्या',
+    helpReportFraud: 'धोखाधड़ी या स्कैम की शिकायत करें',
+    helpMissingReward: 'इनाम नहीं मिला',
+    helpCancelPayment: 'यह भुगतान रद्द करें',
+    helpOtherIssues: 'अन्य समस्याएं',
+    fraudSafetyNote: 'अपना यूपीआई पिन कभी किसी को न बताएं। पैसे पाने के लिए पिन कभी नहीं चाहिए। असली बैंक कॉल पर कभी पिन या ओटीपी नहीं माँगता।',
+    submitReport: 'रिपोर्ट भेजें',
+    reportSubmitted: 'रिपोर्ट भेज दी गई',
+    reportPracticeNote: 'सिर्फ़ अभ्यास। कुछ भी भेजा या सेव नहीं हुआ।',
+    fraudHelpline: 'अगर सच में पैसे कट गए हैं: अभी 1930 (साइबर क्राइम हेल्पलाइन) पर कॉल करें और अपने बैंक को बताएं।',
+    shareImageCount: '1 इमेज',
+    shareWhatsApp: 'व्हाट्सएप',
+    shareMessages: 'मैसेज',
+    shareMail: 'मेल',
+    shareSaveToPhone: 'फ़ोन में सेव',
+    shareCopy: 'कॉपी',
+    sharedTo: (target) => `${target} पर शेयर किया`,
+    sharePracticeNote: 'सिर्फ़ अभ्यास। कुछ भी नहीं भेजा गया।'
   },
   ml: {
     rameshSon: 'രമേഷ് (മകൻ)',
@@ -931,6 +993,26 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     share: 'ഷെയർ ചെയ്യുക',
     havingIssues: 'പ്രശ്നമുണ്ടോ?',
     paidFrom: 'ഈ അക്കൗണ്ടിൽ നിന്ന്',
-    creditedTo: 'ഈ അക്കൗണ്ടിലേക്ക്'
+    creditedTo: 'ഈ അക്കൗണ്ടിലേക്ക്',
+    getHelp: 'സഹായം നേടുക',
+    whatsWrong: 'എന്താണ് പ്രശ്നം?',
+    helpPaymentIssue: 'പേയ്‌മെന്റ് പ്രശ്നം',
+    helpReportFraud: 'തട്ടിപ്പ് റിപ്പോർട്ട് ചെയ്യുക',
+    helpMissingReward: 'റിവാർഡ് കിട്ടിയില്ല',
+    helpCancelPayment: 'ഈ പേയ്‌മെന്റ് റദ്ദാക്കുക',
+    helpOtherIssues: 'മറ്റ് പ്രശ്നങ്ങൾ',
+    fraudSafetyNote: 'യുപിഐ പിൻ ഒരിക്കലും ആരോടും പറയരുത്. പണം ലഭിക്കാൻ പിൻ വേണ്ട. യഥാർത്ഥ ബാങ്ക് ഫോണിൽ പിനോ ഒടിപിയോ ചോദിക്കില്ല.',
+    submitReport: 'റിപ്പോർട്ട് അയക്കുക',
+    reportSubmitted: 'റിപ്പോർട്ട് അയച്ചു',
+    reportPracticeNote: 'പരിശീലനം മാത്രം. ഒന്നും അയച്ചിട്ടില്ല.',
+    fraudHelpline: 'ശരിക്കും പണം നഷ്ടപ്പെട്ടെങ്കിൽ: ഉടൻ 1930 (സൈബർ ക്രൈം ഹെൽപ്‌ലൈൻ) വിളിക്കുക, ബാങ്കിനെയും അറിയിക്കുക.',
+    shareImageCount: '1 ചിത്രം',
+    shareWhatsApp: 'വാട്ട്സ്ആപ്പ്',
+    shareMessages: 'മെസ്സേജ്',
+    shareMail: 'മെയിൽ',
+    shareSaveToPhone: 'ഫോണിൽ സേവ്',
+    shareCopy: 'കോപ്പി',
+    sharedTo: (target) => `${target} വഴി ഷെയർ ചെയ്തു`,
+    sharePracticeNote: 'പരിശീലനം മാത്രം. ഒന്നും അയച്ചിട്ടില്ല.'
   }
 };

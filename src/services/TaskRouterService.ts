@@ -146,6 +146,27 @@ const KEYWORDS: Record<string, Array<[string, number]>> = {
     ...w(4, ['history', 'transaction*', 'statement*', 'receipt*', 'passbook', 'इतिहास', 'हिस्ट्री', 'लेनदेन', 'लेन देन', 'ट्रांजैक्शन', 'ट्रांजेक्शन', 'स्टेटमेंट', 'पासबुक', 'हिसाब', 'रसीद', 'ചരിത്രം', 'ഹിസ്റ്ററി', 'ഇടപാട്', 'ട്രാൻസാക്ഷൻ', 'സ്റ്റേറ്റ്മെന്റ്', 'രസീത്', 'പാസ്ബുക്ക്', 'കണക്ക്']),
     ...w(2, ['previous', 'past', 'spent', 'पुराने', 'पिछले', 'खर्च*', 'പഴയ', 'മുമ്പ*', 'മുൻപ്', 'ചെലവ*']),
     ...w(1, GPAY_APP)
+  ],
+  gpay_report_fraud: [
+    // A payment scam is this task's; a scam message or number stays with the block task (its phrases cover the
+    // scam word). A bare "scam" (5 here, 4 there) asks which one; any payment, money, UPI or app word tips it here.
+    ...w(8, ['report fraud*', 'report a fraud*', 'report scam*', 'report a scam*', 'payment scam*', 'payment fraud*', 'fraud payment*',
+      'scam payment*', 'money scam*', 'money fraud*', 'upi fraud*', 'upi scam*', 'wrong payment*', 'report a payment*', 'report payment*',
+      'fraud transaction*',
+      'पेमेंट फ्रॉड', 'फ्रॉड की शिकायत', 'धोखाधड़ी की शिकायत', 'पैसे का धोखा*', 'पैसों का धोखा*', 'यूपीआई फ्रॉड', 'गलत भुगतान', 'गलत पेमेंट',
+      'പണം തട്ടിപ്പ്*', 'പേയ്മെന്റ് തട്ടിപ്പ്*', 'യുപിഐ തട്ടിപ്പ്*', 'തട്ടിപ്പ് റിപ്പോർട്ട്*', 'തെറ്റായ പേയ്മെന്റ്*']),
+    ...w(5, ['scam*', 'fraud*', 'cheat*', 'धोखा*', 'ठग*', 'फ्रॉड', 'തട്ടിപ്പ്*', 'വഞ്ചന*']),
+    ...w(1, [...PAY, ...GPAY_APP, 'transaction*', 'लेनदेन', 'ट्रांजैक्शन', 'ഇടപാട്', 'ട്രാൻസാക്ഷൻ'])
+  ],
+  gpay_share_receipt: [
+    // The phrases cover "receipt" (a history word) and "share" / "send" (document, location and send words)
+    ...w(8, ['share receipt*', 'share a receipt*', 'share the receipt*', 'share my receipt*', 'share payment*', 'share a payment*',
+      'share the payment*', 'share my payment*', 'send receipt*', 'send a receipt*', 'send the receipt*', 'send payment receipt*',
+      'payment proof', 'proof of payment', 'payment screenshot*',
+      'रसीद शेयर*', 'रसीद भेज*', 'पेमेंट का सबूत', 'भुगतान का सबूत', 'पेमेंट प्रूफ', 'पेमेंट शेयर*',
+      'രസീത് ഷെയർ*', 'രസീത് അയക്ക*', 'പേയ്മെന്റ് തെളിവ്*', 'പേയ്മെന്റ് ഷെയർ*', 'പേയ്മെന്റ് പ്രൂഫ്']),
+    ...w(3, ['proof', 'सबूत', 'प्रूफ', 'തെളിവ്*']),
+    ...w(1, GPAY_APP)
   ]
 };
 

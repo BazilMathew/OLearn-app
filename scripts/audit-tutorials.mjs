@@ -33,6 +33,11 @@
 // typing (first character, filtering by name, UPI ID and digits, clear, no-match lists everyone, keyboard open, never
 // saved); any number and plan; the account and IFSC filling only on their taps, Continue grey until then; history
 // rows in words with + and green (4.5:1) for money received; and their results (success screen or payment details).
+// The fraud report and receipt share tasks also check: their own instructions lead with the on-screen label (quoted
+// in Hindi and Malayalam), no ordinal, colour or amount, Malayalam in 2 lines; the safety note's words (PIN and OTP
+// in every language) on the report screen; one Got it label for both notes; the other detail chip, Pay again, the
+// other Get help choices and Submit report on the reading step nudge; any payment and share target; and their
+// results (report submitted with the helpline line in every language, shared to the chosen target; taps ignored).
 // Exit code 1 if any check fails.
 
 import { spawn, execFileSync } from 'node:child_process';
@@ -184,6 +189,48 @@ for (const id of NEW_GPAY_TASKS) {
   const want = id === 'gpay_transaction_history' ? 'gpay_history_detail_screen' : 'gpay_payment_success_screen';
   if (last.result_screen !== want) failures.push(`${id}: last step's result screen is ${last.result_screen}, expected ${want}`);
 }
+// Fraud report and receipt share: an own instruction (not shared with an older task) has no ordinal, colour or
+// fixed amount and leads with its on-screen label ("Tap <label>" in English, the label quoted first in Hindi and
+// Malayalam), except the free-choice list steps; only the last step has a result screen; the safety note and the
+// helpline line say the agreed words, every language names the PIN and the OTP, and the note and submit
+// instructions name the PIN
+const SAFETY_GPAY_TASKS = ['gpay_report_fraud', 'gpay_share_receipt'];
+const ownSafetyHint = (s) => !TASKS.some((o) => !SAFETY_GPAY_TASKS.includes(o.task_id) && o.steps.some((x) => x.hint_text.en === s.hint_text.en));
+const FREE_CHOICE = ['history_list', 'share_targets'];
+const STEP_LABEL = { detail_help_chip: 'havingIssues', help_report_fraud: 'helpReportFraud', fraud_note_ok: 'gotIt', fraud_submit_button: 'submitReport', detail_share_chip: 'share' };
+const SAFETY_RESULTS = { gpay_report_fraud: 'gpay_fraud_report_submitted', gpay_share_receipt: 'gpay_receipt_shared' };
+const PIN_WORD = { en: /\bPIN\b/, hi: /पिन/, ml: /പിൻ|പിനു/ };
+const OTP_WORD = { en: /\bOTP\b/, hi: /ओटीपी/, ml: /ഒടിപി/ };
+for (const id of SAFETY_GPAY_TASKS) {
+  const steps = TASKS.find((t) => t.task_id === id).steps;
+  steps.forEach((s, i) => {
+    if (i < steps.length - 1 && s.result_screen) failures.push(`${id} step ${i + 1}: a result screen before the final step (${s.result_screen})`);
+    if (['fraud_note_ok', 'fraud_submit_button'].includes(s.highlight_element))
+      for (const l of LANGS) if (!PIN_WORD[l].test(s.hint_text[l])) failures.push(`${id} step ${i + 1} (${l}): the safety instruction does not name the PIN: ${s.hint_text[l]}`);
+    if (!ownSafetyHint(s)) return;
+    for (const l of LANGS) {
+      if (ORDINALS[l].test(s.hint_text[l])) failures.push(`${id} step ${i + 1} (${l}): ordinal wording in the instruction: ${s.hint_text[l]}`);
+      if (COLOURS[l].test(s.hint_text[l])) failures.push(`${id} step ${i + 1} (${l}): instruction names a colour: ${s.hint_text[l]}`);
+      if (/₹\s?\d/.test(s.hint_text[l])) failures.push(`${id} step ${i + 1} (${l}): instruction names a fixed amount: ${s.hint_text[l]}`);
+    }
+    if (FREE_CHOICE.includes(s.highlight_element)) return;
+    const key = STEP_LABEL[s.highlight_element];
+    if (!key) return failures.push(`${id} step ${i + 1}: no on-screen label known for ${s.highlight_element}`);
+    if (!s.hint_text.en.startsWith(`Tap ${REPLICA_STRINGS.en[key]}`)) failures.push(`${id} step ${i + 1} (en): does not lead with "Tap ${REPLICA_STRINGS.en[key]}": ${s.hint_text.en}`);
+    for (const l of ['hi', 'ml'])
+      if (!s.hint_text[l].startsWith(`'${REPLICA_STRINGS[l][key]}'`)) failures.push(`${id} step ${i + 1} (${l}): does not lead with the quoted on-screen label '${REPLICA_STRINGS[l][key]}': ${s.hint_text[l]}`);
+  });
+  if (steps.at(-1).result_screen !== SAFETY_RESULTS[id]) failures.push(`${id}: last step's result screen is ${steps.at(-1).result_screen}, expected ${SAFETY_RESULTS[id]}`);
+}
+if (REPLICA_STRINGS.en.fraudSafetyNote !== 'Never share your UPI PIN. Receiving money never needs a PIN. A real bank never asks for your PIN or OTP on a call.')
+  failures.push(`fraud report: the English safety note changed: ${REPLICA_STRINGS.en.fraudSafetyNote}`);
+if (REPLICA_STRINGS.en.fraudHelpline !== 'If money was really taken: call 1930 (cyber crime helpline) now and tell your bank.')
+  failures.push(`fraud report: the English helpline line changed: ${REPLICA_STRINGS.en.fraudHelpline}`);
+for (const l of LANGS) {
+  const note = REPLICA_STRINGS[l].fraudSafetyNote;
+  if (!PIN_WORD[l].test(note) || !OTP_WORD[l].test(note)) failures.push(`fraud report (${l}): the safety note does not name the PIN and the OTP: ${note}`);
+  if (!REPLICA_STRINGS[l].fraudHelpline.includes('1930')) failures.push(`fraud report (${l}): the helpline line has no 1930: ${REPLICA_STRINGS[l].fraudHelpline}`);
+}
 // Practice data: the learner's number in the fake range, UPI IDs that never read as e-mail addresses, and only
 // invented operator and bank names
 if (!/^\+91 90000 000\d\d$/.test(MY_NUMBER) || MY_NUMBER <= '+91 90000 00003') failures.push(`recharge: ${MY_NUMBER} is not a new number in the fake range +91 90000 000xx`);
@@ -208,6 +255,12 @@ let rechargeTurn = 0;
 // History runs in turn: the payment opened (the received one first)
 const HIST_PICKS = ['history_item_2', 'history_item_1', 'history_item_3'];
 let histTurn = 0;
+// Fraud report and receipt share: the payment each run opens, and the share target it picks
+let safetyTurn = 0;
+const SHARE_PICKS = ['messages', 'whatsapp', 'save', 'mail', 'copy'];
+let shareTurn = 0;
+const shareLabel = (r, key) => ({ whatsapp: r.shareWhatsApp, messages: r.shareMessages, mail: r.shareMail, save: r.shareSaveToPhone, copy: r.shareCopy })[key];
+const HELP_TILES = { help_payment_issue: 'helpPaymentIssue', help_missing_reward: 'helpMissingReward', help_cancel_payment: 'helpCancelPayment', help_other_issues: 'helpOtherIssues' };
 const personName = (r, key) => ({ shop: r.shopName, ramesh: r.ramesh, priya: r.priya, me: r.myNumber })[key];
 // Chat search runs in turn: what is typed, the chats that must be listed (in order) and the one opened
 // (not always the top row: any chat may be chosen). Digits find a chat by its number.
@@ -341,6 +394,14 @@ const PAGE_HELPERS = `
         hitInside: !!hit && el.contains(hit),
         count: document.querySelectorAll('[data-element-id="' + id + '"]').length
       };
+    },
+    // An element (not a target) fully inside the visible practice screen, without scrolling
+    shown(sel) {
+      const el = document.querySelector(sel);
+      if (!el) return false;
+      const r = el.getBoundingClientRect();
+      const g = this.region(el);
+      return r.top >= g.top - 1 && r.bottom <= g.bottom + 1 && r.left >= g.left - 1 && r.right <= g.right + 1;
     },
     smallText() {
       const out = [];
@@ -1058,6 +1119,8 @@ async function runTutorials(w, h, lang, reduce, scale) {
     const upiRun = task.task_id === 'gpay_pay_upi_or_phone' ? UPI_RUNS[upiTurn++ % UPI_RUNS.length] : null;
     const rechargeRun = task.task_id === 'gpay_recharge_mobile' ? RECHARGE_RUNS[rechargeTurn++ % RECHARGE_RUNS.length] : null;
     const histPick = task.task_id === 'gpay_transaction_history' ? HIST_PICKS[histTurn++ % HIST_PICKS.length] : null;
+    const safetyPick = SAFETY_GPAY_TASKS.includes(task.task_id) ? HIST_PICKS[safetyTurn++ % HIST_PICKS.length] : null;
+    const sharePick = task.task_id === 'gpay_share_receipt' ? SHARE_PICKS[shareTurn++ % SHARE_PICKS.length] : null;
     const planPrice = rechargeRun && RECHARGE_PLANS.find((p) => p.key === rechargeRun.plan).price;
     const sendShown = sendAmount ? '₹' + Number(sendAmount).toLocaleString('en-IN') : planPrice ? '₹' + planPrice : null;
     // Who the payment goes to, as the success screen names them
@@ -1156,7 +1219,8 @@ async function runTutorials(w, h, lang, reduce, scale) {
       // New WhatsApp tasks: a new Malayalam instruction takes at most 2 lines at 360px (100% text). Steps shared
       // with the older tasks (start steps, paperclip) keep their existing text and are not checked here.
       const sharedHint = TASKS.some((o) => !NEW_WA_TASKS.includes(o.task_id) && o.steps.some((s) => s.hint_text.en === step.hint_text.en));
-      const newOwnHint = (NEW_WA_TASKS.includes(task.task_id) && !sharedHint) || (NEW_GPAY_TASKS.includes(task.task_id) && ownGpayHint(step));
+      const newOwnHint = (NEW_WA_TASKS.includes(task.task_id) && !sharedHint) || (NEW_GPAY_TASKS.includes(task.task_id) && ownGpayHint(step)) ||
+        (SAFETY_GPAY_TASKS.includes(task.task_id) && ownSafetyHint(step));
       if (newOwnHint && w === 360 && scale === 1) {
         const lines = await A('hintLines()');
         if (lang === 'ml') check(lines <= 2, `${at}: Malayalam instruction takes ${lines} lines at 360px (max 2)`);
@@ -1506,9 +1570,47 @@ async function runTutorials(w, h, lang, reduce, scale) {
           tapAt = await A(`targetPoint('history_note_ok')`);
         } else {
           check(!(await A(`target('history_note_ok')`)), `${at}: Got it is still shown after it was tapped`);
-          tapAt = await A(`point('[data-history-row="${histPick}"]')`);
-          check(tapAt, `${at}: payment ${histPick} not found`);
+          const pick = histPick || safetyPick;
+          tapAt = await A(`point('[data-history-row="${pick}"]')`);
+          check(tapAt, `${at}: payment ${pick} not found`);
         }
+      }
+      // Both notes' Got it buttons show the one shared label
+      if (step.highlight_element === 'history_note_ok' || step.highlight_element === 'fraud_note_ok')
+        check((await A(`textOf('[data-element-id="${step.highlight_element}"]')`)) === r.gotIt, `${at}: Got it reads "${await A(`textOf('[data-element-id="${step.highlight_element}"]')`)}", expected "${r.gotIt}"`);
+
+      // Fraud report and receipt share. Details: the payment tapped; the other chip and Pay again nudge.
+      if (step.highlight_element === 'detail_help_chip' || step.highlight_element === 'detail_share_chip') {
+        check((await A(`attr('[data-history-detail]', 'data-history-detail')`)) === safetyPick, `${at}: details shown for ${await A(`attr('[data-history-detail]', 'data-history-detail')`)}, tapped ${safetyPick}`);
+        await has([r.share, r.havingIssues], 'the payment details');
+        const other = step.highlight_element === 'detail_help_chip' ? 'detail_share_chip' : 'detail_help_chip';
+        await inertTap(await A(`targetPoint('${other}')`), other === 'detail_share_chip' ? 'Share' : 'Having issues?');
+        if (!MOCK_TRANSACTIONS.find((x) => x.id === safetyPick).isCredit) await inertTap(await A(`point('[data-pay-again]')`), 'Pay again');
+        tapAt = await A(`targetPoint('${step.highlight_element}')`);
+      }
+      // Get help: the payment, the question and five choices; only Report fraud or scam is the step
+      if (step.highlight_element === 'help_report_fraud') {
+        await has([r.getHelp, r.whatsWrong, r.helpPaymentIssue, r.helpReportFraud, r.helpMissingReward, r.helpCancelPayment, r.helpOtherIssues], 'Get help');
+        const tiles = Object.entries(HELP_TILES);
+        for (const [id, key] of w === 360 && scale === 1 ? tiles : [tiles[methodTurn % tiles.length]]) await inertTap(await A(`targetPoint('${id}')`), r[key]);
+        tapAt = await A(`targetPoint('help_report_fraud')`);
+      }
+      // Fraud report: the safety note in every language; Submit report is not the reading step; Got it goes after its tap
+      if (step.screen === 'gpay_fraud_report_screen') {
+        await has([r.helpReportFraud, r.fraudSafetyNote, r.submitReport], 'the fraud report');
+        if (step.highlight_element === 'fraud_note_ok') {
+          await inertTap(await A(`targetPoint('fraud_submit_button')`), 'Submit report on the reading step');
+          tapAt = await A(`targetPoint('fraud_note_ok')`);
+        } else {
+          check(!(await A(`target('fraud_note_ok')`)), `${at}: Got it is still shown after it was tapped`);
+        }
+      }
+      // Share sheet: "1 image" and the five invented targets, each a 64px circle; the run's pick is tapped
+      if (step.highlight_element === 'share_targets') {
+        await has([r.shareImageCount, ...SHARE_PICKS.map((k) => shareLabel(r, k))], 'the share sheet');
+        check(!(await cdp.eval(`!!document.querySelector('[data-share-result]')`)), `${at}: shared shown before a target is tapped`);
+        tapAt = await A(`point('[data-share-target="${sharePick}"]')`);
+        check(tapAt && tapAt.h >= 64, `${at}: share target ${sharePick} missing or under 64px`);
       }
 
       // Text status, typing step: a tap on the field focuses it (no nudge, no step), no Send yet; the first
@@ -1759,6 +1861,21 @@ async function runTutorials(w, h, lang, reduce, scale) {
             check((await A(`textOf('[data-detail-words]')`)) === (txn.isCredit ? r.receivedFrom(name) : r.paidTo(name)), `${at}: details read "${await A(`textOf('[data-detail-words]')`)}"`);
             check((await A(`textOf('[data-detail-amount]')`)) === (txn.isCredit ? '+ ' : '') + txn.amount, `${at}: details amount "${await A(`textOf('[data-detail-amount]')`)}"`);
             await has([txn.upiRef, r.completed, txn.date[lang]], 'the payment details');
+          } else if (task.task_id === 'gpay_report_fraud') {
+            // Report submitted: practice only, the safety note and the helpline line, in the screen's language
+            check(await waitFor(() => A(`point('[data-fraud-submitted]')`), 1000), `${at}: "report submitted" is not shown after the Submit tap`);
+            await sleep(reduce ? 100 : 350);
+            await has([r.reportSubmitted, r.reportPracticeNote], 'the report submitted screen');
+            check((await A(`textOf('[data-fraud-helpline]')`)) === r.fraudHelpline, `${at}: helpline line reads "${await A(`textOf('[data-fraud-helpline]')`)}"`);
+            check(await A(`shown('[data-fraud-helpline]')`), `${at}: the helpline line is not fully on screen`);
+          } else if (sharePick) {
+            // Shared: the details of the payment with a note naming the chosen target
+            check(await waitFor(() => A(`point('[data-share-result]')`), 1000), `${at}: "shared" is not shown after the target tap`);
+            await sleep(reduce ? 100 : 350);
+            check((await A(`attr('[data-share-result]', 'data-share-result')`)) === sharePick, `${at}: shared to ${await A(`attr('[data-share-result]', 'data-share-result')`)}, tapped ${sharePick}`);
+            check((await A(`attr('[data-history-detail]', 'data-history-detail')`)) === safetyPick, `${at}: shared details are for another payment`);
+            await has([r.sharedTo(shareLabel(r, sharePick)), r.sharePracticeNote], 'the shared result');
+            check(await A(`shown('[data-share-result]')`), `${at}: the shared note is not fully on screen`);
           } else if (task.task_id === 'whatsapp_block_number') {
             check(await waitFor(() => A(`point('[data-blocked]')`), 1000), `${at}: the blocked notice is not shown after the Block tap`);
             await sleep(reduce ? 100 : 350);
@@ -1782,11 +1899,20 @@ async function runTutorials(w, h, lang, reduce, scale) {
             check((await cdp.eval(`document.querySelector('[data-forwarded-msg]')?.getAttribute('data-forwarded-msg')`)) === fwd.msg, `${at}: the forwarded bubble does not show the held message ${fwd.msg}`);
           }
           // Taps on the result screen are ignored (no nudge)
-          if (statusText || fwd || task.task_id === 'whatsapp_block_number' || payeeShown || histPick) {
+          if (statusText || fwd || task.task_id === 'whatsapp_block_number' || payeeShown || histPick || safetyPick) {
             const pp = await A('progressPoint()');
             await click(pp.cx, pp.cy);
             await sleep(200);
             check(!(await A('nudgeShown()')), `${at} result: a tap on the result screen nudged`);
+          }
+          // Fraud report and share: a tap on the practice screen itself is ignored too (no nudge, result unchanged)
+          if (safetyPick) {
+            const sel = sharePick ? '[data-share-result]' : '[data-fraud-submitted]';
+            const rp = await A(`point('${sel}')`);
+            if (check(rp, `${at} result: ${sel} not found for the tap`)) await click(rp.cx, rp.cy);
+            await sleep(200);
+            check(!(await A('nudgeShown()')), `${at} result: a tap on the practice result nudged`);
+            check(await A(`point('${sel}')`), `${at} result: a tap changed the result screen`);
           }
           if (task.task_id === 'whatsapp_share_location')
             check((await A(`point('[data-location-bubble]')`)) && (await A(`textIncludes(${JSON.stringify(r.addrMainRoad)})`)), `${at}: location bubble with map and place missing`);

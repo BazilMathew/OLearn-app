@@ -46,7 +46,18 @@ import {
   Contact,
   Info,
   Share2,
-  CircleQuestionMark
+  CircleQuestionMark,
+  CircleAlert,
+  TriangleAlert,
+  Gift,
+  Ban,
+  ShieldAlert,
+  ReceiptText,
+  MessageCircle,
+  MessageSquare,
+  Mail,
+  Download,
+  Copy
 } from 'lucide-react';
 
 interface GPayReplicaProps {
@@ -125,6 +136,9 @@ const findPayees = (query: string, s: ReplicaStrings) => {
   );
   return { rows: hits.length ? hits : UPI_PAYEES, matched: hits.length > 0, digits: !!digits };
 };
+
+// Share sheet targets of a payment's receipt (invented, generic; no people)
+type ShareKey = 'whatsapp' | 'messages' | 'mail' | 'save' | 'copy';
 
 // Who the practice payment goes to, per task; other flows pay the shop.
 // The shop shows a "Banking Name Verified" line; a contact shows their phone number instead.
@@ -248,6 +262,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
   const [picked, setPicked] = useState<PersonKey | null>(null);
   const [bankForm, setBankForm] = useState({ account: false, bank: false });
   const [txnIndex, setTxnIndex] = useState(0);
+  const [shareTarget, setShareTarget] = useState<ShareKey | null>(null);
 
   const payee = (taskId && PAYEES[taskId]) || SHOP_PAYEE;
   // Pay anyone and Mobile recharge pay whoever was picked; Bank transfer pays Ramesh's practice account
@@ -831,65 +846,242 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
   }
 
   // 9. PAYMENT DETAILS (result screen of the history task): who, which way, the amount, its status and date,
-  // the reference and bank from the sample data. Read-only: the buttons are inert.
+  // the reference and bank from the sample data. In the fraud and share tasks Having issues? or Share is the
+  // step; the other chip and Pay again nudge (on the history result the engine ignores every tap). The share
+  // sheet and the shared result draw this same screen underneath.
+  const txn = MOCK_TRANSACTIONS[txnIndex];
+  const txnName = txn.merchant[language] || txn.merchant.en;
+  const shareTargets: { key: ShareKey; icon: React.ElementType; label: string }[] = [
+    { key: 'whatsapp', icon: MessageCircle, label: r.shareWhatsApp },
+    { key: 'messages', icon: MessageSquare, label: r.shareMessages },
+    { key: 'mail', icon: Mail, label: r.shareMail },
+    { key: 'save', icon: Download, label: r.shareSaveToPhone },
+    { key: 'copy', icon: Copy, label: r.shareCopy }
+  ];
+  const detailView = (footer: React.ReactNode, overlay?: React.ReactNode) => (
+    <div
+      data-history-detail={txn.id}
+      className="relative min-h-full shrink-0 w-full bg-[var(--gp-surface)] text-[color:var(--gp-ink)] flex flex-col items-center px-lg pb-md text-center"
+      style={GP_THEME}
+    >
+      <div className="w-full flex items-center justify-between py-sm" aria-hidden="true">
+        <ArrowLeft className="w-7 h-7" />
+        <MoreVertical className="w-7 h-7" />
+      </div>
+      <LetterAvatar letter={txnName.charAt(0)} size="lg" />
+      <div data-detail-words className="text-body font-normal mt-sm break-words">
+        {txn.isCredit ? r.receivedFrom(txnName) : r.paidTo(txnName)}
+      </div>
+      <div
+        data-detail-amount
+        className={`text-[48px] leading-[56px] font-normal tracking-tight ${
+          txn.isCredit ? 'text-[color:var(--gp-success)]' : 'text-[color:var(--gp-ink)]'
+        }`}
+      >
+        {txn.isCredit ? `+ ${txn.amount}` : txn.amount}
+      </div>
+      {!txn.isCredit && (
+        <div
+          data-pay-again
+          onClick={onWrongTap}
+          className="mt-xs min-h-[64px] px-xl bg-[var(--gp-brand-blue)] text-white text-body font-bold rounded-full flex items-center justify-center"
+        >
+          {r.payAgain}
+        </div>
+      )}
+      <div className="mt-sm flex items-center justify-center gap-xs text-label font-normal">
+        <CheckCircle2 className="w-6 h-6 text-[color:var(--gp-success)] flex-shrink-0" aria-hidden="true" />
+        <span>{r.completed}</span>
+      </div>
+      <div className="text-label font-normal text-[color:var(--gp-ink-muted)]">{txn.date[language] || txn.date.en}</div>
+
+      <div className="w-full mt-md bg-[var(--gp-surface-card)] rounded-[var(--gp-r-card)] border border-[color:var(--gp-border)] p-md space-y-sm text-left text-label font-normal">
+        <div>
+          <div className="text-[color:var(--gp-ink-muted)]">{r.upiRefNo}</div>
+          <div className="font-bold break-words">{txn.upiRef}</div>
+        </div>
+        <div>
+          <div className="text-[color:var(--gp-ink-muted)]">{txn.isCredit ? r.creditedTo : r.paidFrom}</div>
+          <div className="font-bold break-words">{`${MOCK_BANK_BALANCE.bankName} ${MOCK_BANK_BALANCE.accountNumberMasked}`}</div>
+        </div>
+      </div>
+
+      {footer}
+      <div className="mt-md text-label font-normal text-[color:var(--gp-ink-muted)]">{r.mockData}</div>
+      {overlay}
+    </div>
+  );
+  const detailChips = (
+    <div className="w-full mt-md flex flex-wrap gap-sm justify-center">
+      <HighlightTarget elementId="detail_share_chip" {...tp} className="rounded-full">
+        <div className="min-h-[64px] px-lg rounded-full border border-[color:var(--gp-border)] text-[color:var(--gp-brand-blue-deep)] text-label font-bold flex items-center gap-sm">
+          <Share2 className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+          <span>{r.share}</span>
+        </div>
+      </HighlightTarget>
+      <HighlightTarget elementId="detail_help_chip" {...tp} className="rounded-full">
+        <div className="min-h-[64px] px-lg rounded-full border border-[color:var(--gp-border)] text-[color:var(--gp-brand-blue-deep)] text-label font-bold flex items-center gap-sm">
+          <CircleQuestionMark className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+          <span>{r.havingIssues}</span>
+        </div>
+      </HighlightTarget>
+    </div>
+  );
+
   if (screen === 'gpay_history_detail_screen') {
-    const txn = MOCK_TRANSACTIONS[txnIndex];
-    const name = txn.merchant[language] || txn.merchant.en;
+    return detailView(detailChips);
+  }
+
+  // 9b. SHARE SHEET over the dimmed payment details: "1 image" and a grid of invented, generic targets (no people).
+  // Any target completes the step; which one is kept only while the practice runs.
+  if (screen === 'gpay_share_sheet') {
+    return detailView(
+      detailChips,
+      <div className="absolute inset-0 bg-black/50 flex flex-col justify-end">
+        <div className="screen-enter bg-[var(--gp-surface)] rounded-t-[28px] px-lg pt-sm pb-lg space-y-md text-left">
+          <div className="w-10 h-1 bg-[var(--gp-border)] rounded-full mx-auto" aria-hidden="true" />
+          <div className="flex items-center gap-md">
+            <div className="w-12 h-12 rounded-[var(--gp-r-tile)] bg-[var(--gp-brand-blue-soft)] flex items-center justify-center flex-shrink-0">
+              <ReceiptText className="w-7 h-7 text-[color:var(--gp-brand-blue-ink)]" aria-hidden="true" />
+            </div>
+            <div className="text-body font-normal break-words">{r.shareImageCount}</div>
+          </div>
+          <HighlightTarget elementId="share_targets" {...tp}>
+            {/* Two columns, so the longest Malayalam names wrap by word. Taps between targets do nothing. */}
+            <div onClick={(e) => e.stopPropagation()} className="grid grid-cols-2 gap-x-sm gap-y-md py-xs">
+              {shareTargets.map((t) => (
+                <div
+                  key={t.key}
+                  data-share-target={t.key}
+                  onClick={listRow('share_targets', () => setShareTarget(t.key))}
+                  className="min-w-0 flex flex-col items-center gap-xs text-center cursor-pointer"
+                >
+                  <div className="w-16 h-16 rounded-full bg-[var(--gp-brand-blue-soft)] flex items-center justify-center flex-shrink-0">
+                    <t.icon className="w-8 h-8 text-[color:var(--gp-brand-blue-ink)]" aria-hidden="true" />
+                  </div>
+                  <span className="text-label font-normal leading-tight break-words max-w-full">{t.label}</span>
+                </div>
+              ))}
+            </div>
+          </HighlightTarget>
+        </div>
+      </div>
+    );
+  }
+
+  // 9c. SHARED (result of the share task): the payment details with a note naming the chosen target
+  if (screen === 'gpay_receipt_shared') {
+    const target = shareTargets.find((t) => t.key === shareTarget) || shareTargets[0];
+    return detailView(
+      <div
+        data-share-result={target.key}
+        className="w-full mt-md rounded-[var(--gp-r-card)] bg-[var(--gp-success-soft)] text-[color:var(--gp-success)] px-md py-sm flex items-start gap-sm text-left"
+      >
+        <CheckCircle2 className="w-6 h-6 flex-shrink-0 mt-[2px]" aria-hidden="true" />
+        <div className="min-w-0">
+          <div className="text-body font-bold break-words">{r.sharedTo(target.label)}</div>
+          <div className="text-label font-normal break-words">{r.sharePracticeNote}</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Card of the chosen payment, on Get help and the fraud report
+  const paymentCard = (
+    <div className="mx-lg flex items-center gap-md rounded-[var(--gp-r-card)] border border-[color:var(--gp-border)] px-md py-sm">
+      <LetterAvatar letter={txnName.charAt(0)} />
+      <div className="flex-1 min-w-0 text-body font-normal leading-tight break-words">
+        {txn.isCredit ? r.receivedFrom(txnName) : r.paidTo(txnName)}
+      </div>
+      <div className="text-body font-semibold flex-shrink-0">{txn.isCredit ? `+ ${txn.amount}` : txn.amount}</div>
+    </div>
+  );
+
+  // 9d. GET HELP: the payment, "What's wrong?" and the app's five choices. Only Report fraud or scam is the
+  // step; the others nudge.
+  if (screen === 'gpay_help_screen') {
+    const tiles: { id: string; icon: React.ElementType; label: string }[] = [
+      { id: 'help_payment_issue', icon: CircleAlert, label: r.helpPaymentIssue },
+      { id: 'help_report_fraud', icon: TriangleAlert, label: r.helpReportFraud },
+      { id: 'help_missing_reward', icon: Gift, label: r.helpMissingReward },
+      { id: 'help_cancel_payment', icon: Ban, label: r.helpCancelPayment },
+      { id: 'help_other_issues', icon: CircleQuestionMark, label: r.helpOtherIssues }
+    ];
+    return (
+      <div className="min-h-full shrink-0 w-full bg-[var(--gp-surface)] text-[color:var(--gp-ink)] flex flex-col pb-md" style={GP_THEME}>
+        <div className="flex items-center gap-md px-lg py-md">
+          <X className="w-7 h-7 flex-shrink-0" aria-hidden="true" />
+          <div className="text-title">{r.getHelp}</div>
+        </div>
+        {paymentCard}
+        <div className="px-lg pt-md pb-sm text-body font-bold">{r.whatsWrong}</div>
+        <div className="px-lg space-y-sm">
+          {tiles.map((t) => (
+            <HighlightTarget key={t.id} elementId={t.id} {...tp}>
+              <div className="min-h-[64px] rounded-[var(--gp-r-card)] border border-[color:var(--gp-border)] px-md py-xs flex items-center gap-md">
+                <span className="flex-1 min-w-0 text-body font-normal leading-tight break-words">{t.label}</span>
+                <t.icon className="w-8 h-8 text-[color:var(--gp-brand-blue-deep)] flex-shrink-0" aria-hidden="true" />
+              </div>
+            </HighlightTarget>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // 9e. REPORT FRAUD OR SCAM: the payment, the safety note (its Got it button only on the reading step) and
+  // Submit report. Nothing is typed, sent or stored.
+  if (screen === 'gpay_fraud_report_screen') {
+    return (
+      <div className="min-h-full shrink-0 w-full bg-[var(--gp-surface)] text-[color:var(--gp-ink)] flex flex-col" style={GP_THEME}>
+        <AppBar>
+          <div className="text-title min-w-0 break-words">{r.helpReportFraud}</div>
+        </AppBar>
+        {paymentCard}
+        <div data-fraud-note className="mx-lg mt-md rounded-[var(--gp-r-card)] bg-[var(--gp-brand-blue-soft)] text-[color:var(--gp-brand-blue-ink)] px-md py-sm space-y-sm">
+          <div className="flex items-start gap-sm">
+            <ShieldAlert className="w-6 h-6 flex-shrink-0 mt-[2px]" aria-hidden="true" />
+            <p className="text-label font-normal leading-snug min-w-0 break-words">{r.fraudSafetyNote}</p>
+          </div>
+          {highlightElement === 'fraud_note_ok' && (
+            <div className="flex justify-end">
+              <HighlightTarget elementId="fraud_note_ok" {...tp} className="rounded-full">
+                <div className="min-h-[64px] min-w-[96px] px-lg bg-[var(--gp-brand-blue)] text-white text-body font-bold rounded-full flex items-center justify-center">
+                  {r.gotIt}
+                </div>
+              </HighlightTarget>
+            </div>
+          )}
+        </div>
+        <div className="mt-auto px-lg pt-md pb-md">
+          <HighlightTarget elementId="fraud_submit_button" {...tp} className="w-full rounded-full">
+            <div className="w-full min-h-[64px] bg-[var(--gp-brand-blue)] text-white text-body font-bold rounded-full flex items-center justify-center px-lg text-center">
+              {r.submitReport}
+            </div>
+          </HighlightTarget>
+        </div>
+      </div>
+    );
+  }
+
+  // 9f. REPORT SUBMITTED (result of the fraud task): practice only, and what to do if money was really taken.
+  // Short enough to be seen whole without scrolling: it shows for 2 seconds only.
+  if (screen === 'gpay_fraud_report_submitted') {
     return (
       <div
-        data-history-detail={txn.id}
-        className="min-h-full shrink-0 w-full bg-[var(--gp-surface)] text-[color:var(--gp-ink)] flex flex-col items-center px-lg pb-md text-center"
+        data-fraud-submitted
+        className="min-h-full shrink-0 w-full bg-[var(--gp-surface)] text-[color:var(--gp-ink)] flex flex-col items-center justify-center gap-md px-lg py-md text-center"
         style={GP_THEME}
       >
-        <div className="w-full flex items-center justify-between py-sm" aria-hidden="true">
-          <ArrowLeft className="w-7 h-7" />
-          <MoreVertical className="w-7 h-7" />
+        <div className="w-16 h-16 bg-[var(--gp-success-soft)] rounded-full flex items-center justify-center">
+          <Check className="w-10 h-10 text-[color:var(--gp-success)] stroke-[3]" aria-hidden="true" />
         </div>
-        <LetterAvatar letter={name.charAt(0)} size="lg" />
-        <div data-detail-words className="text-body font-normal mt-sm break-words">
-          {txn.isCredit ? r.receivedFrom(name) : r.paidTo(name)}
+        <div className="text-title">{r.reportSubmitted}</div>
+        <div className="text-label font-normal text-[color:var(--gp-ink-muted)] break-words">{r.reportPracticeNote}</div>
+        <div className="w-full rounded-[var(--gp-r-card)] bg-[var(--gp-brand-blue-soft)] text-[color:var(--gp-brand-blue-ink)] px-md py-sm flex items-start gap-sm text-left">
+          <Phone className="w-6 h-6 flex-shrink-0 mt-[2px]" aria-hidden="true" />
+          <p data-fraud-helpline className="text-label font-bold leading-snug min-w-0 break-words">{r.fraudHelpline}</p>
         </div>
-        <div
-          data-detail-amount
-          className={`text-[48px] leading-[56px] font-normal tracking-tight ${
-            txn.isCredit ? 'text-[color:var(--gp-success)]' : 'text-[color:var(--gp-ink)]'
-          }`}
-        >
-          {txn.isCredit ? `+ ${txn.amount}` : txn.amount}
-        </div>
-        {!txn.isCredit && (
-          <div className="mt-xs min-h-[64px] px-xl bg-[var(--gp-brand-blue)] text-white text-body font-bold rounded-full flex items-center justify-center">
-            {r.payAgain}
-          </div>
-        )}
-        <div className="mt-sm flex items-center justify-center gap-xs text-label font-normal">
-          <CheckCircle2 className="w-6 h-6 text-[color:var(--gp-success)] flex-shrink-0" aria-hidden="true" />
-          <span>{r.completed}</span>
-        </div>
-        <div className="text-label font-normal text-[color:var(--gp-ink-muted)]">{txn.date[language] || txn.date.en}</div>
-
-        <div className="w-full mt-md bg-[var(--gp-surface-card)] rounded-[var(--gp-r-card)] border border-[color:var(--gp-border)] p-md space-y-sm text-left text-label font-normal">
-          <div>
-            <div className="text-[color:var(--gp-ink-muted)]">{r.upiRefNo}</div>
-            <div className="font-bold break-words">{txn.upiRef}</div>
-          </div>
-          <div>
-            <div className="text-[color:var(--gp-ink-muted)]">{txn.isCredit ? r.creditedTo : r.paidFrom}</div>
-            <div className="font-bold break-words">{`${MOCK_BANK_BALANCE.bankName} ${MOCK_BANK_BALANCE.accountNumberMasked}`}</div>
-          </div>
-        </div>
-
-        <div className="w-full mt-md flex flex-wrap gap-sm justify-center">
-          <div className="min-h-[64px] px-lg rounded-full border border-[color:var(--gp-border)] text-[color:var(--gp-brand-blue-deep)] text-label font-bold flex items-center gap-sm">
-            <Share2 className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-            <span>{r.share}</span>
-          </div>
-          <div className="min-h-[64px] px-lg rounded-full border border-[color:var(--gp-border)] text-[color:var(--gp-brand-blue-deep)] text-label font-bold flex items-center gap-sm">
-            <CircleQuestionMark className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-            <span>{r.havingIssues}</span>
-          </div>
-        </div>
-        <div className="mt-md text-label font-normal text-[color:var(--gp-ink-muted)]">{r.mockData}</div>
       </div>
     );
   }
