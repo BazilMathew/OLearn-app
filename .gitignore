@@ -20,3 +20,4 @@ visual_extracted.txt
 !.env.example
 
 reference-shots/
+__pycache__/

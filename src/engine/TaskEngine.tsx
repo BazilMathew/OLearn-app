@@ -373,12 +373,12 @@ export const TaskEngine: React.FC<TaskEngineProps> = ({
       {/* Screen Replica Container: imitates the real apps, so it keeps 100% text at every Text size (ts-fixed).
           It always keeps 40% of the height and at least 284px (the 256px QR viewfinder with room for its
           ring), or 336px on a scroll step (chat list header, a full chat row and the swipe hint); the
-          instruction below takes the rest. Only on the chat search, the text status and Pay anyone (the screens with a text field)
-          that floor is dropped under 480px tall, i.e. while the phone keyboard is open, so the instruction stays in view. */}
+          instruction below takes the rest. Only on the chat search, the text status, the chat message and Pay anyone (the screens with a
+          text field) that floor is dropped under 480px tall, i.e. while the phone keyboard is open, so the instruction stays in view. */}
       <div
         ref={replicaRef}
         className={`ts-fixed flex-1 ${isScrollStep ? 'min-h-[max(40%,336px)]' : 'min-h-[max(40%,284px)]'} ${
-          currentStep.screen === 'whatsapp_search_screen' || currentStep.screen === 'whatsapp_status_text' || currentStep.screen === 'gpay_pay_anyone_screen' ? '[@media(max-height:480px)]:min-h-0' : ''
+          currentStep.screen === 'whatsapp_search_screen' || currentStep.screen === 'whatsapp_status_text' || currentStep.screen === 'whatsapp_chat_screen_typed' || currentStep.screen === 'gpay_pay_anyone_screen' ? '[@media(max-height:480px)]:min-h-0' : ''
         } relative overflow-y-auto overflow-x-hidden bg-canvas flex flex-col`}
       >
         {task.app === 'whatsapp' ? (

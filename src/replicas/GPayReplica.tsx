@@ -174,6 +174,17 @@ const Shortcut: React.FC<{ icon: React.ElementType; label: string }> = ({ icon: 
   </div>
 );
 
+// Home shortcut as an icon tile (English and Hindi, as in the app): the same soft-blue square, its name below in
+// at most two lines that wrap only between words
+const ShortcutTile: React.FC<{ icon: React.ElementType; label: string }> = ({ icon: Icon, label }) => (
+  <div data-shortcut-tile className="min-w-0 min-h-[72px] flex flex-col items-center gap-xs py-xs text-center">
+    <div className="w-16 h-16 rounded-[var(--gp-r-tile)] bg-[var(--gp-brand-blue-soft)] flex items-center justify-center flex-shrink-0">
+      <Icon className="w-8 h-8 text-[color:var(--gp-brand-blue-ink)]" aria-hidden="true" />
+    </div>
+    <span className="text-label font-normal text-[color:var(--gp-ink)] leading-tight [overflow-wrap:normal] max-w-full">{label}</span>
+  </div>
+);
+
 // Section heading on the Google Pay home (24px bold: the closest the header rule allows to the app's light headings)
 const SectionTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="text-[24px] leading-[30px] font-bold text-[color:var(--gp-ink)] px-lg pt-xl pb-md">{children}</div>
@@ -1443,8 +1454,22 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
           </HighlightTarget>
         </div>
 
-        {/* Shortcuts as full-width rows, so long single words (e.g. Malayalam കോൺടാക്റ്റുകൾക്ക്) never break */}
-        <div className="px-lg pt-sm space-y-xs">
+        {/* Shortcuts: three icon tiles in a row in English and Hindi, as in the app. Malayalam keeps full-width
+            rows: its widest word (കോൺടാക്റ്റുകൾക്ക്, 206px) is wider than a third of a 360px screen. */}
+        {language !== 'ml' ? (
+          <div data-shortcut-tiles className="grid grid-cols-3 gap-x-sm px-lg pt-sm">
+            <HighlightTarget elementId="pay_contacts_button" {...tp} className="min-w-0 rounded-[var(--gp-r-tile)]">
+              <ShortcutTile icon={Users} label={r.payContacts} />
+            </HighlightTarget>
+            <HighlightTarget elementId="pay_anyone_button" {...tp} className="min-w-0 rounded-[var(--gp-r-tile)]">
+              <ShortcutTile icon={Send} label={r.payAnyone} />
+            </HighlightTarget>
+            <HighlightTarget elementId="bank_transfer_button" {...tp} className="min-w-0 rounded-[var(--gp-r-tile)]">
+              <ShortcutTile icon={Landmark} label={r.bankTransfer} />
+            </HighlightTarget>
+          </div>
+        ) : (
+        <div data-shortcut-rows className="px-lg pt-sm space-y-xs">
           <HighlightTarget elementId="pay_contacts_button" {...tp}>
             <Shortcut icon={Users} label={r.payContacts} />
           </HighlightTarget>
@@ -1457,6 +1482,7 @@ export const GPayReplica: React.FC<GPayReplicaProps> = ({
             <Shortcut icon={Landmark} label={r.bankTransfer} />
           </HighlightTarget>
         </div>
+        )}
 
         {/* People (inert): Ramesh first. Columns are at least 88px so names wrap by word (3 per row at 360px,
             4 at 412px); the grid wraps, it never scrolls sideways */}

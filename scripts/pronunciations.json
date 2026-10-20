@@ -1,0 +1,43 @@
+{
+  "_about": "Audio only (scripts/generate-audio.py); tasks.json hint_text is never changed. replace: exact text fixes applied first. native: spoken in the language's own voice (numbers as words). english: token as written in the hint -> what the English voice (en-IN-NeerjaNeural) says. To move a word back to the native voice, delete its line in english.",
+  "hi": {
+    "replace": {
+      "कोई समस्या?": "कोई समस्या"
+    },
+    "native": {
+      "14,250": "चौदह हज़ार दो सौ पचास",
+      "200": "दो सौ",
+      "24": "चौबीस",
+      "4": "चार"
+    },
+    "english": {
+      "IFSC": "I F S C",
+      "Practice Bank": "Practice Bank",
+      "व्हाट्सएप": "WhatsApp",
+      "डन": "Done",
+      "आइकॉन": "icon",
+      "अटैचमेंट": "attachment"
+    }
+  },
+  "ml": {
+    "replace": {
+      "പ്രശ്നമുണ്ടോ?'": "പ്രശ്നമുണ്ടോ'",
+      "ബാലൻസ് പരിശോധിക്കുക തൊടുക": "ബാലൻസ് പരിശോധിക്കുക, തൊടുക"
+    },
+    "native": {
+      "14,250": "പതിനാലായിരത്തി ഇരുനൂറ്റമ്പത്",
+      "200": "ഇരുനൂറ്",
+      "4 അക്ക": "നാലക്ക"
+    },
+    "english": {
+      "IFSC": "I F S C",
+      "Practice Bank": "Practice Bank",
+      "വാട്ട്സ്ആപ്പ്": "WhatsApp",
+      "ഡൺ": "Done",
+      "ഐക്കൺ": "icon",
+      "ഐക്കണിൽ": "icon",
+      "പേപ്പർക്ലിപ്പ്": "paperclip",
+      "അറ്റാച്ച്മെന്റ്": "attachment"
+    }
+  }
+}

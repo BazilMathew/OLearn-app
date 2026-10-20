@@ -38,6 +38,10 @@
 // in every language) on the report screen; one Got it label for both notes; the other detail chip, Pay again, the
 // other Get help choices and Submit report on the reading step nudge; any payment and share target; and their
 // results (report submitted with the helpline line in every language, shared to the chosen target; taps ignored).
+// The send-a-text task also checks: no ordinal wording, typing the message (no Send before typing, first character,
+// emptied field, keyboard open, never saved) and the sent bubble showing exactly what was typed.
+// Google Pay home: the three shortcuts are icon tiles in English and Hindi (72px, labels in 2 lines, no overflow)
+// and rows in Malayalam. Narration: scripts/generate-audio.py --check (spoken text and clip files) must pass.
 // Every task: a label an instruction quotes is shown, as a whole word, on that step's practice screen.
 // Exit code 1 if any check fails.
 
@@ -93,6 +97,23 @@ const audioFailures = [];
   console.log(`Narration clips: ${LANGS.map((l) => `${names[l].size} ${l}`).join(', ')}; ${audioFailures.length} problem(s)`);
   for (const f of audioFailures) console.log('  FAIL ' + f);
   if (orphans.length) console.log('  Not referenced by tasks.json (report only): ' + orphans.join(', '));
+
+  // Spoken text (scripts/pronunciations.json applied): Hindi and Malayalam native-voice text has no Latin
+  // letters or digits, English-voice text comes from the map, every clip exists and is tracked. Needs Python;
+  // without it this is a failure, never a skip.
+  try {
+    const out = execFileSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/generate-audio.py', '--check'], {
+      cwd: fileURLToPath(new URL('..', import.meta.url)),
+      encoding: 'utf8'
+    });
+    console.log('  ' + out.trim().split('\n').pop());
+  } catch (e) {
+    const lines = `${e.stdout || ''}${e.stderr || ''}`.trim().split('\n').filter((s) => s.startsWith('FAIL '));
+    for (const s of lines.length ? lines : [`spoken-text check could not run: ${e.message}`]) {
+      audioFailures.push(s.replace(/^FAIL /, 'spoken text: '));
+      console.log('  FAIL ' + s.replace(/^FAIL /, 'spoken text: '));
+    }
+  }
 }
 if (args['audio-only']) process.exit(audioFailures.length ? 1 : 0);
 
@@ -170,6 +191,10 @@ for (const id of LABEL_FIRST_TASKS) {
     for (const l of LANGS) if (COLOURS[l].test(s.hint_text[l])) failures.push(`${id} step ${i + 1} (${l}): instruction names a colour: ${s.hint_text[l]}`);
   });
 }
+// Send a text: no ordinal wording in its instructions
+TASKS.find((t) => t.task_id === 'whatsapp_send_text').steps.forEach((s, i) => {
+  for (const l of LANGS) if (ORDINALS[l].test(s.hint_text[l])) failures.push(`whatsapp_send_text step ${i + 1} (${l}): ordinal wording in the instruction: ${s.hint_text[l]}`);
+});
 // The block task's number is in the fake range
 if (!/^\+91 90000 000\d\d$/.test(UNKNOWN_NUMBER)) failures.push(`block task: unknown number ${UNKNOWN_NUMBER} is not in the fake range +91 90000 000xx`);
 // Pay anyone, recharge, bank transfer and history: an instruction of their own (not shared with the older tasks)
@@ -285,6 +310,9 @@ let docTurn = 0;
 // Text status: what each run types (the first character completes the typing step)
 const STATUS_TEXTS = ['Good morning, all', 'Happy Sunday', 'At the temple today'];
 let statusTurn = 0;
+// Send a text: what each run types in the chat (any language works)
+const CHAT_TEXTS = ['Coming home at 6', 'नमस्ते बेटा', 'ശരി, വരാം'];
+let chatTurn = 0;
 // Forward task, one per run in turn: the message held, how (mouse or finger) and the contact it goes to
 const FWD_PICKS = [
   { msg: 'festival', method: 'mouse', to: 'priya' },
@@ -798,32 +826,32 @@ const PAGE_HELPERS = `
       return 1.05 / (L + 0.05);
     },
     attr: (sel, name) => document.querySelector(sel)?.getAttribute(name) ?? null,
-    // Text status: the typed text, focus, and which of field and Send has the ring
-    statusState() {
-      const input = document.querySelector('[data-status-input]');
-      if (!input) return null;
+    // A typing field (text status or chat message): the typed text, focus, and which of field and Send has the ring
+    typingState(input = '[data-status-input]', fieldId = 'status_text_input', sendId = 'status_send_button') {
+      const field = document.querySelector(input);
+      if (!field) return null;
       const el = (id) => document.querySelector('[data-element-id="' + id + '"]');
       return {
-        value: input.value,
-        focused: document.activeElement === input,
-        fieldRing: !!el('status_text_input')?.classList.contains('highlight-active'),
-        send: !!el('status_send_button'),
-        sendRing: !!el('status_send_button')?.classList.contains('highlight-active')
+        value: field.value,
+        focused: document.activeElement === field,
+        fieldRing: !!el(fieldId)?.classList.contains('highlight-active'),
+        send: !!el(sendId),
+        sendRing: !!el(sendId)?.classList.contains('highlight-active')
       };
     },
-    // Empties the status field the way the keyboard's delete key would (React sees an input event)
-    clearStatus() {
-      const input = document.querySelector('[data-status-input]');
-      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(input, '');
-      input.dispatchEvent(new Event('input', { bubbles: true }));
+    // Empties a typing field the way the keyboard's delete key would (React sees an input event)
+    clearField(input = '[data-status-input]') {
+      const field = document.querySelector(input);
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(field, '');
+      field.dispatchEvent(new Event('input', { bubbles: true }));
     },
-    // Phone keyboard open on the text status: the instruction bar, the field and Send fully on screen
-    statusKeyboardFit() {
+    // Phone keyboard open on a typing screen: the instruction bar, the field and Send fully on screen
+    typingKeyboardFit(input = '[data-status-input]', sendId = 'status_send_button') {
       const out = [];
       for (const [el, name] of [
         [document.getElementById('tutorial-hint')?.closest('[aria-live]'), 'instruction bar'],
-        [document.querySelector('[data-status-input]'), 'status field'],
-        [document.querySelector('[data-element-id="status_send_button"]'), 'Send']
+        [document.querySelector(input), 'text field'],
+        [document.querySelector('[data-element-id="' + sendId + '"]'), 'Send']
       ]) {
         if (!el) { out.push(name + ' not found'); continue; }
         const r = el.getBoundingClientRect(), g = this.region(el);
@@ -845,6 +873,23 @@ const PAGE_HELPERS = `
       return !!el && getComputedStyle(el).pointerEvents === 'none';
     },
     textOf: (sel) => document.querySelector(sel)?.textContent.trim() ?? null,
+    // Google Pay home shortcuts: tiles (English, Hindi) or rows (Malayalam); each one's size, label lines and overflow
+    shortcuts() {
+      const tiles = document.querySelector('[data-shortcut-tiles]');
+      const box = tiles || document.querySelector('[data-shortcut-rows]');
+      if (!box) return null;
+      return {
+        kind: tiles ? 'tiles' : 'rows',
+        sideways: box.scrollWidth > box.clientWidth + 1,
+        items: ['pay_contacts_button', 'pay_anyone_button', 'bank_transfer_button'].map((id) => {
+          const el = box.querySelector('[data-element-id="' + id + '"]');
+          if (!el) return { id, missing: true };
+          const r = el.getBoundingClientRect(), label = el.querySelector('span');
+          const lines = Math.round(label.getBoundingClientRect().height / parseFloat(getComputedStyle(label).lineHeight));
+          return { id, w: r.width, h: r.height, lines, overflow: label.scrollWidth > label.clientWidth + 1 };
+        })
+      };
+    },
     // Attach sheet: number of pills, which pills are purple, and the size of each target pill
     attachPills() {
       const box = document.querySelector('[data-attach-pills]');
@@ -1137,6 +1182,7 @@ async function runTutorials(w, h, lang, reduce, scale) {
     const search = task.task_id === 'whatsapp_search_contact' ? SEARCHES[searchTurn++ % SEARCHES.length] : null;
     const docPick = task.task_id === 'whatsapp_send_document' ? DOC_PICKS[docTurn++ % DOC_PICKS.length] : null;
     const statusText = task.task_id === 'whatsapp_add_status' ? STATUS_TEXTS[statusTurn++ % STATUS_TEXTS.length] : null;
+    const chatText = task.task_id === 'whatsapp_send_text' ? CHAT_TEXTS[chatTurn++ % CHAT_TEXTS.length] : null;
     const fwd = task.task_id === 'whatsapp_forward_message' ? FWD_PICKS[fwdTurn++ % FWD_PICKS.length] : null;
 
     for (let i = 0; i < total; i++) {
@@ -1210,10 +1256,6 @@ async function runTutorials(w, h, lang, reduce, scale) {
 
       // Nothing is shown as sent before the final Send tap
       check(!(await A('sentBubble()')), `${at}: a sent bubble is shown before the Send tap`);
-      if (step.screen === 'whatsapp_chat_screen_typed') {
-        check(await A(`textIncludes(${JSON.stringify(r.chatTyped)})`), `${at}: typed practice message missing from the message box`);
-        check(!(await A(`textIncludes(${JSON.stringify(r.chatSent)})`)), `${at}: the sent message is shown before the Send tap`);
-      }
       // Gallery: several photos and a video, every thumbnail tappable size
       if (step.screen === 'whatsapp_gallery_screen') {
         const gl = await A('gallery()');
@@ -1257,6 +1299,20 @@ async function runTutorials(w, h, lang, reduce, scale) {
         }
         for (const s of [r.gallery, r.location, r.contact, r.document, r.poll, r.payment, r.event, r.aiImages])
           check(await A(`textIncludes(${JSON.stringify(s)})`), `${at}: "${s}" missing on the attach sheet`);
+      }
+      // Google Pay home: three shortcut tiles in English and Hindi (each at least 72px, label in at most 2 lines,
+      // nothing overflowing or scrolling sideways); Malayalam keeps the rows
+      if (step.screen === 'gpay_home_screen') {
+        const sc = await A('shortcuts()');
+        if (check(sc, `${at}: Google Pay shortcuts not found`)) {
+          check(sc.kind === (lang === 'ml' ? 'rows' : 'tiles'), `${at}: shortcuts shown as ${sc.kind}`);
+          if (sc.kind === 'tiles') check(!sc.sideways, `${at}: shortcut tiles scroll sideways`);
+          for (const s of sc.items) {
+            if (!check(!s.missing, `${at}: ${s.id} missing from the shortcuts`)) continue;
+            check(Math.min(s.w, s.h) >= (sc.kind === 'tiles' ? 72 : 64), `${at}: ${s.id} is ${Math.round(s.w)}x${Math.round(s.h)}`);
+            if (sc.kind === 'tiles') check(s.lines <= 2 && !s.overflow, `${at}: ${s.id} label takes ${s.lines} lines${s.overflow ? ' and overflows' : ''}`);
+          }
+        }
       }
       if (step.highlight_element === 'search_input') {
         for (const s of [r.chipUnread, r.chipPhotos, r.chipVideos, r.chipLinks])
@@ -1634,52 +1690,61 @@ async function runTutorials(w, h, lang, reduce, scale) {
         check(tapAt && tapAt.h >= 64, `${at}: share target ${sharePick} missing or under 64px`);
       }
 
-      // Text status, typing step: a tap on the field focuses it (no nudge, no step), no Send yet; the first
-      // character completes the step
-      if (step.highlight_element === 'status_text_input') {
+      // Typing steps (text status, chat message): the field, the ids of its ring and Send, and this run's text
+      const ty =
+        step.screen === 'whatsapp_status_text'
+          ? { input: '[data-status-input]', field: 'status_text_input', send: 'status_send_button', text: statusText, name: 'status' }
+          : step.screen === 'whatsapp_chat_screen_typed'
+            ? { input: '[data-chat-input]', field: 'chat_text_input', send: 'send_button', text: chatText, name: 'message' }
+            : null;
+      const tyState = ty && `typingState(${[ty.input, ty.field, ty.send].map((s) => JSON.stringify(s)).join(', ')})`;
+
+      // Typing step: a tap on the field focuses it (no nudge, no step), no Send yet; the first character
+      // completes the step
+      if (ty && step.highlight_element === ty.field) {
         await waitFor(async () => !(await A('nudgeShown()')), 3500);
-        let st = await A('statusState()');
-        if (!check(st, `${at}: status field not found`)) break;
+        let st = await A(tyState);
+        if (!check(st, `${at}: ${ty.name} field not found`)) break;
         check(st.value === '' && st.fieldRing && !st.send, `${at}: before typing: "${st.value}", ring ${st.fieldRing ? 'on' : 'not on'} the field, Send ${st.send ? 'shown' : 'hidden'}`);
-        const fp = await A(`point('[data-status-input]')`);
+        const fp = await A(`point(${JSON.stringify(ty.input)})`);
         await click(fp.cx, fp.cy);
         await sleep(150);
-        check((await sameStep()) && !(await A('nudgeShown()')), `${at}: tapping the status field nudged or changed the step`);
-        check((await A('statusState()')).focused, `${at}: the status field is not focused (the phone keyboard would not open)`);
+        check((await sameStep()) && !(await A('nudgeShown()')), `${at}: tapping the ${ty.name} field nudged or changed the step`);
+        check((await A(tyState)).focused, `${at}: the ${ty.name} field is not focused (the phone keyboard would not open)`);
         playMark = await cdp.eval('window.__plays.length');
-        await cdp.send('Input.insertText', { text: statusText[0] });
+        await cdp.send('Input.insertText', { text: ty.text[0] });
         check(await waitFor(async () => (await A('label()')) === stepText(t, i + 2, total)), `${at}: typing the first character did not complete the step`);
-        st = await A('statusState()');
-        check(st && st.value === statusText[0] && st.send, `${at}: first character not typed or Send not shown ("${st && st.value}")`);
+        st = await A(tyState);
+        check(st && st.value === ty.text[0] && st.send, `${at}: first character not typed or Send not shown ("${st && st.value}")`);
         check(!(await A('nudgeShown()')), `${at}: typing nudged`);
         continue;
       }
 
-      // Text status, Send step: more typing never nudges; with the keyboard open the instruction, the field and
+      // Send step after typing: more typing never nudges; with the keyboard open the instruction, the field and
       // Send stay in view; an emptied field takes the ring back (no Send); the text is never saved
-      if (step.highlight_element === 'status_send_button') {
-        await typeText(statusText.slice(1));
-        let st = await A('statusState()');
-        check(st.value === statusText && st.sendRing && !st.fieldRing, `${at}: typed "${st.value}", ring on ${st.sendRing ? 'Send' : st.fieldRing ? 'the field' : 'nothing'}`);
+      if (ty && step.highlight_element === ty.send) {
+        await typeText(ty.text.slice(1));
+        let st = await A(tyState);
+        check(st.value === ty.text && st.sendRing && !st.fieldRing, `${at}: typed "${st.value}", ring on ${st.sendRing ? 'Send' : st.fieldRing ? 'the field' : 'nothing'}`);
         check((await sameStep()) && !(await A('nudgeShown()')), `${at}: typing more nudged or changed the step`);
         if (w === 360 && h === 690 && scale === 1) {
           await cdp.send('Emulation.setDeviceMetricsOverride', { width: 360, height: 400, deviceScaleFactor: 1, mobile: true });
           await sleep(400);
-          for (const s of await A('statusKeyboardFit()')) check(false, `${at}: keyboard open (360x400): ${s}`);
-          if (!reduce) await shot(`${tag}_status_keyboard_360x400`);
+          for (const s of await A(`typingKeyboardFit(${JSON.stringify(ty.input)}, ${JSON.stringify(ty.send)})`)) check(false, `${at}: keyboard open (360x400): ${s}`);
+          if (!reduce) await shot(`${tag}_${ty.name}_keyboard_360x400`);
           await setScreen(w, h, reduce);
           await sleep(400);
         }
-        await A('clearStatus()');
+        await A(`clearField(${JSON.stringify(ty.input)})`);
         await sleep(150);
-        st = await A('statusState()');
+        st = await A(tyState);
         check(st.value === '' && !st.send && st.fieldRing, `${at}: emptied: Send ${st.send ? 'still shown' : 'hidden'}, ring ${st.fieldRing ? 'on' : 'not on'} the field`);
         check((await sameStep()) && !(await A('nudgeShown()')), `${at}: emptying the field nudged or changed the step`);
-        await typeText(statusText);
-        st = await A('statusState()');
-        check(st.value === statusText && st.sendRing, `${at}: retyped "${st.value}"`);
-        check(!(await A(`storedAnywhere(${JSON.stringify(statusText)})`)), `${at}: the typed status was saved in browser storage`);
-        tapAt = await A(`targetPoint('status_send_button')`);
+        await typeText(ty.text);
+        st = await A(tyState);
+        check(st.value === ty.text && st.sendRing, `${at}: retyped "${st.value}"`);
+        check(!(await A(`storedAnywhere(${JSON.stringify(ty.text)})`)), `${at}: the typed ${ty.name} was saved in browser storage`);
+        tapAt = await A(`targetPoint(${JSON.stringify(ty.send)})`);
       }
 
       // Unknown chat: the scam link is not the step (a gentle nudge, nothing opens)
@@ -1914,7 +1979,7 @@ async function runTutorials(w, h, lang, reduce, scale) {
             }
           }
           check(!(await A(`buttonWithText(${JSON.stringify(t.practiceAgain)})`)), `${at}: "Well done" shown before the result screen`);
-          if (task.task_id === 'whatsapp_send_text') check(await A(`textIncludes(${JSON.stringify(r.chatSent)})`), `${at}: sent message text missing`);
+          if (chatText) check((await A(`textOf('[data-chat-sent]')`)) === chatText, `${at}: the sent bubble shows "${await A(`textOf('[data-chat-sent]')`)}", typed "${chatText}"`);
           if (docPick) check((await A(`textIncludes(${JSON.stringify(docPick)})`)) && (await A(`textIncludes('JPG • ')`)), `${at}: document bubble does not show ${docPick} with "JPG •"`);
           if (fwd) {
             check((await A(`textOf('[data-chat-name]')`)) === chatName(r, fwd.to), `${at}: forwarded to "${await A(`textOf('[data-chat-name]')`)}", expected ${chatName(r, fwd.to)}`);

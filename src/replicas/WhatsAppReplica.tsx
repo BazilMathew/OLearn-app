@@ -421,8 +421,10 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
   const [openedChat, setOpenedChat] = useState<string | null>(null);
   const [fileIndex, setFileIndex] = useState(0);
   const docFile = DOC_FILES[fileIndex];
-  // Also kept only while the practice runs: the status text typed, the message held and the contact it goes to
+  // Also kept only while the practice runs: the status text and chat message typed, the message held and the
+  // contact it goes to
   const [statusText, setStatusText] = useState('');
+  const [chatText, setChatText] = useState('');
   const [fwdKey, setFwdKey] = useState('greeting');
   const [fwdTo, setFwdTo] = useState<string | null>(null);
   // Press and hold on a message: the running hold (its timer and start point), and whether the click that
@@ -1430,6 +1432,11 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
   // Forward task: Ramesh's three messages, and the one held (selected) on the next step
   const fwdChat = screen === 'whatsapp_chat_forward' || screen === 'whatsapp_chat_message_selected';
   const selecting = screen === 'whatsapp_chat_message_selected';
+  // Send a text: the message bar is a real field. Send appears once there is text; if it is all deleted, the
+  // ring goes back to the field.
+  const composing = screen === 'whatsapp_chat_screen_typed';
+  const typed = chatText.trim() !== '';
+  const chatTp = { ...tp, activeHighlightId: highlightElement === 'send_button' && !typed ? 'chat_text_input' : highlightElement };
   return (
     <div className="h-full w-full flex flex-col justify-between bg-wa-bg relative">
       {/* A message is selected: the selection bar takes the header's place. Only Forward is a target. */}
@@ -1460,8 +1467,9 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
       )}
 
       {/* WhatsApp Header (light): back, avatar, name and status, then video and voice call.
-          16px on the right keeps the call icon's pointer badge on screen. */}
-      {!selecting && <div className="bg-white text-ink pl-xs pr-lg py-md flex items-center justify-between z-10">
+          16px on the right keeps the call icon's pointer badge on screen. While a message is typed with the
+          phone keyboard open (under 480px tall) it steps aside, so the field and Send stay in view. */}
+      {!selecting && <div className={`bg-white text-ink pl-xs pr-lg py-md flex items-center justify-between z-10 ${composing ? '[@media(max-height:480px)]:hidden' : ''}`}>
         <div className="flex items-center gap-xs min-w-0 flex-1">
           <ArrowLeft className="w-7 h-7 text-ink flex-shrink-0" aria-hidden="true" />
           <div
@@ -1555,7 +1563,7 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
         {/* Result screens, shown only after the final Send tap: the sent message, photo or voice note */}
         {screen === 'whatsapp_chat_screen_sent' && (
           <SentBubble>
-            <p className="text-body leading-snug">{r.chatSent}</p>
+            <p data-chat-sent className="text-body leading-snug whitespace-pre-wrap break-words">{chatText}</p>
           </SentBubble>
         )}
         {screen === 'whatsapp_chat_screen_photo_sent' && (
@@ -1705,16 +1713,39 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
               <Smile className="w-7 h-7 text-ink-muted" aria-hidden="true" />
             </div>
 
-            <HighlightTarget elementId="chat_input" {...tp} className="flex-1 min-w-0 mx-xs">
-              <div className="min-h-[64px] py-sm flex items-center text-body text-ink select-none min-w-0">
-                {/* Wraps between words (a word breaks only if it is wider than the whole box), up to 3 lines */}
-                <span className={`line-clamp-3 leading-snug break-words min-w-0 ${screen === 'whatsapp_chat_screen_typed' ? '' : 'text-ink-muted'}`}>
-                  {screen === 'whatsapp_chat_screen_typed'
-                    ? (r.chatTyped)
-                    : (r.messagePlaceholder)}
-                </span>
-              </div>
-            </HighlightTarget>
+            {composing ? (
+              <HighlightTarget elementId="chat_text_input" {...chatTp} className="flex-1 min-w-0 mx-xs">
+                {/* A real field, so the phone's own keyboard opens. Taps on it only focus it: never a nudge, never
+                    a step. The text lives only in the replica's state: never stored, logged or sent. */}
+                <div onClick={(e) => e.stopPropagation()} className="min-h-[64px] py-sm flex items-center min-w-0">
+                  <textarea
+                    data-chat-input
+                    rows={1}
+                    maxLength={200}
+                    inputMode="text"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="sentences"
+                    spellCheck={false}
+                    autoFocus
+                    aria-label={r.messagePlaceholder}
+                    placeholder={r.messagePlaceholder}
+                    value={chatText}
+                    onChange={(e) => {
+                      setChatText(e.target.value);
+                      if (highlightElement === 'chat_text_input' && e.target.value) onCorrectTap();
+                    }}
+                    className="block w-full max-h-[84px] bg-transparent outline-none resize-none select-text text-body leading-snug text-ink placeholder:text-ink-muted"
+                  />
+                </div>
+              </HighlightTarget>
+            ) : (
+              <HighlightTarget elementId="chat_input" {...tp} className="flex-1 min-w-0 mx-xs">
+                <div className="min-h-[64px] py-sm flex items-center text-body text-ink select-none min-w-0">
+                  <span className="line-clamp-3 leading-snug break-words min-w-0 text-ink-muted">{r.messagePlaceholder}</span>
+                </div>
+              </HighlightTarget>
+            )}
 
             <HighlightTarget elementId="attachment_icon" {...tp} className="rounded-full flex-shrink-0">
               <div className="w-16 h-16 rounded-full flex items-center justify-center">
@@ -1723,10 +1754,10 @@ export const WhatsAppReplica: React.FC<WhatsAppReplicaProps> = ({
             </HighlightTarget>
           </div>
 
-          {/* Action Button: Send or Mic */}
-          {screen === 'whatsapp_chat_screen_typed' ? (
-            <HighlightTarget elementId="send_button" {...tp} className="rounded-full flex-shrink-0">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: WA_ACCENT }}>
+          {/* Action Button: Send once there is text (it keeps the keyboard open), otherwise Mic */}
+          {composing && typed ? (
+            <HighlightTarget elementId="send_button" {...chatTp} className="rounded-full flex-shrink-0">
+              <div onPointerDown={(e) => e.preventDefault()} className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: WA_ACCENT }}>
                 <Send className="w-8 h-8 text-white ml-0.5" />
               </div>
             </HighlightTarget>

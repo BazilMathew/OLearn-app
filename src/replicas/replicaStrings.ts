@@ -20,8 +20,6 @@ export interface ReplicaStrings {
   online: string;
   today: string;
   chatReceived: string;
-  chatSent: string;
-  chatTyped: string;
   messagePlaceholder: string;
   gallery: string;
   camera: string;
@@ -291,8 +289,6 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     online: 'online',
     today: 'Today',
     chatReceived: 'Hello! How are you doing today?',
-    chatSent: 'I am doing well son, all good!',
-    chatTyped: 'I am doing well son...',
     messagePlaceholder: 'Message',
     gallery: 'Gallery',
     camera: 'Camera',
@@ -537,8 +533,6 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     online: 'ऑनलाइन',
     today: 'आज',
     chatReceived: 'नमस्ते माँ / पिताजी! आप कैसे हैं?',
-    chatSent: 'मैं ठीक हूँ बेटा, सब कुशल है।',
-    chatTyped: 'मैं ठीक हूँ बेटा...',
     messagePlaceholder: 'संदेश लिखें',
     gallery: 'गैलरी',
     camera: 'कैमरा',
@@ -783,8 +777,6 @@ export const REPLICA_STRINGS: Record<SupportedLanguage, ReplicaStrings> = {
     online: 'ഓൺലൈൻ',
     today: 'ഇന്ന്',
     chatReceived: 'നമസ്കാരം, സുഖമാണോ?',
-    chatSent: 'ഞാൻ ഇവിടെ സുഖമായിരിക്കുന്നു മകനേ.',
-    chatTyped: 'ഞാൻ സുഖമായി ഇരിക്കുന്നു...',
     messagePlaceholder: 'സന്ദേശം എഴുതുക',
     gallery: 'ഗ്യാലറി',
     camera: 'ക്യാമറ',

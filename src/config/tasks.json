@@ -64,11 +64,23 @@
       },
       {
         "screen": "whatsapp_chat_screen_typed",
-        "highlight_element": "send_button",
-        "result_screen": "whatsapp_chat_screen_sent",
+        "highlight_element": "chat_text_input",
         "audio_en": "assets/audio/en/wa_text_step2.mp3",
         "audio_hi": "assets/audio/hi/wa_text_step2.mp3",
         "audio_ml": "assets/audio/ml/wa_text_step2.mp3",
+        "hint_text": {
+          "en": "Type a message for Ramesh.",
+          "hi": "रमेश के लिए कोई भी संदेश टाइप करें।",
+          "ml": "രമേഷിന് എന്തെങ്കിലും സന്ദേശം ടൈപ്പ് ചെയ്യുക."
+        }
+      },
+      {
+        "screen": "whatsapp_chat_screen_typed",
+        "highlight_element": "send_button",
+        "result_screen": "whatsapp_chat_screen_sent",
+        "audio_en": "assets/audio/en/wa_text_step3.mp3",
+        "audio_hi": "assets/audio/hi/wa_text_step3.mp3",
+        "audio_ml": "assets/audio/ml/wa_text_step3.mp3",
         "hint_text": {
           "en": "Now tap the green circle send button to send the message.",
           "hi": "अब संदेश भेजने के लिए हरे गोल सेंड बटन को दबाएं।",
