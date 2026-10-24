@@ -12,6 +12,7 @@
 // --scales-only (skip the 100% Home and tutorial matrix; run the hint fit sweep and the Text size pass),
 // --audio-only (only the narration clip check; no browser, server or --out needed),
 // --reset-only (only the Settings reset confirmation pass),
+// --askme-only (only the Ask Me "not understood" pass),
 // --task <task_id> (only that task's tutorial runs, at 100% and in the Text size pass, plus the hint fit
 // sweep; skips Home, the other screens of the Text size pass and the reset pass).
 //
@@ -43,6 +44,11 @@
 // Google Pay home: the three shortcuts are icon tiles in English and Hindi (72px, labels in 2 lines, no overflow)
 // and rows in Malayalam. Narration: scripts/generate-audio.py --check (spoken text and clip files) must pass.
 // Every task: a label an instruction quotes is shown, as a whole word, on that step's practice screen.
+// Ask Me "not understood" (typed and by a fake mic; en/hi/ml; 100%, 130%, 150%; motion and Reduce motion): its clip
+// (askme-clips.json, same text on screen and in the live region) plays once per request and never while the mic is
+// open, nor after no-speech; the message and list scroll into view (instantly under either Reduce motion) or stay put
+// when already visible; the keyboard closes; the clip stops on a task tap, Cancel and a new request; Malayalam in
+// 2 lines at 360px; nothing saved or logged.
 // Exit code 1 if any check fails.
 
 import { spawn, execFileSync } from 'node:child_process';
@@ -60,6 +66,7 @@ const args = Object.fromEntries(
 const URL_BASE = args.url || 'http://localhost:3000';
 const TASKS = JSON.parse(readFileSync(new URL('../src/config/tasks.json', import.meta.url), 'utf8'));
 const LANGS = ['en', 'hi', 'ml'];
+const ASKME_CLIPS = JSON.parse(readFileSync(new URL('../src/config/askme-clips.json', import.meta.url), 'utf8'));
 
 // ---------- Narration clips (no browser needed) ----------
 // Every non-empty audio path is a git-tracked file with the exact same case, each step's three
@@ -87,6 +94,15 @@ const audioFailures = [];
       });
     });
   }
+  // Ask Me messages: assets/audio/<lang>/<name>.mp3 for every language
+  for (const [name, texts] of Object.entries(ASKME_CLIPS)) {
+    for (const l of LANGS) {
+      const p = `assets/audio/${l}/${name}.mp3`;
+      if (!texts[l]) audioFailures.push(`askme-clips.json ${name}: no ${l} text`);
+      if (!tracked.has('public/' + p)) audioFailures.push(`${name}: ${p} is not a git-tracked file (exact case)`);
+      names[l].add(`${name}.mp3`);
+    }
+  }
   for (const l of LANGS.slice(1)) {
     const only = (a, b) => [...names[a]].filter((n) => !names[b].has(n));
     for (const n of only('en', l)) audioFailures.push(`clip ${n} exists for en but not ${l}`);
@@ -96,7 +112,7 @@ const audioFailures = [];
   const orphans = [...tracked].filter((f) => !used.has(f));
   console.log(`Narration clips: ${LANGS.map((l) => `${names[l].size} ${l}`).join(', ')}; ${audioFailures.length} problem(s)`);
   for (const f of audioFailures) console.log('  FAIL ' + f);
-  if (orphans.length) console.log('  Not referenced by tasks.json (report only): ' + orphans.join(', '));
+  if (orphans.length) console.log('  Not referenced by tasks.json or askme-clips.json (report only): ' + orphans.join(', '));
 
   // Spoken text (scripts/pronunciations.json applied): Hindi and Malayalam native-voice text has no Latin
   // letters or digits, English-voice text comes from the map, every clip exists and is tracked. Needs Python;
@@ -350,6 +366,8 @@ class Cdp {
         const { resolve: ok, reject } = this.pending.get(msg.id);
         this.pending.delete(msg.id);
         msg.error ? reject(new Error(`${msg.error.message}`)) : ok(msg.result);
+      } else if (msg.method && this.onEvent) {
+        this.onEvent(msg);
       }
     };
     this.ready = new Promise((ok, bad) => {
@@ -388,8 +406,21 @@ const PAGE_HELPERS = `
 (() => {
   try { sessionStorage.setItem('olearn_startup_shown', '1'); } catch (e) {} // skip the startup screen
   window.__plays = [];
+  // Ask Me: every clip with whether the (fake) mic was open, and every scrollTo's behaviour
+  window.__playLog = [];
+  window.__scrollLog = [];
+  window.__micOpen = false;
   const play = HTMLMediaElement.prototype.play;
-  HTMLMediaElement.prototype.play = function () { window.__plays.push(this.src); return play.call(this); };
+  HTMLMediaElement.prototype.play = function () {
+    window.__plays.push(this.src);
+    window.__playLog.push({ el: this, micOpen: window.__micOpen });
+    return play.call(this);
+  };
+  const scrollTo = Element.prototype.scrollTo;
+  Element.prototype.scrollTo = function (...a) {
+    window.__scrollLog.push((typeof a[0] === 'object' && a[0].behavior) || 'auto');
+    return scrollTo.apply(this, a);
+  };
   if (window.speechSynthesis) {
     window.speechSynthesis.speak = (u) => { window.__plays.push('tts:' + u.text); setTimeout(() => u.onend && u.onend(), 10); };
   }
@@ -860,6 +891,67 @@ const PAGE_HELPERS = `
       }
       return out;
     },
+    // Ask Me: a fake speech recogniser that hears window.__fakeHeard (nothing = no-speech). Set before Ask Me opens.
+    fakeMic() {
+      window.webkitSpeechRecognition = window.SpeechRecognition = class {
+        start() {
+          window.__micOpen = true;
+          setTimeout(() => {
+            const said = window.__fakeHeard;
+            if (said) this.onresult?.({ results: [Object.assign([{ transcript: said }], { isFinal: true })] });
+            else this.onerror?.({ error: 'no-speech' });
+            this.onend?.();
+            window.__micOpen = false;
+          }, 400);
+        }
+        stop() {}
+        abort() { window.__micOpen = false; }
+      };
+      return true;
+    },
+    askReset() {
+      window.__playLog.length = 0;
+      window.__scrollLog.length = 0;
+      window.__plays.length = 0;
+      return true;
+    },
+    // Every saved key and value, to compare before and after a request
+    storageDump() {
+      const out = {};
+      for (const [n, s] of [['local', localStorage], ['session', sessionStorage]])
+        for (let i = 0; i < s.length; i++) out[n + ':' + s.key(i)] = s.getItem(s.key(i));
+      return JSON.stringify(out);
+    },
+    // Ask Me "not understood" clips played so far: path, mic open at play time, stopped (paused at 0) or playing
+    askClips: () => window.__playLog.filter((p) => p.el.src.endsWith('/askme_not_understood.mp3')).map((p) => ({
+      path: new URL(p.el.src).pathname, micOpen: p.micOpen, paused: p.el.paused, atStart: p.el.currentTime === 0, ended: p.el.ended
+    })),
+    askOtherSpeech: () => window.__plays.filter((s) => s.startsWith('tts:')),
+    askScrolls: () => [...window.__scrollLog],
+    // Ask Me "not understood" card: message, live region, the box that scrolls it and what is in view
+    askCard() {
+      const card = document.getElementById('askme-not-understood');
+      if (!card) return null;
+      let box = card.parentElement;
+      while (box && !(getComputedStyle(box).overflowY !== 'visible' && box.scrollHeight > box.clientHeight)) box = box.parentElement;
+      const msg = card.querySelector('.text-body');
+      const btn = card.querySelector('button');
+      const v = box ? box.getBoundingClientRect() : { top: 0, bottom: innerHeight, height: innerHeight };
+      const r = card.getBoundingClientRect(), m = msg.getBoundingClientRect(), b = btn.getBoundingClientRect();
+      const topAt0 = r.top - v.top + (box ? box.scrollTop : 0);
+      const inView = (x) => x.top >= Math.max(0, v.top) - 1 && x.bottom <= Math.min(innerHeight, v.bottom) + 1;
+      return {
+        message: msg.textContent.trim(),
+        lines: Math.round(m.height / parseFloat(getComputedStyle(msg).lineHeight)),
+        live: document.querySelector('.sr-only[aria-live]')?.textContent.trim() ?? null,
+        scrollTop: box ? Math.round(box.scrollTop) : 0,
+        fitsAtTop: !box || (topAt0 >= -1 && topAt0 + r.height <= v.height + 1),
+        messageInView: inView(m),
+        buttonInView: inView(b),
+        sideways: document.documentElement.scrollWidth > innerWidth || card.scrollWidth > card.clientWidth + 1,
+        inputFocused: document.activeElement?.id === 'askme-typed-input'
+      };
+    },
     // Does any saved value (local or session storage) contain this text?
     storedAnywhere(text) {
       for (const s of [localStorage, sessionStorage])
@@ -991,6 +1083,12 @@ await cdp.ready;
 await cdp.send('Page.enable');
 await cdp.send('Runtime.enable');
 await cdp.send('Page.addScriptToEvaluateOnNewDocument', { source: PAGE_HELPERS });
+// Console output, so the Ask Me pass can check that nothing the learner said or typed is logged
+const consoleTexts = [];
+cdp.onEvent = (msg) => {
+  if (msg.method === 'Runtime.consoleAPICalled')
+    consoleTexts.push(msg.params.args.map((a) => a.value ?? a.description ?? '').join(' '));
+};
 
 const A = (expr) => cdp.eval(`window.__audit.${expr}`);
 const click = async (x, y) => {
@@ -1128,7 +1226,7 @@ async function checkScreen(tag, name, labels, scale = 1) {
 }
 
 // ---------- Home: tile titles and subtitles fully visible, wrapped by word ----------
-if (!args['scales-only'] && !args['reset-only'] && !TASK_ONLY) await timed('Home at 100%', async () => {
+if (!args['scales-only'] && !args['reset-only'] && !args['askme-only'] && !TASK_ONLY) await timed('Home at 100%', async () => {
   for (const [w, h] of SIZES) {
     for (const lang of LANGS) {
       for (const reduce of MOTIONS) {
@@ -2023,12 +2121,12 @@ async function runTutorials(w, h, lang, reduce, scale) {
   }
 }
 
-if (!args['scales-only'] && !args['reset-only']) await timed('Tutorials at 100% (full matrix)', async () => {
+if (!args['scales-only'] && !args['reset-only'] && !args['askme-only']) await timed('Tutorials at 100% (full matrix)', async () => {
   for (const [w, h] of SIZES) for (const lang of LANGS) for (const reduce of MOTIONS) await runTutorials(w, h, lang, reduce, 1);
 });
 
 // ---------- Hint fit sweep: every step's instruction at every Text size ----------
-if (!args['reset-only']) await timed('Hint fit sweep', async () => {
+if (!args['reset-only'] && !args['askme-only']) await timed('Hint fit sweep', async () => {
   for (const [w, h] of SIZES) {
     for (const lang of LANGS) {
       for (const scale of TEXT_SCALES) {
@@ -2054,7 +2152,7 @@ if (!args['reset-only']) await timed('Hint fit sweep', async () => {
 });
 
 // ---------- Text size pass: 130% and 150% ----------
-if (!args['reset-only']) await timed('Text size pass (130% and 150%)', async () => {
+if (!args['reset-only'] && !args['askme-only']) await timed('Text size pass (130% and 150%)', async () => {
   for (const scale of SCALE_PASS.scales) {
     for (const [w, h] of SCALE_PASS.sizes) {
       for (const lang of LANGS) {
@@ -2128,8 +2226,156 @@ if (!args['reset-only']) await timed('Text size pass (130% and 150%)', async () 
   }
 });
 
+// ---------- Ask Me "not understood": spoken once, list scrolled into view, clip stops, nothing kept ----------
+// Queries the routing tests (scripts/test-matching.ts) expect to be "none"
+const NOT_UNDERSTOOD_QUERY = { en: 'what is the weather', hi: 'नमस्ते', ml: 'ജിപേ' };
+if (!args['reset-only'] && !TASK_ONLY) await timed('Ask Me not understood', async () => {
+  for (const lang of LANGS)
+    check(I18N[lang].didNotUnderstand === ASKME_CLIPS.askme_not_understood[lang], `Ask Me ${lang}: screen text is not the askme-clips.json text`);
+
+  const pressEnter = async () => {
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r' });
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
+  };
+  // Opens Ask Me (fake mic installed first: the screen picks its recogniser when it opens)
+  const openAskMe = async (lang, w, h, osReduce, appReduce, scale) => {
+    const t = I18N[lang];
+    await setScreen(w, h, osReduce);
+    await openApp(profileFor(lang, appReduce, scale));
+    await A('fakeMic()');
+    const p = await A(`clickPointForText(${JSON.stringify(t.askMe)})`);
+    if (!p) return false;
+    await click(p.cx, p.cy);
+    const ok = await waitFor(() => A(`textIncludes(${JSON.stringify(t.askMeSubtitle)})`), 3000);
+    await sleep(osReduce || appReduce ? 100 : 400);
+    await A('askReset()');
+    return ok;
+  };
+  // Typed with the keyboard and sent with Enter, so the text box still has focus when the answer comes
+  const typeRequest = async (text) => {
+    const p = await A(`point('#askme-typed-input')`);
+    if (!p) return false;
+    await click(p.cx, p.cy);
+    await cdp.send('Input.insertText', { text });
+    await pressEnter();
+    return true;
+  };
+  const micRequest = async (heard, t) => {
+    await cdp.eval(`window.__fakeHeard = ${JSON.stringify(heard)}`);
+    const p = await A(`point(${JSON.stringify(`button[aria-label="${t.tapAndSpeak}"]`)})`);
+    if (!p) return false;
+    await click(p.cx, p.cy);
+    return true;
+  };
+
+  // One request the router did not understand: message, clip, live region, scroll, keyboard, nothing kept
+  const checkNotUnderstood = async (at, lang, reduced, query, before) => {
+    if (!check(await waitFor(() => A('askCard()'), 4000), `${at}: not-understood message not shown`)) return null;
+    await sleep(reduced ? 150 : 800); // smooth scroll settles
+    const c = await A('askCard()');
+    const want = ASKME_CLIPS.askme_not_understood[lang];
+    const clips = await A('askClips()');
+    check(clips.length === 1, `${at}: not-understood clip played ${clips.length} times, expected 1`);
+    check(clips.every((x) => x.path === `/assets/audio/${lang}/askme_not_understood.mp3`), `${at}: wrong clip ${clips.map((x) => x.path).join(', ')}`);
+    check(clips.every((x) => !x.micOpen), `${at}: clip played while the mic was open`);
+    check((await A('askOtherSpeech()')).length === 0, `${at}: the phone's own voice was used`);
+    check(c.message === want, `${at}: message on screen is "${c.message}", expected "${want}"`);
+    check(c.live === want, `${at}: live region says "${c.live}", expected "${want}"`);
+    check(!c.inputFocused, `${at}: the text box kept focus (keyboard stays open)`);
+    check(!c.sideways, `${at}: sideways overflow`);
+    const scrolls = await A('askScrolls()');
+    if (c.fitsAtTop) {
+      check(scrolls.length === 0 && c.scrollTop === 0, `${at}: list already in view but the screen scrolled (${scrolls.join(', ')}; top ${c.scrollTop})`);
+    } else {
+      check(scrolls.length >= 1, `${at}: list out of view and the screen did not scroll`);
+      check(scrolls.every((b) => b === (reduced ? 'auto' : 'smooth')), `${at}: scrolled with ${scrolls.join(', ')}, expected ${reduced ? 'auto (instant)' : 'smooth'}`);
+      check(c.messageInView && c.buttonInView, `${at}: after scrolling, message ${c.messageInView ? 'in' : 'out of'} view, first task ${c.buttonInView ? 'in' : 'out of'} view`);
+    }
+    check((await A('storageDump()')) === before, `${at}: something was saved`);
+    check(!(await A(`storedAnywhere(${JSON.stringify(query)})`)), `${at}: the request was saved`);
+    check(!consoleTexts.some((x) => x.includes(query)), `${at}: the request was logged to the console`);
+    return c;
+  };
+
+  // Typed requests: every language, Text size 100/130/150%, motion and Reduce motion (app and phone)
+  const sizes = args.quick ? [[360, 690]] : [[360, 690], [412, 915]];
+  for (const [w, h] of sizes) for (const lang of LANGS) for (const scale of [1, 1.3, 1.5]) for (const reduce of [false, true]) {
+    const tag = `${lang}_${w}x${h}_ts${Math.round(scale * 100)}`;
+    const at = `Ask Me ${tag}_${reduce ? 'reduced' : 'motion'}`;
+    const q = NOT_UNDERSTOOD_QUERY[lang];
+    if (!check(await openAskMe(lang, w, h, reduce, reduce, scale), `${at}: Ask Me did not open`)) continue;
+    const before = await A('storageDump()');
+    if (!check(await typeRequest(q), `${at}: text box not found`)) continue;
+    const c = await checkNotUnderstood(at, lang, reduce, q, before);
+    if (!c) continue;
+    if (lang === 'ml' && w === 360 && scale === 1) check(c.lines <= 2, `${at}: message takes ${c.lines} lines, expected at most 2`);
+    if (w === 360 && !reduce) await shot(`${tag}_askme_not_understood`);
+    // Typing again (a re-render) and waiting do not repeat the clip
+    const p = await A(`point('#askme-typed-input')`);
+    await click(p.cx, p.cy);
+    await cdp.send('Input.insertText', { text: 'a' });
+    await sleep(1500);
+    check((await A('askClips()')).length === 1, `${at}: clip repeated after a re-render`);
+  }
+
+  for (const lang of LANGS) {
+    const t = I18N[lang];
+    const q = NOT_UNDERSTOOD_QUERY[lang];
+    const base = `Ask Me ${lang}_360x690_ts100`;
+
+    // By mic: the same as typing
+    if (check(await openAskMe(lang, 360, 690, false, false, 1), `${base} mic: Ask Me did not open`)) {
+      const before = await A('storageDump()');
+      if (check(await micRequest(q, t), `${base} mic: mic button not found`)) await checkNotUnderstood(`${base} mic`, lang, false, q, before);
+    }
+    // The mic hears nothing: its own message, never the not-understood one
+    if (check(await openAskMe(lang, 360, 690, false, false, 1), `${base} no speech: Ask Me did not open`)) {
+      await micRequest(null, t);
+      check(await waitFor(() => A(`textIncludes(${JSON.stringify(t.voiceNoSpeech)})`), 3000), `${base} no speech: its message not shown`);
+      await sleep(800);
+      check((await A('askClips()')).length === 0 && !(await A('askCard()')), `${base} no speech: the not-understood message or clip appeared`);
+    }
+    // Reduce motion from the app setting alone, and from the phone setting alone: an instant jump
+    for (const [os, app, name] of [[false, true, 'app Reduce motion only'], [true, false, 'phone reduced motion only']]) {
+      if (!check(await openAskMe(lang, 360, 690, os, app, 1), `${base} ${name}: Ask Me did not open`)) continue;
+      const before = await A('storageDump()');
+      await typeRequest(q);
+      const c = await checkNotUnderstood(`${base} ${name}`, lang, true, q, before);
+      if (c) check(!c.fitsAtTop, `${base} ${name}: list already in view, so the instant scroll was not tested`);
+    }
+    // A very tall screen (the list's height is 40% of the screen, so only here does it all fit): nothing scrolls
+    const tall = `Ask Me ${lang}_412x1800_ts100`;
+    if (check(await openAskMe(lang, 412, 1800, false, false, 1), `${tall}: Ask Me did not open`)) {
+      const before = await A('storageDump()');
+      await typeRequest(q);
+      const c = await checkNotUnderstood(tall, lang, false, q, before);
+      if (c) check(c.fitsAtTop, `${tall}: list not fully in view, so "no scroll" was not tested`);
+    }
+    // The clip stops on a task tap, on Cancel and on a new request (which speaks once for itself)
+    const stops = [
+      ['task tap', async () => { const p = await A(`point('#askme-not-understood button')`); await click(p.cx, p.cy); }],
+      ['Cancel', async () => { const p = await A(`buttonWithText(${JSON.stringify(t.cancel)})`); await click(p.cx, p.cy); }],
+      ['new request', () => typeRequest(q)]
+    ];
+    for (const [name, act] of stops) {
+      if (!check(await openAskMe(lang, 360, 690, true, true, 1), `${base} ${name}: Ask Me did not open`)) continue;
+      await typeRequest(q);
+      if (!check(await waitFor(() => A('askCard()'), 4000), `${base} ${name}: message not shown`)) continue;
+      await sleep(200);
+      const playing = await A('askClips()');
+      if (!check(playing.length === 1 && !playing[0].paused, `${base} ${name}: clip not playing before the tap`)) continue;
+      await act();
+      await sleep(300);
+      const first = (await A('askClips()'))[0];
+      check(first.paused && first.atStart && !first.ended, `${base} ${name}: clip did not stop`);
+      if (name === 'new request')
+        check(await waitFor(async () => (await A('askClips()')).length === 2, 4000), `${base} new request: its own clip did not play once`);
+    }
+  }
+});
+
 // ---------- Reset progress: the app's own confirmation, and what a reset clears ----------
-if (!TASK_ONLY) await timed('Reset progress dialog', async () => {
+if (!TASK_ONLY && !args['askme-only']) await timed('Reset progress dialog', async () => {
   for (const [w, h] of [[360, 690], [412, 915]]) {
     for (const lang of LANGS) {
       for (const scale of [1, 1.5]) {
@@ -2196,7 +2442,7 @@ if (!TASK_ONLY) await timed('Reset progress dialog', async () => {
   }
 });
 
-if (!args['reset-only']) for (const id of replicaIds) check(seenIds.has(id), `highlight id ${id} never found on screen`);
+if (!args['reset-only'] && !args['askme-only']) for (const id of replicaIds) check(seenIds.has(id), `highlight id ${id} never found on screen`);
 
 browser.kill();
 const secs = Math.round((Date.now() - t0) / 1000);

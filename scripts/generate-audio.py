@@ -2,6 +2,8 @@
 
 tasks.json is the single source of truth: every step's audio_<lang> path names the clip and its
 hint_text[lang] is what the clip says. Steps that share a clip must share the same text.
+Ask Me messages come from src/config/askme-clips.json ({clip name: {lang: text}}), the same text the
+screen shows; each is saved as assets/audio/<lang>/<clip name>.mp3.
 
 Hindi and Malayalam clips can mix two voices: words listed under "english" in scripts/pronunciations.json
 are spoken by the English voice, the rest by the native voice, joined with a short pause. The map is
@@ -29,6 +31,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TASKS = ROOT / "src" / "config" / "tasks.json"
+ASKME = ROOT / "src" / "config" / "askme-clips.json"
 PRONUNCIATIONS = Path(__file__).resolve().parent / "pronunciations.json"
 PUBLIC = ROOT / "public"
 VOICES = {
@@ -129,7 +132,7 @@ def spoken(segs):
 
 
 def collect():
-    """{lang: {clip name: (relative path, text)}} from tasks.json."""
+    """{lang: {clip name: (relative path, text)}} from tasks.json and askme-clips.json."""
     tasks = json.loads(TASKS.read_text(encoding="utf-8"))
     clips = {lang: {} for lang in VOICES}
     errors = []
@@ -150,6 +153,14 @@ def collect():
                 if seen and seen != (path, text):
                     errors.append(f"{where}: clip {name} is also used with a different text or path")
                 clips[lang][name] = (path, text)
+    for name, texts in json.loads(ASKME.read_text(encoding="utf-8")).items():
+        for lang in VOICES:
+            text = texts.get(lang, "").strip()
+            if not text:
+                errors.append(f"askme-clips.json {name} ({lang}): no text to speak")
+            if name in clips[lang]:
+                errors.append(f"askme-clips.json {name} ({lang}): name is also a tasks.json clip")
+            clips[lang][name] = (f"assets/audio/{lang}/{name}.mp3", text)
     return clips, errors
 
 
@@ -287,7 +298,7 @@ def main():
 
     clips, errors = collect()
     if errors:
-        print("tasks.json problems:\n  " + "\n  ".join(errors))
+        print("tasks.json / askme-clips.json problems:\n  " + "\n  ".join(errors))
         return 1
     pron = {k: v for k, v in json.loads(PRONUNCIATIONS.read_text(encoding="utf-8")).items() if not k.startswith("_")}
 
@@ -326,10 +337,10 @@ def main():
             total_bytes += size
             print(f"ok   {lang}/{name}.mp3 {size} B  {spoken(segs)}")
 
-        # Report (never delete) files in the folder that tasks.json does not use
+        # Report (never delete) files in the folder that no clip uses
         orphans = sorted(p.name for p in folder.glob("*.mp3") if p.stem not in clips[lang])
         if orphans and not args.only:
-            print(f"orphans in {lang}/ (not referenced by tasks.json): {', '.join(orphans)}")
+            print(f"orphans in {lang}/ (not referenced by tasks.json or askme-clips.json): {', '.join(orphans)}")
 
     print(f"\n{done} clip(s) written, {total_bytes} bytes, {len(failures)} failure(s)")
     for f in failures:

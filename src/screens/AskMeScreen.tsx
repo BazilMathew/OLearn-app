@@ -31,11 +31,21 @@ const ERROR_CLIP: Record<STTError, string> = {
   unavailable: 'askme_unavailable'
 };
 
+// Spoken once per request when the router finds no task; says the same sentence as the screen.
+const NOT_UNDERSTOOD_CLIP = 'askme_not_understood';
+
 // Longest we wait for the "Listening" clip to finish before opening the mic anyway.
 const MAX_PROMPT_MS = 4000;
+// How long after "not understood" a closing keyboard may still grow the screen.
+const KEYBOARD_SETTLE_MS = 1000;
 
 const IS_NATIVE = Capacitor.isNativePlatform();
 const TYPED_INPUT_ID = 'askme-typed-input';
+const NOT_UNDERSTOOD_ID = 'askme-not-understood';
+
+const motionReduced = () =>
+  document.documentElement.classList.contains('reduce-motion') ||
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 interface AskMeScreenProps {
   language: SupportedLanguage;
@@ -57,7 +67,10 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
   const [typedInput, setTypedInput] = useState<string>('');
   const [isRouting, setIsRouting] = useState<boolean>(false);
   const [clarifyData, setClarifyData] = useState<RouteResult['clarifyQuestion'] | null>(null);
-  const [notUnderstood, setNotUnderstood] = useState<boolean>(false);
+  // The request the router did not understand (null = none); a new request makes a new id.
+  const [notUnderstood, setNotUnderstood] = useState<number | null>(null);
+  // Read by screen readers: the same sentence as the spoken clip.
+  const [liveMessage, setLiveMessage] = useState<string>('');
   // Android app: "Try the Google voice box" after "didn't catch that"
   const [offerVoiceBox, setOfferVoiceBox] = useState<boolean>(false);
 
@@ -69,6 +82,20 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
   const startTokenRef = useRef(0);
   const startTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isListening = voiceState === 'starting' || voiceState === 'listening';
+
+  // A routing result is used only if no newer request (or closing the screen) came after it.
+  const requestRef = useRef(0);
+  const spokenRef = useRef(0);
+  const notUnderstoodPlayingRef = useRef(false);
+  const screenRef = useRef<HTMLDivElement>(null);
+  const zoneRef = useRef<HTMLDivElement>(null);
+  const listCardRef = useRef<HTMLDivElement>(null);
+
+  const stopNotUnderstoodClip = () => {
+    if (!notUnderstoodPlayingRef.current) return;
+    notUnderstoodPlayingRef.current = false;
+    AudioService.stopAudio();
+  };
 
   const cancelPendingStart = () => {
     startTokenRef.current++;
@@ -83,11 +110,47 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
   };
 
   useEffect(() => () => {
+    requestRef.current++;
+    stopNotUnderstoodClip();
     cancelPendingStart();
     stt.cancel();
   }, [stt]);
 
   const clipPath = (clip: string) => `assets/audio/${language}/${clip}.mp3`;
+
+  // Brings the message and task list into view unless they already are. Below 130% text the middle zone
+  // scrolls; from 130% the whole screen does.
+  const revealList = () => {
+    const card = listCardRef.current;
+    const box = [zoneRef.current, screenRef.current].find(
+      (el) => el && getComputedStyle(el).overflowY !== 'visible' && el.scrollHeight > el.clientHeight
+    );
+    if (!card || !box) return;
+    const view = box.getBoundingClientRect();
+    const rect = card.getBoundingClientRect();
+    if (rect.top >= view.top && rect.bottom <= view.bottom) return;
+    box.scrollTo({ top: box.scrollTop + rect.top - view.top, behavior: motionReduced() ? 'auto' : 'smooth' });
+  };
+
+  // "Not understood": speak the message and scroll to the list at the same moment, once per request.
+  useEffect(() => {
+    if (notUnderstood === null || spokenRef.current === notUnderstood) return;
+    spokenRef.current = notUnderstood;
+    // Never over an open mic.
+    stopVoice();
+    setLiveMessage(t.didNotUnderstand);
+    notUnderstoodPlayingRef.current = true;
+    const done = () => { notUnderstoodPlayingRef.current = false; };
+    AudioService.playClip(clipPath(NOT_UNDERSTOOD_CLIP), done, done);
+    revealList();
+    // A typed request closes the keyboard; check again as the screen grows back.
+    window.addEventListener('resize', revealList);
+    const timer = setTimeout(() => window.removeEventListener('resize', revealList), KEYBOARD_SETTLE_MS);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', revealList);
+    };
+  }, [notUnderstood]);
 
   const showNotice = (err: STTError) => {
     setNotice(t[ERROR_TEXT[err]] as string);
@@ -123,8 +186,12 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
       return;
     }
 
+    requestRef.current++;
+    stopNotUnderstoodClip();
+    setIsRouting(false);
     setClarifyData(null);
-    setNotUnderstood(false);
+    setNotUnderstood(null);
+    setLiveMessage('');
     setTranscript('');
     setNotice(null);
     setOfferVoiceBox(false);
@@ -159,11 +226,15 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
 
   const processQuery = async (queryText: string) => {
     if (!queryText.trim()) return;
+    const request = ++requestRef.current;
+    stopNotUnderstoodClip();
     setIsRouting(true);
     setClarifyData(null);
-    setNotUnderstood(false);
+    setNotUnderstood(null);
+    setLiveMessage('');
 
     const result = await TaskRouterService.routeQuery(queryText, language);
+    if (requestRef.current !== request) return;
     setIsRouting(false);
 
     if (result.matched && result.taskId) {
@@ -177,8 +248,10 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
     if (result.clarifyQuestion) {
       setClarifyData(result.clarifyQuestion);
     } else if (result.notUnderstood) {
-      // Shown as text only: no clip exists for this message.
-      setNotUnderstood(true);
+      // Typed request: close the keyboard so the task list has room.
+      const input = document.getElementById(TYPED_INPUT_ID);
+      if (input && document.activeElement === input) input.blur();
+      setNotUnderstood(request);
     }
   };
 
@@ -194,14 +267,18 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
   };
 
   // Mitra appears only while nothing else is happening on screen.
-  const isIdle = voiceState === 'idle' && !isRouting && !clarifyData && !notUnderstood && !transcript && !notice;
+  const isIdle = voiceState === 'idle' && !isRouting && !clarifyData && notUnderstood === null && !transcript && !notice;
 
   return (
-    <div className="h-full w-full bg-canvas text-ink flex flex-col p-lg select-none relative [.text-large_&]:overflow-y-auto">
+    <div ref={screenRef} className="h-full w-full bg-canvas text-ink flex flex-col p-lg select-none relative [.text-large_&]:overflow-y-auto">
+      <div className="sr-only" aria-live="polite">{liveMessage}</div>
+
       {/* Top Bar with Cancel / X */}
       <ScreenHeader
         title={<span className="text-accent-deep">{t.askMe}</span>}
         onBack={() => {
+          requestRef.current++;
+          stopNotUnderstoodClip();
           stopVoice();
           onClose();
         }}
@@ -211,7 +288,7 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
       />
 
       {/* Main Interaction Zone (at large text sizes the whole screen scrolls instead) */}
-      <div className="flex-1 overflow-y-auto flex flex-col -mx-xs px-xs [.text-large_&]:flex-[1_0_auto] [.text-large_&]:overflow-visible">
+      <div ref={zoneRef} className="flex-1 overflow-y-auto flex flex-col -mx-xs px-xs [.text-large_&]:flex-[1_0_auto] [.text-large_&]:overflow-visible">
         <div className="my-auto flex flex-col items-center space-y-xl text-center py-sm">
           <p className="text-body font-bold text-ink max-w-sm">
             {t.askMeSubtitle}
@@ -304,30 +381,33 @@ export const AskMeScreen: React.FC<AskMeScreenProps> = ({
           )}
 
           {/* Nothing matched: say so and let the user pick a task */}
-          {notUnderstood && (
-            <Card className="w-full border-accent-deep text-left space-y-lg" shade="#8A5207">
-              <div className="flex items-start gap-md" role="alert">
-                <HelpCircle className="w-7 h-7 text-accent-deep flex-shrink-0 mt-xs" />
+          {notUnderstood !== null && (
+            <div ref={listCardRef} id={NOT_UNDERSTOOD_ID} className="w-full">
+              <Card className="w-full border-accent-deep text-left space-y-lg" shade="#8A5207">
+                {/* Full width (no icon) so the Malayalam fits two lines at 360px; read out by the live region above */}
                 <div className="text-body font-bold text-ink">
                   {t.didNotUnderstand}
                 </div>
-              </div>
 
-              <div className="space-y-md max-h-[40vh] overflow-y-auto px-xs pb-xs">
-                {tasks.map((task) => (
-                  <Button
-                    key={task.task_id}
-                    icon={ArrowRight}
-                    iconEnd
-                    label={task.title[language]}
-                    variant="primary"
-                    fullWidth
-                    className="justify-between"
-                    onClick={() => onSelectTask(task)}
-                  />
-                ))}
-              </div>
-            </Card>
+                <div className="space-y-md max-h-[40vh] overflow-y-auto px-xs pb-xs">
+                  {tasks.map((task) => (
+                    <Button
+                      key={task.task_id}
+                      icon={ArrowRight}
+                      iconEnd
+                      label={task.title[language]}
+                      variant="primary"
+                      fullWidth
+                      className="justify-between"
+                      onClick={() => {
+                        stopNotUnderstoodClip();
+                        onSelectTask(task);
+                      }}
+                    />
+                  ))}
+                </div>
+              </Card>
+            </div>
           )}
         </div>
       </div>
